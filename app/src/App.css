@@ -94,7 +94,7 @@
 }
 
 /* Input styles */
-.input-plug {
+.input-field {
   @apply w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground;
   @apply placeholder:text-muted-foreground;
   @apply focus:outline-none focus:ring-2 focus:ring-jence-gold/50 focus:border-jence-gold;

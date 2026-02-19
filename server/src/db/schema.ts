@@ -1,10 +1,11 @@
-import { pgTable, text, timestamp, boolean, integer, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey } from 'drizzle-orm/pg-core'
 
 // ===== Better Auth Tables =====
 
 export const user = pgTable('user', {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
+    username: text('username').unique(), // Made optional initially to avoid migration issues with existing data, but logic should enforce it
     email: text('email').notNull().unique(),
     emailVerified: boolean('email_verified').notNull().default(false),
     image: text('image'),
@@ -75,6 +76,8 @@ export const creatorProfile = pgTable('creator_profile', {
     selfCertificationDate: timestamp('self_certification_date'),
     strikeCount: integer('strike_count').notNull().default(0),
     isBanned: boolean('is_banned').notNull().default(false),
+    payoutAddress: text('payout_address'),
+    payoutMethod: text('payout_method').default('crypto'), // 'crypto' | 'bank'
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -112,3 +115,79 @@ export const strike = pgTable('strike', {
     issuedAt: timestamp('issued_at').notNull().defaultNow(),
     resolvedAt: timestamp('resolved_at'),
 })
+
+export const notification = pgTable('notification', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id),
+    type: text('type').notNull().default('new_post'), // 'new_post' | 'system'
+    title: text('title').notNull(),
+    body: text('body'),
+    postId: uuid('post_id').references(() => post.id),
+    creatorPseudonym: text('creator_pseudonym'),
+    isRead: boolean('is_read').notNull().default(false),
+    emailSent: boolean('email_sent').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// ===== Community / Forum Tables =====
+
+export const communityPost = pgTable('community_post', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const tag = pgTable('tag', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull().unique(), // stored as lowercase, no #
+    usageCount: integer('usage_count').notNull().default(0),
+    color: text('color'), // optional custom color
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const communityPostTag = pgTable('community_post_tag', {
+    postId: uuid('post_id').notNull().references(() => communityPost.id),
+    tagId: uuid('tag_id').notNull().references(() => tag.id),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+    pk: [t.postId, t.tagId],
+}))
+
+export const communityPostLike = pgTable('community_post_like', {
+    postId: uuid('post_id').notNull().references(() => communityPost.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    value: integer('value').notNull().default(1), // 1 for upvote, -1 for downvote
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+    pk: [t.postId, t.userId],
+}))
+
+export const postComment = pgTable('post_comment', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    postId: uuid('post_id').notNull().references(() => post.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const postVote = pgTable('post_vote', {
+    postId: uuid('post_id').notNull().references(() => post.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    value: integer('value').notNull().default(1), // 1 for upvote, -1 for downvote
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+    pk: [t.postId, t.userId],
+}))
+
+export const communityPostComment = pgTable('community_post_comment', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    postId: uuid('post_id').notNull().references(() => communityPost.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+

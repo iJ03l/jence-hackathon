@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 export default function CreatorProfilePage() {
-    const { id } = useParams<{ id: string }>()
+    const { username } = useParams<{ username: string }>()
     const { user } = useAuth()
     const [data, setData] = useState<{ creator: any; posts: any[] } | null>(null)
     const [loading, setLoading] = useState(true)
@@ -13,18 +13,25 @@ export default function CreatorProfilePage() {
     const [subscribed, setSubscribed] = useState(false)
 
     useEffect(() => {
-        if (!id) return
-        api.getCreator(id)
-            .then(setData)
+        if (!username) return
+        // We now pass user.id (if available) to check subscription status
+        api.getCreatorByUsername(username, user?.id)
+            .then((data) => {
+                setData(data)
+                // If the API returns isSubscribed, update local state
+                if (data?.creator?.isSubscribed) {
+                    setSubscribed(true)
+                }
+            })
             .catch(console.error)
             .finally(() => setLoading(false))
-    }, [id])
+    }, [username, user?.id])
 
     const handleSubscribe = async () => {
-        if (!user?.id || !id) return
+        if (!user?.id || !data?.creator?.id) return
         setSubscribing(true)
         try {
-            await api.subscribe(user.id, id)
+            await api.subscribe(user.id, data.creator.id)
             setSubscribed(true)
         } catch {
             setSubscribed(true)
@@ -172,11 +179,33 @@ export default function CreatorProfilePage() {
                                             Free
                                         </span>
                                     )}
+                                    {!post.isFree && (
+                                        <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs flex items-center gap-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-jence-gold" />
+                                            Paid
+                                        </span>
+                                    )}
                                 </div>
                                 <h3 className="font-semibold text-foreground mb-1">{post.title}</h3>
-                                <p className="text-sm text-muted-foreground line-clamp-2">
-                                    {post.excerpt || post.content?.substring(0, 200)}
-                                </p>
+
+                                <div className="relative">
+                                    <p className={`text-sm text-muted-foreground line-clamp-2 ${!post.isFree && !subscribed && user?.id !== creator.userId ? 'blur-sm select-none' : ''
+                                        }`}>
+                                        {(post.excerpt || post.content || '').length > 258
+                                            ? `${(post.excerpt || post.content || '').substring(0, 258)}...`
+                                            : (post.excerpt || post.content || '').substring(0, 200)}
+                                    </p>
+
+                                    {!post.isFree && !subscribed && user?.id !== creator.userId && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border shadow-sm">
+                                                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                    🔒 Subscribe to read
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </article>
                         ))}
                     </div>

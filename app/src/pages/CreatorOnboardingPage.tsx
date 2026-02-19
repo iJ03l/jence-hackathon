@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import {
     Landmark, Shield, Trophy, Bitcoin, Building2,
     Briefcase, Store, Palette, Wheat, Fuel,
-    CheckCircle2, Upload, FileText, ArrowRight, ArrowLeft
+    CheckCircle2, Upload, FileText, ArrowRight, ArrowLeft, Loader2
 } from 'lucide-react'
-import { useSession } from '../lib/auth-client'
+import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 const iconMap: Record<string, any> = {
@@ -22,7 +22,7 @@ const SELF_CERT_CLAUSES = [
 ]
 
 export default function CreatorOnboardingPage() {
-    const { data: session, isPending } = useSession()
+    const { user, loading: authLoading } = useAuth()
     const navigate = useNavigate()
 
     const [step, setStep] = useState(1)
@@ -35,10 +35,10 @@ export default function CreatorOnboardingPage() {
     const [error, setError] = useState('')
 
     useEffect(() => {
-        if (!isPending && !session) {
+        if (!authLoading && !user) {
             navigate('/login')
         }
-    }, [session, isPending, navigate])
+    }, [user, authLoading, navigate])
 
     useEffect(() => {
         api.getVerticals()
@@ -55,19 +55,19 @@ export default function CreatorOnboardingPage() {
     const allCertSigned = certChecks.every(Boolean)
 
     const handleSubmit = async () => {
-        if (!session?.user?.id) return
+        if (!user?.id) return
         setLoading(true)
         setError('')
 
         try {
             await api.onboardCreator({
-                userId: session.user.id,
+                userId: user.id,
                 pseudonym,
                 verticalId: selectedVertical,
                 kycDocumentType: kycDocType,
                 selfCertificationSigned: true,
             })
-            setStep(4) // Success step
+            setStep(4)
         } catch (err: any) {
             setError(err.message || 'Onboarding failed')
         } finally {
@@ -75,10 +75,13 @@ export default function CreatorOnboardingPage() {
         }
     }
 
-    if (isPending) {
+    if (authLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-muted-foreground">Loading...</div>
+                <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="w-5 h-5 border-2 border-jence-gold/30 border-t-jence-gold rounded-full animate-spin" />
+                    Loading...
+                </div>
             </div>
         )
     }
@@ -91,7 +94,7 @@ export default function CreatorOnboardingPage() {
                     {[1, 2, 3, 4].map((s) => (
                         <div
                             key={s}
-                            className={`h-1.5 flex-1 rounded-full transition-colors ${s <= step ? 'bg-jence-gold' : 'bg-muted'
+                            className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${s <= step ? 'bg-jence-gold' : 'bg-muted'
                                 }`}
                         />
                     ))}
@@ -127,9 +130,9 @@ export default function CreatorOnboardingPage() {
                                                 key={v.id}
                                                 type="button"
                                                 onClick={() => setSelectedVertical(v.id)}
-                                                className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all text-sm ${selectedVertical === v.id
-                                                        ? 'border-jence-gold bg-jence-gold/10'
-                                                        : 'border-border hover:border-jence-gold/50'
+                                                className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all text-sm active:scale-[0.97] ${selectedVertical === v.id
+                                                    ? 'border-jence-gold bg-jence-gold/10'
+                                                    : 'border-border hover:border-jence-gold/50'
                                                     }`}
                                             >
                                                 <Icon size={18} style={{ color: v.color }} />
@@ -144,7 +147,7 @@ export default function CreatorOnboardingPage() {
                         <button
                             onClick={() => setStep(2)}
                             disabled={!pseudonym || !selectedVertical}
-                            className="btn-primary w-full mt-6 justify-center disabled:opacity-50"
+                            className="btn-primary w-full mt-6 justify-center disabled:opacity-50 active:scale-[0.98] transition-all"
                         >
                             Continue <ArrowRight size={18} />
                         </button>
@@ -186,13 +189,22 @@ export default function CreatorOnboardingPage() {
                         </div>
 
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setStep(1)} className="btn-secondary flex-1 justify-center">
+                            <button onClick={() => setStep(1)} className="btn-secondary flex-1 justify-center active:scale-[0.97] transition-all">
                                 <ArrowLeft size={18} /> Back
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setKycDocType('') // clear selection to indicate skip
+                                    setStep(3)
+                                }}
+                                className="btn-secondary flex-1 justify-center text-muted-foreground hover:text-foreground active:scale-[0.97] transition-all"
+                            >
+                                Skip for now
                             </button>
                             <button
                                 onClick={() => setStep(3)}
                                 disabled={!kycDocType}
-                                className="btn-primary flex-1 justify-center disabled:opacity-50"
+                                className="btn-primary flex-1 justify-center disabled:opacity-50 active:scale-[0.98] transition-all"
                             >
                                 Continue <ArrowRight size={18} />
                             </button>
@@ -209,7 +221,7 @@ export default function CreatorOnboardingPage() {
                         </p>
 
                         {error && (
-                            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
                                 {error}
                             </div>
                         )}
@@ -218,9 +230,9 @@ export default function CreatorOnboardingPage() {
                             {SELF_CERT_CLAUSES.map((clause, i) => (
                                 <label
                                     key={i}
-                                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${certChecks[i]
-                                            ? 'border-jence-gold bg-jence-gold/5'
-                                            : 'border-border hover:border-jence-gold/30'
+                                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.99] ${certChecks[i]
+                                        ? 'border-jence-gold bg-jence-gold/5'
+                                        : 'border-border hover:border-jence-gold/30'
                                         }`}
                                 >
                                     <input
@@ -235,15 +247,22 @@ export default function CreatorOnboardingPage() {
                         </div>
 
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setStep(2)} className="btn-secondary flex-1 justify-center">
+                            <button onClick={() => setStep(2)} className="btn-secondary flex-1 justify-center active:scale-[0.97] transition-all">
                                 <ArrowLeft size={18} /> Back
                             </button>
                             <button
                                 onClick={handleSubmit}
                                 disabled={!allCertSigned || loading}
-                                className="btn-primary flex-1 justify-center disabled:opacity-50"
+                                className="btn-primary flex-1 justify-center disabled:opacity-50 active:scale-[0.98] transition-all"
                             >
-                                {loading ? 'Submitting...' : 'Submit application'}
+                                {loading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    'Submit application'
+                                )}
                             </button>
                         </div>
                     </div>
@@ -260,7 +279,7 @@ export default function CreatorOnboardingPage() {
                             Your KYC documents are being reviewed. You'll be able to publish content once verified.
                             This typically takes 24–48 hours.
                         </p>
-                        <button onClick={() => navigate('/dashboard')} className="btn-primary">
+                        <button onClick={() => navigate('/dashboard')} className="btn-primary active:scale-[0.97] transition-all">
                             Go to dashboard <ArrowRight size={18} />
                         </button>
                     </div>

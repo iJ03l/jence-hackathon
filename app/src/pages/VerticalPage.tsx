@@ -111,7 +111,11 @@ export default function VerticalPage() {
                                     </span>
                                 </div>
                                 <h3 className="font-semibold text-foreground mb-1">{post.title}</h3>
-                                <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                    {(post.excerpt || post.content || '').length > 258
+                                        ? `${(post.excerpt || post.content || '').substring(0, 258)}...`
+                                        : (post.excerpt || post.content || '')}
+                                </p>
                             </article>
                         ))}
                     </div>

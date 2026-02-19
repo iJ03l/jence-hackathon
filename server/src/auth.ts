@@ -13,6 +13,7 @@ export const auth = betterAuth({
             verification: schema.verification,
         },
     }),
+    trustedOrigins: [process.env.FRONTEND_URL || 'http://localhost:5173'],
     emailAndPassword: {
         enabled: true,
     },
@@ -22,6 +23,11 @@ export const auth = betterAuth({
                 type: 'string',
                 required: false,
                 defaultValue: 'subscriber',
+                input: true,
+            },
+            username: {
+                type: 'string',
+                required: true,
                 input: true,
             },
         },

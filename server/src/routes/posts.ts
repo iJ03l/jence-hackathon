@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { post, creatorProfile, subscription } from '../db/schema.js'
-import { eq, inArray, desc } from 'drizzle-orm'
+import { post, creatorProfile, subscription, postVote, postComment, user } from '../db/schema.js'
+import { eq, inArray, desc, sql, and, count, sum } from 'drizzle-orm'
+import { notifySubscribersOfNewPost } from '../services/notify.js'
 
 const postsRoutes = new Hono()
 
@@ -79,7 +80,170 @@ postsRoutes.post('/', async (c) => {
         isFree: isFree ?? false,
     }).returning()
 
+    // Fire-and-forget: notify all subscribers via in-app + email
+    notifySubscribersOfNewPost({
+        id: newPost.id,
+        title: newPost.title,
+        excerpt: newPost.excerpt,
+        creatorId: newPost.creatorId,
+        verticalId: newPost.verticalId,
+    }).catch(console.error)
+
     return c.json(newPost, 201)
+})
+
+// GET /api/posts/my — creator's own posts with stats
+postsRoutes.get('/my', async (c) => {
+    const creatorProfileId = c.req.query('creatorProfileId')
+    if (!creatorProfileId) {
+        return c.json({ error: 'creatorProfileId required' }, 400)
+    }
+
+    // Get the user ID for this creator owner
+    const creatorUser = await db.query.creatorProfile.findFirst({
+        where: eq(creatorProfile.id, creatorProfileId),
+        columns: { userId: true }
+    })
+    const currentUserId = creatorUser?.userId
+
+    const myPosts = await Promise.all((await db
+        .select({
+            id: post.id,
+            title: post.title,
+            excerpt: post.excerpt,
+            isFree: post.isFree,
+            isPublished: post.isPublished,
+            moderationStatus: post.moderationStatus,
+            createdAt: post.createdAt,
+        })
+        .from(post)
+        .where(eq(post.creatorId, creatorProfileId))
+        .orderBy(desc(post.createdAt))
+    ).map(async (p) => {
+        const likesResult = await db
+            .select({ value: sum(postVote.value) })
+            .from(postVote)
+            .where(eq(postVote.postId, p.id))
+            .then(res => res[0].value)
+
+        const likes = likesResult ? Number(likesResult) : 0
+
+        const comments = await db
+            .select({ count: count() })
+            .from(postComment)
+            .where(eq(postComment.postId, p.id))
+            .then(res => res[0].count)
+
+        let userVote = 0
+        if (currentUserId) {
+            const vote = await db.query.postVote.findFirst({
+                where: and(eq(postVote.postId, p.id), eq(postVote.userId, currentUserId))
+            })
+            if (vote) userVote = vote.value
+        }
+
+        return { ...p, likes, comments, userVote }
+    }))
+
+    return c.json(myPosts)
+})
+
+// GET /api/posts/stats — aggregate stats for a creator
+postsRoutes.get('/stats', async (c) => {
+    const creatorProfileId = c.req.query('creatorProfileId')
+    if (!creatorProfileId) {
+        return c.json({ error: 'creatorProfileId required' }, 400)
+    }
+
+    const [{ count: totalPosts }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(post)
+        .where(eq(post.creatorId, creatorProfileId))
+
+    const [{ count: totalSubscribers }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(subscription)
+        .where(eq(subscription.creatorProfileId, creatorProfileId))
+
+    return c.json({
+        totalPosts,
+        totalSubscribers,
+        totalViews: 0,       // placeholder — add view tracking later
+        totalEarnings: 0,    // placeholder — add payment tracking later
+    })
+})
+
+// POST /api/posts/:id/comments
+postsRoutes.post('/:id/comments', async (c) => {
+    const id = c.req.param('id')
+    const { userId, content } = await c.req.json()
+
+    if (!userId || !content) return c.json({ error: 'Missing fields' }, 400)
+
+    const [comment] = await db.insert(postComment).values({
+        postId: id,
+        userId,
+        content
+    }).returning()
+
+    return c.json(comment)
+})
+
+// GET /api/posts/:id/comments
+postsRoutes.get('/:id/comments', async (c) => {
+    const id = c.req.param('id')
+
+    const comments = await db
+        .select({
+            id: postComment.id,
+            content: postComment.content,
+            createdAt: postComment.createdAt,
+            userId: postComment.userId,
+            user: {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                image: user.image,
+                role: user.role,
+                pseudonym: creatorProfile.pseudonym,
+            }
+        })
+        .from(postComment)
+        .leftJoin(user, eq(postComment.userId, user.id))
+        .leftJoin(creatorProfile, eq(user.id, creatorProfile.userId))
+        .where(eq(postComment.postId, id))
+        .orderBy(desc(postComment.createdAt))
+
+    const formattedComments = comments.map(c => ({
+        ...c,
+        user: {
+            ...c.user,
+            displayName: c.user?.pseudonym || c.user?.username || c.user?.name,
+            isCreator: !!c.user?.pseudonym
+        }
+    }))
+
+    return c.json(formattedComments)
+})
+
+// POST /api/posts/:id/vote
+postsRoutes.post('/:id/vote', async (c) => {
+    const id = c.req.param('id')
+    const { userId, value } = await c.req.json() // 1 or -1
+
+    if (!userId || !value) return c.json({ error: 'Missing fields' }, 400)
+
+    // Upsert vote
+    await db.insert(postVote).values({
+        postId: id,
+        userId,
+        value
+    }).onConflictDoUpdate({
+        target: [postVote.postId, postVote.userId],
+        set: { value }
+    })
+
+    return c.json({ success: true })
 })
 
 export default postsRoutes

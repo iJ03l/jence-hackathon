@@ -1,24 +1,39 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react'
+import { Zap, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function RegisterPage() {
     const navigate = useNavigate()
     const { signUp } = useAuth()
     const [role, setRole] = useState<'subscriber' | 'creator'>('subscriber')
-    const [name, setName] = useState('')
+    const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+
+    // Password validation logic
+    const isPasswordValid =
+        password.length >= 8 &&
+        /[A-Z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[!@#$%^&*]/.test(password)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+
+        if (!isPasswordValid) {
+            setError('Please meet all password requirements')
+            return
+        }
+
         setLoading(true)
 
-        const result = await signUp(name, email, password, role)
+        const result = await signUp(username, email, password, role)
         if (result.error) {
             setError(result.error)
         } else {
@@ -57,8 +72,8 @@ export default function RegisterPage() {
                             type="button"
                             onClick={() => setRole('subscriber')}
                             className={`p-4 rounded-xl border text-center transition-all active:scale-[0.97] ${role === 'subscriber'
-                                    ? 'border-jence-gold bg-jence-gold/10 text-foreground'
-                                    : 'border-border text-muted-foreground hover:border-jence-gold/50'
+                                ? 'border-jence-gold bg-jence-gold/10 text-foreground'
+                                : 'border-border text-muted-foreground hover:border-jence-gold/50'
                                 }`}
                         >
                             <span className="text-2xl block mb-1">📖</span>
@@ -69,8 +84,8 @@ export default function RegisterPage() {
                             type="button"
                             onClick={() => setRole('creator')}
                             className={`p-4 rounded-xl border text-center transition-all active:scale-[0.97] ${role === 'creator'
-                                    ? 'border-jence-gold bg-jence-gold/10 text-foreground'
-                                    : 'border-border text-muted-foreground hover:border-jence-gold/50'
+                                ? 'border-jence-gold bg-jence-gold/10 text-foreground'
+                                : 'border-border text-muted-foreground hover:border-jence-gold/50'
                                 }`}
                         >
                             <span className="text-2xl block mb-1">✍️</span>
@@ -81,15 +96,15 @@ export default function RegisterPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-foreground mb-1.5">Full name</label>
+                            <label className="block text-sm font-medium text-foreground mb-1.5">Username</label>
                             <div className="relative">
                                 <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="input-field pl-10"
-                                    placeholder="Your full name"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="input-field !pl-10"
+                                    placeholder="username"
                                     required
                                 />
                             </div>
@@ -103,7 +118,7 @@ export default function RegisterPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="input-field pl-10"
+                                    className="input-field !pl-10"
                                     placeholder="you@example.com"
                                     required
                                 />
@@ -113,17 +128,48 @@ export default function RegisterPage() {
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
                             <div className="relative">
-                                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="input-field pl-10"
+                                    className="input-field !pl-10 !pr-10"
                                     placeholder="Minimum 8 characters"
-                                    minLength={8}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
+
+                            {/* Password Strength Checklist */}
+                            {password && (
+                                <div className="mt-3 p-3 rounded-lg bg-muted/40 space-y-2 animate-in fade-in slide-in-from-top-2">
+                                    <p className="text-xs font-medium text-muted-foreground mb-2">Password strength:</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className={`flex items-center gap-1.5 text-xs ${password.length >= 8 ? 'text-jence-green' : 'text-muted-foreground/60'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${password.length >= 8 ? 'bg-jence-green' : 'bg-current'}`} />
+                                            8+ characters
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-xs ${/[A-Z]/.test(password) ? 'text-jence-green' : 'text-muted-foreground/60'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(password) ? 'bg-jence-green' : 'bg-current'}`} />
+                                            Uppercase letter
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-xs ${/[0-9]/.test(password) ? 'text-jence-green' : 'text-muted-foreground/60'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(password) ? 'bg-jence-green' : 'bg-current'}`} />
+                                            Number
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 text-xs ${/[!@#$%^&*]/.test(password) ? 'text-jence-green' : 'text-muted-foreground/60'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${/[!@#$%^&*]/.test(password) ? 'bg-jence-green' : 'bg-current'}`} />
+                                            Special char
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <button

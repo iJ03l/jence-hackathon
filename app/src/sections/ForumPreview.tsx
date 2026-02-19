@@ -1,4 +1,5 @@
 import { useRef, useLayoutEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MessageSquare, ThumbsUp, Share2, ArrowRight, Flame, Pin } from 'lucide-react'
@@ -120,13 +121,13 @@ export default function ForumPreview() {
               </h2>
             </div>
           </div>
-          <a
-            href="#"
+          <Link
+            to="/community"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-jence-gold transition-colors"
           >
             Join the conversation
             <ArrowRight size={16} />
-          </a>
+          </Link>
         </div>
 
         {/* Pinned Notice */}
@@ -194,10 +195,10 @@ export default function ForumPreview() {
 
         {/* View All */}
         <div className="mt-6 text-center">
-          <button className="btn-outline">
+          <Link to="/community" className="btn-outline inline-flex items-center gap-2">
             View all discussions
             <ArrowRight size={16} />
-          </button>
+          </Link>
         </div>
       </div>
     </section>

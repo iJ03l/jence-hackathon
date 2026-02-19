@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
+import CreatorDashboardPage from './CreatorDashboardPage'
 
 const iconMap: Record<string, any> = {
     Landmark, Shield, Trophy, Bitcoin, Building2,
@@ -20,11 +21,19 @@ export default function DashboardPage() {
     const [posts, setPosts] = useState<any[]>([])
     const [loadingPosts, setLoadingPosts] = useState(true)
 
+    // Redirect if not logged in
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login')
         }
     }, [user, authLoading, navigate])
+
+    // If user is a creator, show the Creator Dashboard
+    if (user?.role === 'creator') {
+        return <CreatorDashboardPage />
+    }
+
+    // ... existing subscriber dashboard logic ...
 
     useEffect(() => {
         api.getVerticals().then(setVerticals).catch(console.error)
@@ -139,7 +148,11 @@ export default function DashboardPage() {
                                         )}
                                     </div>
                                     <h3 className="font-semibold text-foreground mb-1">{post.title}</h3>
-                                    <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                        {(post.excerpt || post.content || '').length > 258
+                                            ? `${(post.excerpt || post.content || '').substring(0, 258)}...`
+                                            : (post.excerpt || post.content || '')}
+                                    </p>
                                 </article>
                             ))}
                         </div>

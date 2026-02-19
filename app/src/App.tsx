@@ -9,6 +9,8 @@ import ExplorePage from './pages/ExplorePage'
 import VerticalPage from './pages/VerticalPage'
 import CreatorProfilePage from './pages/CreatorProfilePage'
 import CreatorOnboardingPage from './pages/CreatorOnboardingPage'
+import CommunityPage from './pages/CommunityPage'
+import PostDetail from './pages/PostDetail'
 import SettingsPage from './pages/SettingsPage'
 import './App.css'
 
@@ -21,10 +23,14 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/verticals/:slug" element={<VerticalPage />} />
-          <Route path="/creator/:id" element={<CreatorProfilePage />} />
+          <Route path="/verticals/:slug" element={<VerticalPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/creator-onboarding" element={<CreatorOnboardingPage />} />
+          {/* Catch-all for creator profiles (e.g. jence.xyz/username) */}
+          <Route path="/:username" element={<CreatorProfilePage />} />
         </Route>
 
         {/* Auth pages — no layout (clean, focused) */}

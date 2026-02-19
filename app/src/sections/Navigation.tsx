@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Sun, Moon, Zap, LogOut } from 'lucide-react'
+import { Menu, X, Sun, Moon, Zap, LogOut, Bell, Loader2 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../lib/api'
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -11,6 +12,7 @@ export default function Navigation() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const isLanding = location.pathname === '/'
   const isLoggedIn = !!user
@@ -23,6 +25,45 @@ export default function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Poll unread notifications
+  useEffect(() => {
+    if (!user?.id) return
+    const fetchCount = () => {
+      api.getUnreadCount(user.id).then(d => setUnreadCount(d.count)).catch(() => { })
+    }
+    fetchCount()
+    const interval = setInterval(fetchCount, 30000) // every 30s
+    return () => clearInterval(interval)
+  }, [user?.id])
+
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+
+  useEffect(() => {
+    if (isNotificationsOpen && user?.id) {
+      setLoadingNotifications(true)
+      api.getNotifications(user.id)
+        .then(setNotifications)
+        .catch(console.error)
+        .finally(() => setLoadingNotifications(false))
+
+      // Mark all as read when opening (optional, or separate button)
+      // For now let's just fetch.
+    }
+  }, [isNotificationsOpen, user?.id])
+
+  const handleMarkAllRead = async () => {
+    if (!user?.id) return
+    try {
+      await api.markNotificationsRead(user.id)
+      setUnreadCount(0)
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
@@ -33,11 +74,12 @@ export default function Navigation() {
       { label: 'How it works', href: '#how-it-works' },
       { label: 'Creators', href: '#creators' },
       { label: 'Verticals', href: '#verticals' },
-      { label: 'Forum', href: '#forum' },
+      { label: 'Community', href: '/community' },
     ]
     : [
       { label: 'Dashboard', href: '/dashboard' },
       { label: 'Explore', href: '/explore' },
+      { label: 'Community', href: '/community' },
       { label: 'Settings', href: '/settings' },
     ]
 
@@ -74,8 +116,8 @@ export default function Navigation() {
                   key={link.label}
                   to={link.href}
                   className={`text-sm transition-colors ${location.pathname === link.href
-                      ? 'text-foreground font-medium'
-                      : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
                   {link.label}
@@ -93,6 +135,89 @@ export default function Navigation() {
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+
+            {isLoggedIn && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors outline-none"
+                  title="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-jence-gold text-jence-black text-[10px] font-bold flex items-center justify-center border-2 border-background">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {isNotificationsOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-80 md:w-96 rounded-xl border border-border bg-background shadow-lg shadow-black/5 p-1 animate-in fade-in zoom-in-95 origin-top-right z-50">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                      <h3 className="font-semibold text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-xs text-jence-gold hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto py-1">
+                      {loadingNotifications ? (
+                        <div className="flex justify-center p-4">
+                          <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                        </div>
+                      ) : notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <Link
+                            key={notif.id}
+                            to={notif.postId ? `/verticals/${notif.verticalSlug || 'all'}` : '#'}
+                            // ideally link to the specific post context or modality
+                            className={`block px-3 py-3 rounded-lg hover:bg-muted/50 transition-colors ${!notif.isRead ? 'bg-muted/20' : ''}`}
+                            onClick={() => setIsNotificationsOpen(false)}
+                          >
+                            <div className="flex gap-3">
+                              <div className="shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-full bg-jence-gold/20 flex items-center justify-center text-jence-gold">
+                                  <Zap size={14} />
+                                </div>
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-foreground truncate">{notif.title}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{notif.body}</p>
+                                <p className="text-[10px] text-muted-foreground mt-1.5 opacity-70">
+                                  {new Date(notif.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              {!notif.isRead && (
+                                <div className="shrink-0 mt-2">
+                                  <div className="w-2 h-2 rounded-full bg-jence-gold" />
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <p className="text-sm">No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Backdrop to close */}
+                {isNotificationsOpen && (
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent cursor-default"
+                    onClick={() => setIsNotificationsOpen(false)}
+                  />
+                )}
+              </div>
+            )}
 
             {isLoggedIn ? (
               <>

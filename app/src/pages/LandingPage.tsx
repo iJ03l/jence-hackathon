@@ -4,6 +4,7 @@ import TrendingCreators from '../sections/TrendingCreators'
 import ByTheNumbers from '../sections/ByTheNumbers'
 import Verticals from '../sections/Verticals'
 import ForumPreview from '../sections/ForumPreview'
+import FAQ from '../sections/FAQ'
 
 export default function LandingPage() {
     return (
@@ -14,6 +15,7 @@ export default function LandingPage() {
             <ByTheNumbers />
             <Verticals />
             <ForumPreview />
+            <FAQ />
         </>
     )
 }

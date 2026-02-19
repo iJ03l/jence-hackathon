@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 interface User {
     id: string
     name: string
+    username: string
     email: string
     role?: string
     image?: string
@@ -12,10 +13,12 @@ interface AuthContextType {
     user: User | null
     loading: boolean
     signIn: (email: string, password: string) => Promise<{ error?: string }>
-    signUp: (name: string, email: string, password: string, role: string) => Promise<{ error?: string }>
+    signUp: (username: string, email: string, password: string, role: string) => Promise<{ error?: string }>
     signOut: () => Promise<void>
     refreshSession: () => Promise<void>
 }
+
+// ... (API_URL and setup remain same)
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
@@ -66,13 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const signUp = async (name: string, email: string, password: string, role: string) => {
+    const signUp = async (username: string, email: string, password: string, role: string) => {
         try {
             const res = await fetch(`${API_URL}/api/auth/sign-up/email`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, role }),
+                // We send username as 'name' as well since it's required by default schema,
+                // and also as 'username' for our custom field.
+                body: JSON.stringify({ name: username, username, email, password, role }),
             })
             const data = await res.json()
             if (!res.ok) {

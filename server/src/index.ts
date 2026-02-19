@@ -5,10 +5,13 @@ import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
 
 import authRoutes from './routes/auth.js'
+import usersRoutes from './routes/users.js'
 import verticalsRoutes from './routes/verticals.js'
 import creatorsRoutes from './routes/creators.js'
 import postsRoutes from './routes/posts.js'
 import subscriptionsRoutes from './routes/subscriptions.js'
+import notificationsRoutes from './routes/notifications.js'
+import communityRoutes from './routes/community.js'
 
 const app = new Hono()
 
@@ -32,10 +35,13 @@ app.get('/', (c) => {
 
 // Mount routes
 app.route('/api/auth', authRoutes)
+app.route('/api/users', usersRoutes)
 app.route('/api/verticals', verticalsRoutes)
 app.route('/api/creators', creatorsRoutes)
 app.route('/api/posts', postsRoutes)
 app.route('/api/subscriptions', subscriptionsRoutes)
+app.route('/api/notifications', notificationsRoutes)
+app.route('/api/community', communityRoutes)
 
 // Start server
 const port = parseInt(process.env.PORT || '3001', 10)

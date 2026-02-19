@@ -22,7 +22,7 @@ const values = [
   },
   {
     title: 'Creator-first revenue',
-    description: '80% to creators.',
+    description: 'Majority goes to creators.',
     icon: Heart,
   },
 ]
@@ -147,7 +147,7 @@ export default function Community({ className = '' }: CommunityProps) {
               ref={bodyRef}
               className="text-jence-gray text-base lg:text-lg max-w-lg mb-8"
             >
-              Jence is a subscription network for independent analysts. Creators earn 80%. Subscribers stay anonymous. We don't sell data. We don't track identities.
+              Jence is a subscription network for independent analysts. Creators earn the majority of revenue. Subscribers stay anonymous. We don't sell data. We don't track identities.
             </p>
 
             <div ref={ctaRef}>
