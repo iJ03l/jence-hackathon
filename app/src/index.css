@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode - THE PLUG */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 48 100% 50%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 158 100% 42%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 354 70% 54%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 48 100% 50%;
+    --radius: 0.75rem;
+    
+    /* Custom colors */
+    --jence-black: #0A0A0A;
+    --jence-white: #FAFAFA;
+    --jence-gold: #FFD700;
+    --jence-green: #00D68F;
+    --jence-dark-gray: #1A1A1A;
+    --jence-medium-gray: #2D2D2D;
+    --jence-soft-gray: #6B6B6B;
+    --jence-red: #FF4757;
+    --jence-crypto: #7928CA;
+    --jence-betting: #00D68F;
+    --jence-creator: #FF6B35;
+    --jence-remote: #3B82F6;
+    --jence-hustle: #FFD700;
+  }
+
+  .dark {
+    /* Dark Mode - THE PLUG */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 48 100% 50%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 158 100% 42%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 354 70% 54%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 48 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#FFD700] to-[#FFA500];
+  }
+  .text-gradient-green {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#00D68F] to-[#00B377];
+  }
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.1);
+  }
+  .glow-green {
+    box-shadow: 0 0 20px rgba(0, 214, 143, 0.3), 0 0 40px rgba(0, 214, 143, 0.1);
+  }
+  .card-elevated {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+  .dark .card-elevated {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+  .category-crypto { @apply text-[#7928CA] bg-[#7928CA]/10; }
+  .category-betting { @apply text-[#00D68F] bg-[#00D68F]/10; }
+  .category-creator { @apply text-[#FF6B35] bg-[#FF6B35]/10; }
+  .category-remote { @apply text-[#3B82F6] bg-[#3B82F6]/10; }
+  .category-hustle { @apply text-[#FFD700] bg-[#FFD700]/10; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/30;
+}
+
+/* Smooth theme transition */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}

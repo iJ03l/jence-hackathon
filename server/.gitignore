@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment — NEVER commit secrets
+.env
+.env.local
+.env.production
+
+# Drizzle
+drizzle/
+
+# OS
+.DS_Store
+
+# Logs
+*.log

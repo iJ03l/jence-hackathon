@@ -1,0 +1,50 @@
+import 'dotenv/config'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
+import { serve } from '@hono/node-server'
+
+import authRoutes from './routes/auth.js'
+import verticalsRoutes from './routes/verticals.js'
+import creatorsRoutes from './routes/creators.js'
+import postsRoutes from './routes/posts.js'
+import subscriptionsRoutes from './routes/subscriptions.js'
+
+const app = new Hono()
+
+// Middleware
+app.use('*', logger())
+app.use('*', cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+}))
+
+// Health check
+app.get('/', (c) => {
+    return c.json({
+        name: 'Jence API',
+        version: '1.0.0',
+        description: 'Expert sector research platform — anonymous and crypto-settled',
+    })
+})
+
+// Mount routes
+app.route('/api/auth', authRoutes)
+app.route('/api/verticals', verticalsRoutes)
+app.route('/api/creators', creatorsRoutes)
+app.route('/api/posts', postsRoutes)
+app.route('/api/subscriptions', subscriptionsRoutes)
+
+// Start server
+const port = parseInt(process.env.PORT || '3001', 10)
+
+serve({
+    fetch: app.fetch,
+    port,
+}, (info) => {
+    console.log(`🚀 Jence server running on http://localhost:${info.port}`)
+})
+
+export default app

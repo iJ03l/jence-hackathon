@@ -1,0 +1,250 @@
+/* JENCE - App Styles */
+
+/* Section base styles */
+.section {
+  @apply w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-16 lg:py-24;
+}
+
+.section-narrow {
+  @apply w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-12 lg:py-16;
+}
+
+/* Button styles - THE PLUG */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm;
+  @apply bg-jence-gold text-jence-black;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-sm;
+  @apply bg-card border border-border text-foreground;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  @apply border-jence-gold/50;
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-sm;
+  @apply border border-border text-foreground bg-transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  @apply border-jence-gold bg-jence-gold/5;
+}
+
+/* Card styles */
+.card-plug {
+  @apply bg-card border border-border rounded-2xl;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dark .card-plug {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.card-plug:hover {
+  @apply border-jence-gold/30;
+  transform: translateY(-4px);
+  transition: all 0.3s ease;
+}
+
+/* Category badges */
+.badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium;
+}
+
+/* Typography */
+.heading-xl {
+  @apply text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight;
+}
+
+.heading-lg {
+  @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
+}
+
+.heading-md {
+  @apply text-2xl sm:text-3xl font-bold tracking-tight;
+}
+
+.heading-sm {
+  @apply text-xl sm:text-2xl font-bold;
+}
+
+.body-lg {
+  @apply text-base sm:text-lg text-muted-foreground;
+}
+
+.body-md {
+  @apply text-sm sm:text-base text-muted-foreground;
+}
+
+/* Label style */
+.label-mono {
+  @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
+}
+
+/* Input styles */
+.input-plug {
+  @apply w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground;
+  @apply placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-jence-gold/50 focus:border-jence-gold;
+  transition: all 0.2s ease;
+}
+
+/* Glow effects */
+.glow-gold-sm {
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+}
+
+.glow-green-sm {
+  box-shadow: 0 0 12px rgba(0, 214, 143, 0.2);
+}
+
+/* Gradient backgrounds */
+.gradient-gold {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.02) 100%);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, rgba(0, 214, 143, 0.1) 0%, rgba(0, 214, 143, 0.02) 100%);
+}
+
+/* Thread/Post styles */
+.thread-card {
+  @apply p-4 sm:p-5 rounded-xl bg-card border border-border;
+  transition: all 0.2s ease;
+}
+
+.thread-card:hover {
+  @apply border-jence-gold/30;
+  transform: translateX(4px);
+}
+
+/* Creator card */
+.creator-card {
+  @apply relative overflow-hidden rounded-2xl bg-card border border-border;
+  transition: all 0.3s ease;
+}
+
+.creator-card:hover {
+  @apply border-jence-gold/30;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.dark .creator-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Stats card */
+.stat-card {
+  @apply flex flex-col items-center justify-center p-6 sm:p-8 rounded-2xl bg-card border border-border;
+}
+
+/* Navigation blur */
+.nav-blur {
+  @apply bg-background/80 backdrop-blur-xl;
+}
+
+/* Theme toggle animation */
+.theme-toggle {
+  @apply relative w-10 h-10 rounded-full flex items-center justify-center;
+  @apply bg-card border border-border text-foreground;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  @apply border-jence-gold/50 bg-jence-gold/5;
+}
+
+/* Vertical category cards */
+.vertical-card {
+  @apply flex flex-col items-center justify-center p-6 rounded-2xl bg-card border border-border;
+  @apply text-center cursor-pointer;
+  transition: all 0.3s ease;
+}
+
+.vertical-card:hover {
+  @apply border-jence-gold/40;
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Step cards */
+.step-card {
+  @apply relative p-6 sm:p-8 rounded-2xl bg-card border border-border;
+}
+
+.step-number {
+  @apply absolute -top-4 left-6 px-3 py-1 rounded-full bg-jence-gold text-jence-black font-mono text-sm font-bold;
+}
+
+/* FAQ accordion */
+.faq-item {
+  @apply rounded-xl bg-card border border-border overflow-hidden;
+}
+
+.faq-button {
+  @apply w-full flex items-center justify-between p-5 text-left;
+}
+
+/* Footer links */
+.footer-link {
+  @apply text-sm text-muted-foreground hover:text-foreground transition-colors;
+}
+
+/* Mobile bottom nav */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Animations */
+@keyframes pulse-gold {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 215, 0, 0);
+  }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s infinite;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .heading-xl {
+    @apply text-3xl;
+  }
+
+  .heading-lg {
+    @apply text-2xl;
+  }
+
+  .heading-md {
+    @apply text-xl;
+  }
+}
