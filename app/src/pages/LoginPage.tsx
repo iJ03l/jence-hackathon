@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
-import { useCreateWallet } from '@privy-io/react-auth/solana'
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -14,7 +13,7 @@ export default function LoginPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-    const { createWallet } = useCreateWallet()
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -25,12 +24,6 @@ export default function LoginPage() {
         if (result.error) {
             setError(result.error)
         } else {
-            try {
-                // Provision or fetch embedded wallet
-                await createWallet()
-            } catch (err) {
-                console.error("Failed to provision embedded wallet on login:", err)
-            }
             navigate('/dashboard')
         }
         setLoading(false)

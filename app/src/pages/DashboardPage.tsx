@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
+import { useWallets, useCreateWallet } from '@privy-io/react-auth/solana'
 import CreatorDashboardPage from './CreatorDashboardPage'
 
 const iconMap: Record<string, any> = {
@@ -20,6 +21,8 @@ export default function DashboardPage() {
     const [verticals, setVerticals] = useState<any[]>([])
     const [posts, setPosts] = useState<any[]>([])
     const [loadingPosts, setLoadingPosts] = useState(true)
+    const { wallets } = useWallets()
+    const { createWallet } = useCreateWallet()
 
     // Redirect if not logged in
     useEffect(() => {
@@ -27,6 +30,18 @@ export default function DashboardPage() {
             navigate('/login')
         }
     }, [user, authLoading, navigate])
+
+    // Provision Privy embedded wallet for users who don't have one yet
+    // (e.g. Google OAuth users landing here for the first time)
+    useEffect(() => {
+        if (!user || authLoading) return
+        const hasEmbedded = wallets.some((w: any) => w.walletClientType === 'privy')
+        if (!hasEmbedded) {
+            createWallet().catch((err) =>
+                console.error('Failed to provision embedded wallet:', err)
+            )
+        }
+    }, [user, authLoading, wallets, createWallet])
 
     useEffect(() => {
         if (user?.role === 'creator') return // Don't fetch feed if creator

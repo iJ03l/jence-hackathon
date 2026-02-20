@@ -24,6 +24,8 @@ export default function SettingsPage() {
     const [saved, setSaved] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)
     const [creatorId, setCreatorId] = useState<string | null>(null)
+    const [walletCreating, setWalletCreating] = useState(false)
+    const [walletError, setWalletError] = useState('')
 
     // Privy Wallet 
     const { wallets } = useWallets()
@@ -53,6 +55,29 @@ export default function SettingsPage() {
             navigate('/login')
         }
     }, [user, authLoading, navigate])
+
+    // Auto-provision Privy embedded wallet if missing
+    useEffect(() => {
+        if (!user || authLoading) return
+        if (!embeddedWallet) {
+            createWallet().catch((err) =>
+                console.error('Failed to provision embedded wallet:', err)
+            )
+        }
+    }, [user, authLoading, embeddedWallet, createWallet])
+
+    const handleCreateWallet = async () => {
+        setWalletCreating(true)
+        setWalletError('')
+        try {
+            await createWallet()
+        } catch (err: any) {
+            console.error('Failed to create wallet:', err)
+            setWalletError(err?.message || 'Failed to create wallet. Please try again.')
+        } finally {
+            setWalletCreating(false)
+        }
+    }
 
     const handleSignOut = async () => {
         await signOut()
@@ -277,12 +302,14 @@ export default function SettingsPage() {
                                             />
                                             {!embeddedWallet && (
                                                 <button
-                                                    onClick={() => createWallet()}
-                                                    className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap"
+                                                    onClick={handleCreateWallet}
+                                                    disabled={walletCreating}
+                                                    className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50"
                                                 >
-                                                    Create Wallet
+                                                    {walletCreating ? 'Creating...' : 'Create Wallet'}
                                                 </button>
                                             )}
+                                            {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-2">
                                             This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets.
@@ -373,12 +400,14 @@ export default function SettingsPage() {
                                         />
                                         {!embeddedWallet && (
                                             <button
-                                                onClick={() => createWallet()}
-                                                className="btn-secondary h-[38px] px-3 shrink-0 text-xs"
+                                                onClick={handleCreateWallet}
+                                                disabled={walletCreating}
+                                                className="btn-secondary h-[38px] px-3 shrink-0 text-xs disabled:opacity-50"
                                             >
-                                                Create Wallet
+                                                {walletCreating ? 'Creating...' : 'Create Wallet'}
                                             </button>
                                         )}
+                                        {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                     </div>
                                     <p className="text-xs text-muted-foreground mb-3">
                                         Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets.
