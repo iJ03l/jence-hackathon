@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Lock, ArrowRight, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
 
 export default function ResetPasswordPage() {
     const navigate = useNavigate()

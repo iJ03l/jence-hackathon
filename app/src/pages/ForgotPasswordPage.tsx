@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Zap, Mail, ArrowRight, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
