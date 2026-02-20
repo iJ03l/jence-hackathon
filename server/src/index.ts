@@ -28,7 +28,18 @@ const app = new Hono()
 // Middleware
 app.use('*', logger())
 app.use('*', cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin) => {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'https://jence.xyz',
+            'https://www.jence.xyz',
+            ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, '')] : [])
+        ]
+        if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+            return origin
+        }
+        return allowedOrigins[1] // Default to production site
+    },
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,

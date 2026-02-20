@@ -5,7 +5,11 @@ import { db } from './db/index.js'
 import * as schema from './db/schema.js'
 
 export const auth = betterAuth({
-    trustedOrigins: [process.env.FRONTEND_URL || 'http://localhost:5173', 'https://jence.io'],
+    trustedOrigins: [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        'https://jence.xyz',
+        'https://www.jence.xyz'
+    ],
     database: drizzleAdapter(db, {
         provider: 'pg',
         schema: {
@@ -31,7 +35,7 @@ export const auth = betterAuth({
 
             try {
                 const result = await resend.emails.send({
-                    from: process.env.FROM_EMAIL || 'Jence <auth@jence.io>',
+                    from: process.env.FROM_EMAIL || 'Jence <auth@jence.xyz>',
                     to: user.email,
                     subject: 'Reset your Jence password',
                     html: `
