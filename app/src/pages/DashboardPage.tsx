@@ -28,20 +28,20 @@ export default function DashboardPage() {
         }
     }, [user, authLoading, navigate])
 
-    // If user is a creator, show the Creator Dashboard
-    if (user?.role === 'creator') {
-        return <CreatorDashboardPage />
-    }
-
-    // ... existing subscriber dashboard logic ...
-
     useEffect(() => {
+        if (user?.role === 'creator') return // Don't fetch feed if creator
+
         api.getVerticals().then(setVerticals).catch(console.error)
         api.getFeed(user?.id)
             .then(setPosts)
             .catch(console.error)
             .finally(() => setLoadingPosts(false))
-    }, [user?.id])
+    }, [user?.id, user?.role])
+
+    // If user is a creator, show the Creator Dashboard
+    if (user?.role === 'creator') {
+        return <CreatorDashboardPage />
+    }
 
     const handleSignOut = async () => {
         await signOut()

@@ -11,6 +11,9 @@ import CreatorProfilePage from './pages/CreatorProfilePage'
 import CreatorOnboardingPage from './pages/CreatorOnboardingPage'
 import CommunityPage from './pages/CommunityPage'
 import PostDetail from './pages/PostDetail'
+import CreatorPostDetail from './pages/CreatorPostDetail'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
 import './App.css'
 
@@ -25,6 +28,7 @@ function App() {
           <Route path="/verticals/:slug" element={<VerticalPage />} />
           <Route path="/verticals/:slug" element={<VerticalPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/post/:id" element={<CreatorPostDetail />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/settings" element={<SettingsPage />} />
@@ -35,6 +39,8 @@ function App() {
 
         {/* Auth pages — no layout (clean, focused) */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </ThemeProvider>

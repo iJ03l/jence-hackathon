@@ -123,6 +123,31 @@ communityRoutes.get('/posts/:id', async (c) => {
     return c.json(formattedPost)
 })
 
+// DELETE /api/community/posts/:id
+communityRoutes.delete('/posts/:id', async (c) => {
+    const id = c.req.param('id')
+    const userId = c.req.query('userId')
+
+    if (!userId) return c.json({ error: 'Missing userId' }, 400)
+
+    const post = await db.query.communityPost.findFirst({
+        where: eq(communityPost.id, id)
+    })
+
+    if (!post) return c.json({ error: 'Post not found' }, 404)
+    if (post.userId !== userId) return c.json({ error: 'Unauthorized to delete this post' }, 403)
+
+    // Manual cascade delete
+    await db.transaction(async (tx) => {
+        await tx.delete(communityPostTag).where(eq(communityPostTag.postId, id))
+        await tx.delete(communityPostLike).where(eq(communityPostLike.postId, id))
+        await tx.delete(communityPostComment).where(eq(communityPostComment.postId, id))
+        await tx.delete(communityPost).where(eq(communityPost.id, id))
+    })
+
+    return c.json({ success: true })
+})
+
 // POST /api/community/posts/:id/vote
 communityRoutes.post('/posts/:id/vote', async (c) => {
     const id = c.req.param('id')
@@ -239,7 +264,7 @@ communityRoutes.post('/posts', async (c) => {
 
     const hashtagRegex = /#(\w+)/g
     const matches = content.match(hashtagRegex)
-    const uniqueTags = matches ? [...new Set(matches.map((t: string) => t.substring(1).toLowerCase()))] : []
+    const uniqueTags: string[] = matches ? Array.from(new Set(matches.map((t: string) => t.substring(1).toLowerCase()))) : []
 
     for (const tagName of uniqueTags) {
         let tagId
@@ -251,7 +276,7 @@ communityRoutes.post('/posts', async (c) => {
         } else {
             const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB']
             const randomColor = colors[Math.floor(Math.random() * colors.length)]
-            const [newTag] = await db.insert(tag).values({ name: tagName, color: randomColor, usageCount: 1 }).returning()
+            const [newTag] = await db.insert(tag).values([{ name: tagName, color: randomColor, usageCount: 1 }]).returning()
             tagId = newTag.id
         }
         await db.insert(communityPostTag).values({ postId: newPost.id, tagId: tagId })

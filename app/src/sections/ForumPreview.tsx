@@ -45,7 +45,7 @@ const threads = [
   },
   {
     id: 4,
-    title: '[INCOME PROOF] Made ₦520k this month from importation',
+    title: '[INCOME PROOF] Made $500 this month from importation',
     author: '@anon_hustler',
     category: 'Hustle',
     categoryColor: 'hustle',

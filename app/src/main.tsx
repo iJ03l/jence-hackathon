@@ -2,15 +2,31 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { PrivyProvider } from '@privy-io/react-auth'
 import './index.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <PrivyProvider
+      appId={import.meta.env.VITE_PRIVY_APP_ID || ''}
+      config={{
+        appearance: {
+          theme: 'dark',
+          accentColor: '#D4AF37', // jence-gold
+        },
+        embeddedWallets: {
+          solana: {
+            createOnLogin: 'users-without-wallets',
+          },
+        },
+      }}
+    >
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </PrivyProvider>
   </StrictMode>,
 )

@@ -2,10 +2,29 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock } from 'lucide-react'
 
+// Skeleton Component
+const PostSkeleton = () => (
+    <div className="card-plug p-6 space-y-4 animate-pulse">
+        <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-muted/50 shrink-0" />
+            <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-32 bg-muted/50 rounded" />
+                    <div className="h-3 w-20 bg-muted/30 rounded" />
+                </div>
+                <div className="space-y-2">
+                    <div className="h-4 w-full bg-muted/30 rounded" />
+                    <div className="h-4 w-full bg-muted/30 rounded" />
+                    <div className="h-4 w-3/4 bg-muted/30 rounded" />
+                </div>
+            </div>
+        </div>
+    </div>
+)
 
-export default function PostDetail() {
+export default function CreatorPostDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
     const { user } = useAuth()
@@ -18,14 +37,14 @@ export default function PostDetail() {
 
     useEffect(() => {
         if (id) loadData(id)
-    }, [id])
+    }, [id, user?.id])
 
     const loadData = async (postId: string) => {
         setLoading(true)
         try {
             const [postRes, commentsRes] = await Promise.all([
-                api.getCommunityPost(postId, user?.id),
-                api.getComments(postId)
+                api.getPost(postId, user?.id),
+                api.getPostComments(postId)
             ])
             setPost(postRes)
             setComments(commentsRes)
@@ -59,11 +78,7 @@ export default function PostDetail() {
         setPost((prev: any) => ({ ...prev, userVote: newVote, likes: newScore }))
 
         try {
-            if (newVote === 0) {
-                await api.unvoteCommunityPost(post.id, user.id)
-            } else {
-                await api.voteCommunityPost(post.id, user.id, newVote)
-            }
+            await api.votePost(post.id, user.id, newVote)
         } catch (error) {
             console.error(error)
             // Revert on error
@@ -75,13 +90,12 @@ export default function PostDetail() {
         if (!user || !newComment.trim() || !post) return
         setSubmittingComment(true)
         try {
-            await api.createComment(post.id, user.id, newComment)
+            await api.createPostComment(post.id, user.id, newComment)
             setNewComment('')
             // Refresh comments
-            const commentsRes = await api.getComments(post.id)
+            const commentsRes = await api.getPostComments(post.id)
             setComments(commentsRes)
-            // Update counts
-            setPost((prev: any) => ({ ...prev, comments: Number(prev.comments) + 1 }))
+            // Update counts (if we tracked comment count in post object, we'd update it here)
         } catch (e) {
             console.error(e)
         } finally {
@@ -91,23 +105,11 @@ export default function PostDetail() {
 
     if (loading) {
         return (
-            <article className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 animate-pulse">
-                <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="h-8 w-full bg-muted rounded-lg mb-4"></div>
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-10 h-10 rounded-full bg-muted"></div>
-                        <div>
-                            <div className="h-4 w-32 bg-muted rounded-lg mb-2"></div>
-                            <div className="h-3 w-24 bg-muted rounded-lg"></div>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="h-4 w-full bg-muted rounded-lg"></div>
-                        <div className="h-4 w-full bg-muted rounded-lg"></div>
-                        <div className="h-4 w-3/4 bg-muted rounded-lg"></div>
-                    </div>
+            <div className="min-h-screen bg-background pt-24 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-3xl mx-auto">
+                    <PostSkeleton />
                 </div>
-            </article>
+            </div>
         )
     }
 
@@ -115,7 +117,7 @@ export default function PostDetail() {
         return (
             <div className="min-h-screen bg-background pt-24 px-4 text-center">
                 <p className="text-muted-foreground mb-4">Post not found</p>
-                <Link to="/community" className="btn-primary inline-flex">Back to Community</Link>
+                <Link to="/explore" className="btn-primary inline-flex">Back to Explore</Link>
             </div>
         )
     }
@@ -131,46 +133,39 @@ export default function PostDetail() {
                 {/* Main Post */}
                 <div className="card-plug p-6 mb-8">
                     <div className="flex gap-4">
-                        <Link to={`/${post.author?.username}`} className="w-12 h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
-                            {post.author?.image ? (
-                                <img src={post.author.image} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
-                                    {(post.author?.displayName || '?')[0].toUpperCase()}
-                                </div>
-                            )}
+                        <Link to={`/${post.creatorUsername || '#'}`} className="w-12 h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
+                            {post.creatorPseudonym?.[0]}
                         </Link>
                         <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
-                                    {post.author?.displayName}
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Link to={`/${post.creatorUsername || '#'}`} className="font-semibold text-foreground hover:underline">
+                                    {post.creatorPseudonym}
                                 </Link>
-                                {post.author?.isCreator && (
-                                    <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-                                        Creator
+                                {post.verticalName && (
+                                    <Link to={`/verticals/${post.verticalSlug}`} className="text-xs px-2 py-0.5 rounded-full bg-muted hover:bg-muted/80 transition-colors">
+                                        {post.verticalName}
+                                    </Link>
+                                )}
+                                <span className="text-muted-foreground text-xs flex items-center gap-1">
+                                    <Clock size={12} />
+                                    {new Date(post.createdAt).toLocaleDateString()}
+                                </span>
+                                {post.isFree ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs">
+                                        Free
+                                    </span>
+                                ) : (
+                                    <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs">
+                                        Paid
                                     </span>
                                 )}
-                                <span className="text-muted-foreground text-xs">@{post.author?.username}</span>
-                                <span className="text-muted-foreground text-xs">•</span>
-                                <span className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <p className="text-foreground text-lg whitespace-pre-wrap mb-4">{post.content.replace(/#[\w]+/gi, '').trim()}</p>
 
-                            {/* Tags */}
-                            {post.tags && post.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    {post.tags.map((tag: any) => (
-                                        <Link
-                                            key={tag.name}
-                                            to={`/community?tag=${tag.name}`}
-                                            className="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-foreground transition-colors"
-                                            style={{ color: tag.color }}
-                                        >
-                                            #{tag.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
+                            <h1 className="text-2xl font-bold text-foreground mb-4">{post.title}</h1>
+
+                            <div className="prose prose-invert max-w-none mb-6">
+                                <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+                            </div>
 
                             {/* Actions */}
                             <div className="flex items-center gap-6 pt-4 border-t border-border/50">
@@ -193,7 +188,7 @@ export default function PostDetail() {
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <MessageCircle size={18} />
-                                    <span>{post.comments}</span>
+                                    <span>{comments.length}</span>
                                 </div>
                                 <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto">
                                     <Share2 size={18} />
@@ -206,14 +201,8 @@ export default function PostDetail() {
                 {/* Comment Form */}
                 {user ? (
                     <div className="flex gap-4 mb-8">
-                        <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0">
-                            {user.image ? (
-                                <img src={user.image} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
-                                    {user.name?.[0]?.toUpperCase()}
-                                </div>
-                            )}
+                        <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center font-bold text-muted-foreground">
+                            {user.name?.[0]?.toUpperCase()}
                         </div>
                         <div className="flex-1 relative">
                             <textarea
@@ -243,14 +232,8 @@ export default function PostDetail() {
                     {comments.map((comment) => (
                         <div key={comment.id} className="p-4 rounded-xl border border-border/50 bg-background/50">
                             <div className="flex gap-3">
-                                <Link to={`/${comment.user?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
-                                    {comment.user?.image ? (
-                                        <img src={comment.user.image} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold text-xs">
-                                            {(comment.user?.displayName || '?')[0].toUpperCase()}
-                                        </div>
-                                    )}
+                                <Link to={`/${comment.user?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-xs text-muted-foreground">
+                                    {(comment.user?.displayName || '?')[0].toUpperCase()}
                                 </Link>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">

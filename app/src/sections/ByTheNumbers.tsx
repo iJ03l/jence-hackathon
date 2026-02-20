@@ -6,7 +6,7 @@ gsap.registerPlugin(ScrollTrigger)
 
 const stats = [
   {
-    value: '₦2.3B+',
+    value: '$1.5M+',
     label: 'paid out to creators',
   },
   {

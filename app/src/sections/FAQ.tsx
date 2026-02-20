@@ -4,11 +4,11 @@ import { ChevronDown } from 'lucide-react'
 const faqs = [
   {
     q: 'What is Jence?',
-    a: 'Jence is an anonymous expert analysis platform where verified creators publish independent sector research across Nigerian markets — finance, energy, real estate, tech, agriculture, and more.',
+    a: 'Jence is an anonymous expert analysis platform where creators publish independent sector research across global markets — finance, energy, real estate, tech, agriculture, and more.',
   },
   {
     q: 'How do creators stay anonymous?',
-    a: 'Creators publish under pseudonyms. Their real identity is verified privately through KYC but never shared publicly. Only Jence has access to identity documents, encrypted at rest.',
+    a: 'Creators publish under pseudonyms. Real identities are never shared publicly. Only the creator controls their identity on the platform.',
   },
   {
     q: 'Is the content financial or legal advice?',
@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: 'Is my data safe?',
-    a: 'Yes. Jence is compliant with the Nigeria Data Protection Act (NDPA). You can request data export or full deletion at any time from your settings page.',
+    a: 'Yes. Jence is compliant with the General Data Protection Regulation (GDPR) and global privacy standards. You can request data export or full deletion at any time from your settings page.',
   },
 ]
 

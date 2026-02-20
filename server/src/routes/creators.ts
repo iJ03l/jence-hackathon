@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { creatorProfile, post, subscription, vertical, user } from '../db/schema.js'
-import { eq, sql, and, desc } from 'drizzle-orm'
+import { creatorProfile, post, subscription, vertical, user, creatorRating } from '../db/schema.js'
+import { eq, sql, and, desc, avg, count } from 'drizzle-orm'
 
 const creatorsRoutes = new Hono()
 
@@ -34,8 +34,10 @@ creatorsRoutes.get('/:id', async (c) => {
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
             kycStatus: creatorProfile.kycStatus,
+            verticalId: creatorProfile.verticalId,
             verticalName: vertical.name,
             verticalSlug: vertical.slug,
+            subscriptionPrice: creatorProfile.subscriptionPrice,
             createdAt: creatorProfile.createdAt,
         })
         .from(creatorProfile)
@@ -50,7 +52,39 @@ creatorsRoutes.get('/:id', async (c) => {
     const [{ count: subscriberCount }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(subscription)
-        .where(eq(subscription.creatorProfileId, id))
+        .where(
+            and(
+                eq(subscription.creatorProfileId, id),
+                eq(subscription.status, 'active')
+            )
+        )
+
+    // Get rating stats
+    const [ratingStats] = await db
+        .select({
+            averageRating: avg(creatorRating.rating),
+            ratingCount: count(creatorRating.id),
+        })
+        .from(creatorRating)
+        .where(eq(creatorRating.creatorProfileId, id))
+
+    // Get feedback list
+    const feedbackList = await db
+        .select({
+            id: creatorRating.id,
+            rating: creatorRating.rating,
+            feedback: creatorRating.feedback,
+            createdAt: creatorRating.createdAt,
+            user: {
+                username: user.username,
+                image: user.image,
+            }
+        })
+        .from(creatorRating)
+        .innerJoin(user, eq(creatorRating.userId, user.id))
+        .where(eq(creatorRating.creatorProfileId, id))
+        .orderBy(desc(creatorRating.createdAt))
+        .limit(10)
 
     // Get creator's posts
     const creatorPosts = await db
@@ -63,8 +97,11 @@ creatorsRoutes.get('/:id', async (c) => {
         creator: {
             ...creator,
             subscriberCount,
+            averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
+            ratingCount: ratingStats?.ratingCount || 0,
         },
         posts: creatorPosts,
+        feedback: feedbackList,
     })
 })
 
@@ -79,11 +116,16 @@ creatorsRoutes.get('/u/:username', async (c) => {
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
             kycStatus: creatorProfile.kycStatus,
+            verticalId: creatorProfile.verticalId,
             verticalName: vertical.name,
             verticalSlug: vertical.slug,
+            subscriptionPrice: creatorProfile.subscriptionPrice,
+            payoutAddress: creatorProfile.payoutAddress,
             createdAt: creatorProfile.createdAt,
             // We can also return user data if needed
             username: user.username,
+            image: user.image,
+            userId: creatorProfile.userId,
         })
         .from(creatorProfile)
         .leftJoin(vertical, eq(creatorProfile.verticalId, vertical.id))
@@ -114,7 +156,39 @@ creatorsRoutes.get('/u/:username', async (c) => {
     const [{ count: subscriberCount }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(subscription)
-        .where(eq(subscription.creatorProfileId, creator.id))
+        .where(
+            and(
+                eq(subscription.creatorProfileId, creator.id),
+                eq(subscription.status, 'active')
+            )
+        )
+
+    // Get rating stats
+    const [ratingStats] = await db
+        .select({
+            averageRating: avg(creatorRating.rating),
+            ratingCount: count(creatorRating.id),
+        })
+        .from(creatorRating)
+        .where(eq(creatorRating.creatorProfileId, creator.id))
+
+    // Get feedback list
+    const feedbackList = await db
+        .select({
+            id: creatorRating.id,
+            rating: creatorRating.rating,
+            feedback: creatorRating.feedback,
+            createdAt: creatorRating.createdAt,
+            user: {
+                username: user.username,
+                image: user.image,
+            }
+        })
+        .from(creatorRating)
+        .innerJoin(user, eq(creatorRating.userId, user.id))
+        .where(eq(creatorRating.creatorProfileId, creator.id))
+        .orderBy(desc(creatorRating.createdAt))
+        .limit(10)
 
     // Get creator's posts
     const creatorPosts = await db
@@ -129,8 +203,11 @@ creatorsRoutes.get('/u/:username', async (c) => {
             ...creator,
             subscriberCount,
             isSubscribed,
+            averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
+            ratingCount: ratingStats?.ratingCount || 0,
         },
         posts: creatorPosts,
+        feedback: feedbackList,
     })
 })
 
@@ -160,9 +237,9 @@ creatorsRoutes.post('/onboard', async (c) => {
 creatorsRoutes.put('/:id', async (c) => {
     const id = c.req.param('id')
     const body = await c.req.json()
-    const { bio, payoutAddress, payoutMethod } = body
+    const { bio, payoutAddress, payoutMethod, subscriptionPrice } = body
 
-    if (!bio && !payoutAddress && !payoutMethod) {
+    if (!bio && !payoutAddress && !payoutMethod && subscriptionPrice === undefined) {
         return c.json({ error: 'Nothing to update' }, 400)
     }
 
@@ -172,6 +249,7 @@ creatorsRoutes.put('/:id', async (c) => {
             ...(bio && { bio }),
             ...(payoutAddress && { payoutAddress }),
             ...(payoutMethod && { payoutMethod }),
+            ...(subscriptionPrice !== undefined && { subscriptionPrice: String(subscriptionPrice) }),
             updatedAt: new Date(),
         })
         .where(eq(creatorProfile.id, id))
@@ -182,6 +260,39 @@ creatorsRoutes.put('/:id', async (c) => {
     }
 
     return c.json(updatedCreator)
+})
+
+// POST /api/creators/:id/rate — rate a creator
+creatorsRoutes.post('/:id/rate', async (c) => {
+    const creatorProfileId = c.req.param('id')
+    const body = await c.req.json()
+    const { userId, rating, feedback } = body
+
+    if (!userId || !rating || rating < 1 || rating > 5) {
+        return c.json({ error: 'Valid userId and rating (1-5) are required' }, 400)
+    }
+
+    try {
+        const [upserted] = await db.insert(creatorRating)
+            .values({
+                creatorProfileId,
+                userId,
+                rating,
+                feedback: feedback || null,
+            })
+            .onConflictDoUpdate({
+                target: [creatorRating.creatorProfileId, creatorRating.userId],
+                set: {
+                    rating,
+                    feedback: feedback || null,
+                }
+            })
+            .returning()
+
+        return c.json(upserted, 201)
+    } catch (e: any) {
+        return c.json({ error: 'Failed to rate creator: ' + e.message }, 500)
+    }
 })
 
 export default creatorsRoutes

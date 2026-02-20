@@ -14,7 +14,6 @@ export default function Navigation() {
   const { user, signOut } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
 
-  const isLanding = location.pathname === '/'
   const isLoggedIn = !!user
 
   useEffect(() => {
@@ -69,19 +68,11 @@ export default function Navigation() {
     navigate('/')
   }
 
-  const navLinks = isLanding && !isLoggedIn
-    ? [
-      { label: 'How it works', href: '#how-it-works' },
-      { label: 'Creators', href: '#creators' },
-      { label: 'Verticals', href: '#verticals' },
-      { label: 'Community', href: '/community' },
-    ]
-    : [
-      { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Explore', href: '/explore' },
-      { label: 'Community', href: '/community' },
-      { label: 'Settings', href: '/settings' },
-    ]
+  const navLinks = [
+    { label: 'Explore', href: '/explore' },
+    { label: 'Community', href: '/community' },
+    ...(isLoggedIn ? [{ label: 'Settings', href: '/settings' }] : []),
+  ]
 
   return (
     <nav
@@ -101,7 +92,7 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {navLinks.map((link) =>
               link.href.startsWith('#') ? (
                 <a
@@ -221,10 +212,17 @@ export default function Navigation() {
 
             {isLoggedIn ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                  <div className="w-6 h-6 rounded-full bg-jence-gold/20 flex items-center justify-center text-xs font-bold text-jence-gold">
-                    {user.name?.[0] || '?'}
-                  </div>
+                <Link to="/dashboard" className="hidden lg:flex items-center justify-center btn-primary text-sm py-2 px-4 whitespace-nowrap">
+                  Dashboard
+                </Link>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 ml-1">
+                  {user.image ? (
+                    <img src={user.image} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-jence-gold/20 flex items-center justify-center text-xs font-bold text-jence-gold">
+                      {user.name?.[0] || '?'}
+                    </div>
+                  )}
                   <span className="text-sm text-foreground">{user.name?.split(' ')[0]}</span>
                 </div>
                 <button
@@ -293,12 +291,21 @@ export default function Navigation() {
             )}
             <div className="pt-4 border-t border-border space-y-3">
               {isLoggedIn ? (
-                <button
-                  onClick={() => { handleSignOut(); setIsMobileMenuOpen(false) }}
-                  className="block w-full text-left text-red-400"
-                >
-                  Sign out
-                </button>
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="btn-primary w-full text-center block mb-4"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { handleSignOut(); setIsMobileMenuOpen(false) }}
+                    className="block w-full text-left text-red-400 mt-2"
+                  >
+                    Sign out
+                  </button>
+                </>
               ) : (
                 <>
                   <Link

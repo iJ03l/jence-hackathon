@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, unique } from 'drizzle-orm/pg-core'
 
 // ===== Better Auth Tables =====
 
@@ -78,6 +78,7 @@ export const creatorProfile = pgTable('creator_profile', {
     isBanned: boolean('is_banned').notNull().default(false),
     payoutAddress: text('payout_address'),
     payoutMethod: text('payout_method').default('crypto'), // 'crypto' | 'bank'
+    subscriptionPrice: text('subscription_price').notNull().default('0'), // USDC amount, '0' = free
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -101,6 +102,8 @@ export const subscription = pgTable('subscription', {
     subscriberUserId: text('subscriber_user_id').notNull().references(() => user.id),
     creatorProfileId: uuid('creator_profile_id').notNull().references(() => creatorProfile.id),
     status: text('status').notNull().default('active'), // 'active' | 'cancelled' | 'expired'
+    txSignature: text('tx_signature'), // Solana transaction signature for payment proof
+    amountUsdc: text('amount_usdc'), // Amount paid in USDC
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -151,18 +154,18 @@ export const communityPostTag = pgTable('community_post_tag', {
     postId: uuid('post_id').notNull().references(() => communityPost.id),
     tagId: uuid('tag_id').notNull().references(() => tag.id),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (t) => ({
-    pk: [t.postId, t.tagId],
-}))
+}, (t) => [
+    primaryKey({ columns: [t.postId, t.tagId] })
+])
 
 export const communityPostLike = pgTable('community_post_like', {
     postId: uuid('post_id').notNull().references(() => communityPost.id),
     userId: text('user_id').notNull().references(() => user.id),
     value: integer('value').notNull().default(1), // 1 for upvote, -1 for downvote
     createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (t) => ({
-    pk: [t.postId, t.userId],
-}))
+}, (t) => [
+    primaryKey({ columns: [t.postId, t.userId] })
+])
 
 export const postComment = pgTable('post_comment', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -178,9 +181,9 @@ export const postVote = pgTable('post_vote', {
     userId: text('user_id').notNull().references(() => user.id),
     value: integer('value').notNull().default(1), // 1 for upvote, -1 for downvote
     createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (t) => ({
-    pk: [t.postId, t.userId],
-}))
+}, (t) => [
+    primaryKey({ columns: [t.postId, t.userId] })
+])
 
 export const communityPostComment = pgTable('community_post_comment', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -191,3 +194,13 @@ export const communityPostComment = pgTable('community_post_comment', {
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const creatorRating = pgTable('creator_rating', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    creatorProfileId: uuid('creator_profile_id').notNull().references(() => creatorProfile.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    rating: integer('rating').notNull(), // 1 to 5
+    feedback: text('feedback'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+    unique('creator_user_rating_unique').on(t.creatorProfileId, t.userId)
+])

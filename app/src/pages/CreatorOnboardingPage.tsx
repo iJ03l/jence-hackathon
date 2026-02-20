@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
     Landmark, Shield, Trophy, Bitcoin, Building2,
     Briefcase, Store, Palette, Wheat, Fuel,
-    CheckCircle2, Upload, FileText, ArrowRight, ArrowLeft, Loader2
+    CheckCircle2, FileText, ArrowRight, ArrowLeft, Loader2
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -18,7 +18,6 @@ const SELF_CERT_CLAUSES = [
     'I will not present opinions as guaranteed outcomes or factual predictions.',
     'I will use clear disclaimer language as required by Jence platform policies.',
     'I understand that violation of content policies may result in strikes, suspension, or account termination.',
-    'I am providing my identity documents for private KYC verification and understand this does not affect my public anonymity.',
 ]
 
 export default function CreatorOnboardingPage() {
@@ -29,7 +28,7 @@ export default function CreatorOnboardingPage() {
     const [verticals, setVerticals] = useState<any[]>([])
     const [pseudonym, setPseudonym] = useState('')
     const [selectedVertical, setSelectedVertical] = useState('')
-    const [kycDocType, setKycDocType] = useState('')
+
     const [certChecks, setCertChecks] = useState<boolean[]>(new Array(SELF_CERT_CLAUSES.length).fill(false))
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -64,10 +63,9 @@ export default function CreatorOnboardingPage() {
                 userId: user.id,
                 pseudonym,
                 verticalId: selectedVertical,
-                kycDocumentType: kycDocType,
                 selfCertificationSigned: true,
             })
-            setStep(4)
+            setStep(3)
         } catch (err: any) {
             setError(err.message || 'Onboarding failed')
         } finally {
@@ -75,23 +73,14 @@ export default function CreatorOnboardingPage() {
         }
     }
 
-    if (authLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                    <div className="w-5 h-5 border-2 border-jence-gold/30 border-t-jence-gold rounded-full animate-spin" />
-                    Loading...
-                </div>
-            </div>
-        )
-    }
+    if (authLoading) return null
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="max-w-2xl mx-auto">
                 {/* Progress */}
                 <div className="flex items-center gap-2 mb-8">
-                    {[1, 2, 3, 4].map((s) => (
+                    {[1, 2, 3].map((s) => (
                         <div
                             key={s}
                             className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${s <= step ? 'bg-jence-gold' : 'bg-muted'
@@ -154,66 +143,8 @@ export default function CreatorOnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 2: KYC */}
+                {/* Step 2: Self-Certification */}
                 {step === 2 && (
-                    <div className="card-plug p-8">
-                        <h1 className="text-2xl font-bold text-foreground mb-2">Identity verification</h1>
-                        <p className="text-muted-foreground mb-6">
-                            Private KYC is required for all creators. Your documents are encrypted and never shared publicly.
-                        </p>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Document type</label>
-                                <select
-                                    value={kycDocType}
-                                    onChange={(e) => setKycDocType(e.target.value)}
-                                    className="input-field"
-                                >
-                                    <option value="">Select document type</option>
-                                    <option value="NIN">National Identification Number (NIN)</option>
-                                    <option value="BVN">Bank Verification Number (BVN)</option>
-                                    <option value="Passport">International Passport</option>
-                                </select>
-                            </div>
-
-                            {kycDocType && (
-                                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-jence-gold/50 transition-colors cursor-pointer">
-                                    <Upload size={32} className="text-muted-foreground mx-auto mb-3" />
-                                    <p className="text-sm text-foreground font-medium">Upload {kycDocType} document</p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        PDF, JPG, or PNG — max 5MB. Encrypted at rest.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                            <button onClick={() => setStep(1)} className="btn-secondary flex-1 justify-center active:scale-[0.97] transition-all">
-                                <ArrowLeft size={18} /> Back
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setKycDocType('') // clear selection to indicate skip
-                                    setStep(3)
-                                }}
-                                className="btn-secondary flex-1 justify-center text-muted-foreground hover:text-foreground active:scale-[0.97] transition-all"
-                            >
-                                Skip for now
-                            </button>
-                            <button
-                                onClick={() => setStep(3)}
-                                disabled={!kycDocType}
-                                className="btn-primary flex-1 justify-center disabled:opacity-50 active:scale-[0.98] transition-all"
-                            >
-                                Continue <ArrowRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 3: Self-Certification */}
-                {step === 3 && (
                     <div className="card-plug p-8">
                         <h1 className="text-2xl font-bold text-foreground mb-2">Self-certification agreement</h1>
                         <p className="text-muted-foreground mb-6">
@@ -247,7 +178,7 @@ export default function CreatorOnboardingPage() {
                         </div>
 
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setStep(2)} className="btn-secondary flex-1 justify-center active:scale-[0.97] transition-all">
+                            <button onClick={() => setStep(1)} className="btn-secondary flex-1 justify-center active:scale-[0.97] transition-all">
                                 <ArrowLeft size={18} /> Back
                             </button>
                             <button
@@ -268,16 +199,15 @@ export default function CreatorOnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 4: Success */}
-                {step === 4 && (
+                {/* Step 3: Success */}
+                {step === 3 && (
                     <div className="card-plug p-8 text-center">
                         <div className="w-16 h-16 rounded-full bg-jence-green/10 flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 size={32} className="text-jence-green" />
                         </div>
                         <h1 className="text-2xl font-bold text-foreground mb-2">Application submitted!</h1>
                         <p className="text-muted-foreground mb-6">
-                            Your KYC documents are being reviewed. You'll be able to publish content once verified.
-                            This typically takes 24–48 hours.
+                            Your creator profile has been created. You can now start publishing content.
                         </p>
                         <button onClick={() => navigate('/dashboard')} className="btn-primary active:scale-[0.97] transition-all">
                             Go to dashboard <ArrowRight size={18} />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, Shield, ArrowBigUp, MessageCircle
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -10,6 +10,21 @@ import { api } from '../lib/api'
 export default function CreatorDashboardPage() {
     const { user } = useAuth()
     const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [creatorId, setCreatorId] = useState<string>('')
+    const [verticalId, setVerticalId] = useState<string>('')
+
+    const [stats, setStats] = useState({
+        totalSubscribers: 0,
+        totalViews: 0,
+        totalPosts: 0,
+        totalEarnings: 0
+    })
+    const [posts, setPosts] = useState<any[]>([])
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false)
+    const [activePostMenu, setActivePostMenu] = useState<string | null>(null)
+    const [postToDelete, setPostToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         if (!user?.id) return
@@ -25,7 +40,7 @@ export default function CreatorDashboardPage() {
                     const cId = profileRes.creator.id
                     setCreatorId(cId)
                     setVerticalId(profileRes.creator.verticalId)
-                    setKycStatus(profileRes.creator.kycStatus)
+
 
                     // 2. Get Stats
                     const statsRes = await api.getCreatorStats(cId)
@@ -80,11 +95,52 @@ export default function CreatorDashboardPage() {
         }
     }
 
+    const handleDeletePost = async () => {
+        if (!postToDelete) return;
+        setIsDeleting(true);
+        try {
+            await api.deletePost(postToDelete);
+            setPosts(posts.filter(p => p.id !== postToDelete));
+            setActivePostMenu(null);
+            setPostToDelete(null);
+        } catch (error) {
+            console.error('Failed to delete post:', error);
+            alert('Failed to delete post');
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-jence-gold" />
-            </div>
+            <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
+                <div className="max-w-7xl mx-auto space-y-8 animate-pulse">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <div className="h-8 w-64 bg-muted rounded-lg mb-2"></div>
+                            <div className="h-4 w-40 bg-muted rounded-lg"></div>
+                        </div>
+                        <div className="h-10 w-32 bg-muted rounded-full"></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="card-plug p-5 h-24 bg-muted/50"></div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="card-plug p-5 h-32 bg-muted/50"></div>
+                            ))}
+                        </div>
+                        <div className="space-y-6">
+                            <div className="card-plug p-5 h-48 bg-muted/50"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         )
     }
 
@@ -109,23 +165,6 @@ export default function CreatorDashboardPage() {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Creator Dashboard</h1>
-                        <p className="text-muted-foreground mt-1">Welcome back, {user?.name}</p>
-
-                        {/* KYC Banner */}
-                        {kycStatus !== 'verified' && (
-                            <div className="mt-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                                <div className="p-2 rounded-full bg-yellow-500/20 text-yellow-500">
-                                    <Shield size={16} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-yellow-500">Complete Identity Verification</p>
-                                    <p className="text-xs text-muted-foreground">You must verify your identity to enable payouts and get the verified badge.</p>
-                                </div>
-                                <Link to="/settings" className="text-sm font-bold text-yellow-500 hover:text-yellow-400 underline underline-offset-4">
-                                    Complete KYC
-                                </Link>
-                            </div>
-                        )}
                     </div>
                     <button
                         onClick={() => setIsPostModalOpen(true)}
@@ -192,13 +231,30 @@ export default function CreatorDashboardPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="font-semibold text-foreground truncate">{post.title}</h3>
+                                            <Link to={`/post/${post.id}`} className="group-hover:text-jence-gold transition-colors">
+                                                <h3 className="font-semibold text-foreground truncate">{post.title}</h3>
+                                            </Link>
                                             <p className="text-sm text-muted-foreground line-clamp-1">{post.excerpt}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
-                                            <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
-                                                <MoreVertical size={16} />
-                                            </button>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setActivePostMenu(activePostMenu === post.id ? null : post.id)}
+                                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                >
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                                {activePostMenu === post.id && (
+                                                    <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
+                                                        <button
+                                                            onClick={() => setPostToDelete(post.id)}
+                                                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted/50 transition-colors"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     onClick={(e) => handleVote(e, post)}
@@ -207,10 +263,10 @@ export default function CreatorDashboardPage() {
                                                     <ArrowBigUp size={16} fill={post.userVote === 1 ? "currentColor" : "none"} />
                                                     <span>{post.likes || 0}</span>
                                                 </button>
-                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <Link to={`/post/${post.id}`} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                                                     <MessageCircle size={14} />
                                                     <span>{post.comments || 0}</span>
-                                                </div>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

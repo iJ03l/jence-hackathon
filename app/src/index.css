@@ -27,7 +27,7 @@
     --input: 0 0% 90%;
     --ring: 48 100% 50%;
     --radius: 0.75rem;
-    
+
     /* Custom colors */
     --jence-black: #0A0A0A;
     --jence-white: #FAFAFA;
@@ -72,17 +72,26 @@
   * {
     @apply border-border;
   }
+
   html {
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
   }
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
   }
+
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
@@ -92,39 +101,62 @@
   .text-gradient-gold {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-[#FFD700] to-[#FFA500];
   }
+
   .text-gradient-green {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-[#00D68F] to-[#00B377];
   }
+
   .glow-gold {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.1);
   }
+
   .glow-green {
     box-shadow: 0 0 20px rgba(0, 214, 143, 0.3), 0 0 40px rgba(0, 214, 143, 0.1);
   }
+
   .card-elevated {
     @apply bg-card border border-border rounded-xl;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   }
+
   .dark .card-elevated {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   }
-  .category-crypto { @apply text-[#7928CA] bg-[#7928CA]/10; }
-  .category-betting { @apply text-[#00D68F] bg-[#00D68F]/10; }
-  .category-creator { @apply text-[#FF6B35] bg-[#FF6B35]/10; }
-  .category-remote { @apply text-[#3B82F6] bg-[#3B82F6]/10; }
-  .category-hustle { @apply text-[#FFD700] bg-[#FFD700]/10; }
+
+  .category-crypto {
+    @apply text-[#7928CA] bg-[#7928CA]/10;
+  }
+
+  .category-betting {
+    @apply text-[#00D68F] bg-[#00D68F]/10;
+  }
+
+  .category-creator {
+    @apply text-[#FF6B35] bg-[#FF6B35]/10;
+  }
+
+  .category-remote {
+    @apply text-[#3B82F6] bg-[#3B82F6]/10;
+  }
+
+  .category-hustle {
+    @apply text-[#FFD700] bg-[#FFD700]/10;
+  }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-muted rounded-full;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-primary;
 }
@@ -137,4 +169,31 @@
 /* Smooth theme transition */
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Footer Animation */
+@keyframes slowPulse {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.3;
+  }
+
+  33% {
+    transform: scale(1.1) translate(2%, 2%);
+    opacity: 0.5;
+  }
+
+  66% {
+    transform: scale(0.9) translate(-2%, -2%);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.3;
+  }
+}
+
+.animate-slow-pulse {
+  animation: slowPulse 15s ease-in-out infinite alternate;
 }

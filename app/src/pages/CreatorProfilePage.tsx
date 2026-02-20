@@ -1,16 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, Users, FileText, AlertTriangle, Loader2 } from 'lucide-react'
+import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
+import { buildSubscriptionTransaction } from '../lib/solana'
+import { useWallets, useSignAndSendTransaction } from '@privy-io/react-auth/solana'
+import { PublicKey } from '@solana/web3.js'
 
 export default function CreatorProfilePage() {
     const { username } = useParams<{ username: string }>()
     const { user } = useAuth()
-    const [data, setData] = useState<{ creator: any; posts: any[] } | null>(null)
+    const [data, setData] = useState<{ creator: any; posts: any[]; feedback?: any[] } | null>(null)
     const [loading, setLoading] = useState(true)
     const [subscribing, setSubscribing] = useState(false)
     const [subscribed, setSubscribed] = useState(false)
+    const [paymentError, setPaymentError] = useState('')
+
+    // Rating state
+    const [ratingValue, setRatingValue] = useState(5)
+    const [feedbackText, setFeedbackText] = useState('')
+    const [submittingRating, setSubmittingRating] = useState(false)
+
+    const { wallets } = useWallets()
+    const { signAndSendTransaction } = useSignAndSendTransaction()
+
+    const creatorSharePercent = parseInt(import.meta.env.VITE_CREATOR_PAYOUT_PERCENT || '80')
 
     useEffect(() => {
         if (!username) return
@@ -30,34 +44,145 @@ export default function CreatorProfilePage() {
     const handleSubscribe = async () => {
         if (!user?.id || !data?.creator?.id) return
         setSubscribing(true)
+        setPaymentError('')
+
         try {
-            await api.subscribe(user.id, data.creator.id)
+            const price = parseFloat(data.creator.subscriptionPrice || '0')
+            let txSignature: string | undefined
+
+            if (price > 0) {
+                // Find the embedded Privy wallet
+                const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
+                if (!embeddedWallet) {
+                    setPaymentError('No embedded wallet found. Please create one in Settings.')
+                    setSubscribing(false)
+                    return
+                }
+
+                // Creator must have a payout address
+                const creatorWallet = data.creator.payoutAddress
+                if (!creatorWallet) {
+                    setPaymentError('Creator has not set up a payout wallet yet.')
+                    setSubscribing(false)
+                    return
+                }
+
+                // Build the USDC transfer transaction
+                const tx = await buildSubscriptionTransaction({
+                    payerPublicKey: new PublicKey(embeddedWallet.address),
+                    creatorWalletAddress: creatorWallet,
+                    priceUsdc: price,
+                    creatorSharePercent,
+                })
+
+                if (tx) {
+                    // Serialize and send via Privy
+                    const serializedTx = tx.serialize({ requireAllSignatures: false, verifySignatures: false })
+                    const { signature } = await signAndSendTransaction({
+                        transaction: serializedTx,
+                        wallet: embeddedWallet,
+                    })
+                    // Convert signature Uint8Array to base58 string
+                    const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+                    let sigStr = ''
+                    let num = BigInt('0x' + Array.from(signature).map(b => b.toString(16).padStart(2, '0')).join(''))
+                    while (num > 0n) {
+                        sigStr = bs58Chars[Number(num % 58n)] + sigStr
+                        num = num / 58n
+                    }
+                    txSignature = sigStr || undefined
+                }
+            }
+
+            await api.subscribe(user.id, data.creator.id, txSignature)
             setSubscribed(true)
-        } catch {
-            setSubscribed(true)
+        } catch (err: any) {
+            console.error('Subscription failed:', err)
+            setPaymentError(err?.message || 'Payment failed. Please try again.')
         } finally {
             setSubscribing(false)
         }
     }
 
+    const handleRate = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!user || !data?.creator?.id) return
+        setSubmittingRating(true)
+        try {
+            await api.rateCreator(data.creator.id, ratingValue, feedbackText)
+            // Refresh data
+            const res = await api.getCreatorByUsername(username!)
+            setData(res)
+            setFeedbackText('')
+        } catch (err: any) {
+            console.error('Failed to rate:', err)
+            alert(err.message || 'Failed to submit rating.')
+        } finally {
+            setSubmittingRating(false)
+        }
+    }
+
+    const handleVote = async (e: React.MouseEvent, post: any) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!user) return
+
+        const previousVote = post.userVote || 0
+        const previousScore = post.likes || 0
+
+        let newVote = 1
+        let newScore = previousScore
+
+        if (previousVote === 1) {
+            newVote = 0
+            newScore -= 1
+        } else {
+            newVote = 1
+            newScore += 1 - previousVote
+        }
+
+        // Optimistic update
+        if (data) {
+            setData({
+                ...data,
+                posts: data.posts.map(p => p.id === post.id ? { ...p, userVote: newVote, likes: newScore } : p)
+            })
+        }
+
+        try {
+            await api.votePost(post.id, user.id, newVote)
+        } catch (error) {
+            console.error(error)
+            // Revert
+            if (data) {
+                setData({
+                    ...data,
+                    posts: data.posts.map(p => p.id === post.id ? { ...p, userVote: previousVote, likes: previousScore } : p)
+                })
+            }
+        }
+    }
+
     if (loading) {
         return (
-            <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
-                <div className="max-w-3xl mx-auto">
-                    <div className="card-plug p-6 mb-6">
-                        <div className="animate-pulse flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-muted" />
-                            <div className="flex-1">
-                                <div className="h-6 bg-muted rounded w-48 mb-2" />
-                                <div className="h-4 bg-muted rounded w-32 mb-2" />
-                                <div className="h-3 bg-muted rounded w-56" />
+            <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 animate-pulse">
+                <div className="max-w-4xl mx-auto">
+                    <div className="card-plug overflow-hidden mb-8">
+                        <div className="h-32 bg-muted/50 w-full relative"></div>
+                        <div className="px-6 pb-6 relative">
+                            <div className="w-24 h-24 rounded-2xl bg-muted border-4 border-background absolute -top-12"></div>
+                            <div className="mt-16 sm:mt-4 sm:ml-32 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                                <div>
+                                    <div className="h-8 w-48 bg-muted rounded-lg mb-2"></div>
+                                    <div className="h-4 w-32 bg-muted rounded-lg"></div>
+                                </div>
+                                <div className="h-10 w-32 bg-muted rounded-lg"></div>
                             </div>
-                            <div className="h-10 bg-muted rounded w-28" />
                         </div>
                     </div>
                     <div className="space-y-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="card-plug p-5 animate-pulse">
+                            <div key={i} className="card-plug p-5 animate-pulse bg-muted/20 border-border/10">
                                 <div className="h-3 bg-muted rounded w-32 mb-3" />
                                 <div className="h-5 bg-muted rounded w-2/3 mb-2" />
                                 <div className="h-3 bg-muted rounded w-full" />
@@ -91,8 +216,12 @@ export default function CreatorProfilePage() {
                 <div className="card-plug p-6 mb-6">
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-jence-gold/30 to-jence-gold/5 flex items-center justify-center text-2xl font-bold text-jence-gold">
-                                {creator.pseudonym?.[0] || '?'}
+                            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-jence-gold/30 to-jence-gold/5 flex items-center justify-center text-2xl font-bold text-jence-gold shrink-0">
+                                {creator.image ? (
+                                    <img src={creator.image} className="w-full h-full object-cover" />
+                                ) : (
+                                    creator.pseudonym?.[0] || '?'
+                                )}
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold text-foreground">{creator.pseudonym}</h1>
@@ -104,7 +233,11 @@ export default function CreatorProfilePage() {
                                         {creator.verticalName}
                                     </Link>
                                 )}
-                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                                    <span className="flex items-center gap-1">
+                                        <Star size={12} className={creator.averageRating > 0 ? "text-jence-gold fill-jence-gold" : ""} />
+                                        {creator.averageRating > 0 ? creator.averageRating : 'No ratings'} ({creator.ratingCount || 0})
+                                    </span>
                                     <span className="flex items-center gap-1">
                                         <Users size={12} />
                                         {creator.subscriberCount || 0} subscribers
@@ -130,10 +263,12 @@ export default function CreatorProfilePage() {
                                 {subscribing ? (
                                     <>
                                         <Loader2 size={14} className="animate-spin" />
-                                        Subscribing...
+                                        {parseFloat(data?.creator?.subscriptionPrice || '0') > 0 ? 'Processing payment...' : 'Subscribing...'}
                                     </>
                                 ) : (
-                                    'Subscribe'
+                                    parseFloat(data?.creator?.subscriptionPrice || '0') > 0
+                                        ? `Subscribe · $${data?.creator?.subscriptionPrice} USDC`
+                                        : 'Subscribe · Free'
                                 )}
                             </button>
                         ) : subscribed ? (
@@ -147,6 +282,12 @@ export default function CreatorProfilePage() {
                         )}
                     </div>
 
+                    {paymentError && (
+                        <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
+                            {paymentError}
+                        </div>
+                    )}
+
                     {creator.bio && (
                         <p className="text-sm text-muted-foreground mt-4 pt-4 border-t border-border">
                             {creator.bio}
@@ -154,13 +295,6 @@ export default function CreatorProfilePage() {
                     )}
                 </div>
 
-                {/* KYC Badge */}
-                {creator.kycStatus === 'verified' && (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-jence-green/10 border border-jence-green/20 mb-6 text-sm">
-                        <span className="text-jence-green">✓</span>
-                        <span className="text-muted-foreground">Identity verified via KYC</span>
-                    </div>
-                )}
 
                 {/* Posts */}
                 <h2 className="font-semibold text-foreground mb-4">Published Analysis</h2>
@@ -186,25 +320,45 @@ export default function CreatorProfilePage() {
                                         </span>
                                     )}
                                 </div>
-                                <h3 className="font-semibold text-foreground mb-1">{post.title}</h3>
-
                                 <div className="relative">
-                                    <p className={`text-sm text-muted-foreground line-clamp-2 ${!post.isFree && !subscribed && user?.id !== creator.userId ? 'blur-sm select-none' : ''
-                                        }`}>
-                                        {(post.excerpt || post.content || '').length > 258
-                                            ? `${(post.excerpt || post.content || '').substring(0, 258)}...`
-                                            : (post.excerpt || post.content || '').substring(0, 200)}
-                                    </p>
+                                    <Link to={`/post/${post.id}`} className="block group">
+                                        <h3 className="font-semibold text-foreground mb-1 group-hover:text-jence-gold transition-colors">{post.title}</h3>
+                                        <p className={`text-sm text-muted-foreground line-clamp-2 ${!post.isFree && !subscribed && user?.id !== creator.userId ? 'blur-sm select-none' : ''
+                                            }`}>
+                                            {(post.excerpt || post.content || '').length > 258
+                                                ? `${(post.excerpt || post.content || '').substring(0, 258)}...`
+                                                : (post.excerpt || post.content || '').substring(0, 200)}
+                                        </p>
+                                    </Link>
 
                                     {!post.isFree && !subscribed && user?.id !== creator.userId && (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border shadow-sm">
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div className="bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border shadow-sm pointer-events-auto">
                                                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                                     🔒 Subscribe to read
                                                 </span>
                                             </div>
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={(e) => handleVote(e, post)}
+                                            className={`flex items-center gap-1 text-xs transition-colors hover:bg-muted/50 p-1.5 rounded-md ${post.userVote === 1 ? 'text-jence-gold' : 'text-muted-foreground hover:text-foreground'}`}
+                                        >
+                                            <ArrowBigUp size={18} fill={post.userVote === 1 ? "currentColor" : "none"} />
+                                            <span className="font-medium">{post.likes || 0}</span>
+                                        </button>
+                                    </div>
+                                    <Link
+                                        to={`/post/${post.id}`}
+                                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 p-1.5 rounded-md"
+                                    >
+                                        <MessageCircle size={16} />
+                                        <span>{post.comments || 0}</span>
+                                    </Link>
                                 </div>
                             </article>
                         ))}
@@ -214,6 +368,86 @@ export default function CreatorProfilePage() {
                         <p className="text-muted-foreground">No posts published yet.</p>
                     </div>
                 )}
+
+                {/* Reviews & Ratings */}
+                <div className="mt-8">
+                    <h2 className="font-semibold text-foreground mb-4">Reviews & Ratings</h2>
+
+                    {user && user.id !== creator.userId && (
+                        <div className="card-plug p-5 mb-6">
+                            <h3 className="text-sm font-medium mb-3">Leave a Review</h3>
+                            <form onSubmit={handleRate} className="space-y-4">
+                                <div>
+                                    <div className="flex items-center gap-1 mb-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setRatingValue(star)}
+                                                className={`p-1 hover:scale-110 transition-transform ${star <= ratingValue ? 'text-jence-gold' : 'text-muted-foreground hover:text-jence-gold/50'}`}
+                                            >
+                                                <Star size={20} className={star <= ratingValue ? 'fill-jence-gold' : ''} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <textarea
+                                        value={feedbackText}
+                                        onChange={(e) => setFeedbackText(e.target.value)}
+                                        placeholder="Share your experience with this creator..."
+                                        className="input-field min-h-[80px] text-sm resize-none"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={submittingRating}
+                                        className="btn-primary text-sm py-2 px-4"
+                                    >
+                                        {submittingRating ? 'Submitting...' : 'Submit Review'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {data.feedback && data.feedback.length > 0 ? (
+                        <div className="space-y-4">
+                            {data.feedback.map((review: any) => (
+                                <div key={review.id} className="card-plug p-5">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground overflow-hidden">
+                                                {review.user?.image ? (
+                                                    <img src={review.user.image} alt="User avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    review.user?.username?.[0]?.toUpperCase() || '?'
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">@{review.user?.username || 'user'}</p>
+                                                <p className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-jence-gold">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} size={12} className={i < review.rating ? 'fill-jence-gold' : 'text-muted-foreground/30'} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {review.feedback && (
+                                        <p className="text-sm text-foreground/90 mt-2">{review.feedback}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-6 text-center border border-border/50 rounded-xl bg-muted/20">
+                            <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                        </div>
+                    )}
+                </div>
 
                 {/* Disclaimer */}
                 <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">

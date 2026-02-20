@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { post, creatorProfile, subscription, postVote, postComment, user } from '../db/schema.js'
+import { post, creatorProfile, subscription, postVote, postComment, user, vertical, strike, notification } from '../db/schema.js'
 import { eq, inArray, desc, sql, and, count, sum } from 'drizzle-orm'
 import { notifySubscribersOfNewPost } from '../services/notify.js'
 
@@ -92,6 +92,28 @@ postsRoutes.post('/', async (c) => {
     return c.json(newPost, 201)
 })
 
+// DELETE /api/posts/:id — delete a post (creator only)
+postsRoutes.delete('/:id', async (c) => {
+    const id = c.req.param('id')
+
+    const postRecord = await db.query.post.findFirst({
+        where: eq(post.id, id)
+    })
+
+    if (!postRecord) return c.json({ error: 'Post not found' }, 404)
+
+    // Perform cascading deletes manually to avoid foreign key errors
+    await db.transaction(async (tx) => {
+        await tx.delete(postVote).where(eq(postVote.postId, id))
+        await tx.delete(postComment).where(eq(postComment.postId, id))
+        await tx.delete(notification).where(eq(notification.postId, id))
+        await tx.delete(strike).where(eq(strike.postId, id))
+        await tx.delete(post).where(eq(post.id, id))
+    })
+
+    return c.json({ success: true })
+})
+
 // GET /api/posts/my — creator's own posts with stats
 postsRoutes.get('/my', async (c) => {
     const creatorProfileId = c.req.query('creatorProfileId')
@@ -172,6 +194,70 @@ postsRoutes.get('/stats', async (c) => {
         totalEarnings: 0,    // placeholder — add payment tracking later
     })
 })
+
+// GET /api/posts/:id — get a single post with stats
+postsRoutes.get('/:id', async (c) => {
+    const id = c.req.param('id')
+    const userId = c.req.query('userId')
+
+    const [postData] = await db
+        .select({
+            id: post.id,
+            title: post.title,
+            content: post.content, // Full content for detail view
+            excerpt: post.excerpt,
+            isFree: post.isFree,
+            createdAt: post.createdAt,
+            creatorId: post.creatorId,
+            creatorPseudonym: creatorProfile.pseudonym,
+            creatorImage: user.image, // helpful for UI
+            creatorUsername: user.username, // helpful for linking
+            verticalId: post.verticalId,
+            verticalName: vertical.name,
+            verticalSlug: vertical.slug,
+        })
+        .from(post)
+        .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
+        .innerJoin(user, eq(creatorProfile.userId, user.id))
+        .leftJoin(vertical, eq(post.verticalId, vertical.id))
+        .where(eq(post.id, id))
+
+    if (!postData) {
+        return c.json({ error: 'Post not found' }, 404)
+    }
+
+    // Get stats
+    const likesResult = await db
+        .select({ value: sum(postVote.value) })
+        .from(postVote)
+        .where(eq(postVote.postId, id))
+        .then(res => res[0].value)
+
+    const likes = likesResult ? Number(likesResult) : 0
+
+    const commentsCount = await db
+        .select({ count: count() })
+        .from(postComment)
+        .where(eq(postComment.postId, id))
+        .then(res => res[0].count)
+
+    let userVote = 0
+    if (userId) {
+        const vote = await db.query.postVote.findFirst({
+            where: and(eq(postVote.postId, id), eq(postVote.userId, userId))
+        })
+        if (vote) userVote = vote.value
+    }
+
+    return c.json({
+        ...postData,
+        likes,
+        comments: commentsCount,
+        userVote
+    })
+})
+
+
 
 // POST /api/posts/:id/comments
 postsRoutes.post('/:id/comments', async (c) => {

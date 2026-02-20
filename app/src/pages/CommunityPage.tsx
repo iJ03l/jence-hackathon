@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, Hash, MessageCircle, Send, ArrowBigUp, ArrowBigDown } from 'lucide-react'
+import { Loader2, Hash, MessageCircle, Send, ArrowBigUp, ArrowBigDown, MoreVertical } from 'lucide-react'
+import { DeleteModal } from '../components/DeleteModal'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -12,7 +13,6 @@ const PostSkeleton = () => (
             <div className="flex-1 space-y-3">
                 <div className="flex items-center gap-2">
                     <div className="h-4 w-24 bg-muted/50 rounded" />
-                    <div className="h-3 w-16 bg-muted/30 rounded" />
                 </div>
                 <div className="space-y-2">
                     <div className="h-4 w-full bg-muted/30 rounded" />
@@ -38,6 +38,9 @@ export default function CommunityPage() {
     const [loading, setLoading] = useState(true)
     const [newPostContent, setNewPostContent] = useState('')
     const [posting, setPosting] = useState(false)
+    const [activePostMenu, setActivePostMenu] = useState<string | null>(null)
+    const [postToDelete, setPostToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     // Load Data
     useEffect(() => {
@@ -110,6 +113,22 @@ export default function CommunityPage() {
             console.error(error)
             // Revert on error
             setPosts(posts.map(p => p.id === post.id ? { ...p, userVote: previousVote, likes: previousScore } : p))
+        }
+    }
+
+    const handleDeletePost = async () => {
+        if (!postToDelete || !user) return;
+        setIsDeleting(true);
+        try {
+            await api.deleteCommunityPost(postToDelete, user.id);
+            setPosts(posts.filter(p => p.id !== postToDelete));
+            setActivePostMenu(null);
+            setPostToDelete(null);
+        } catch (error) {
+            console.error('Failed to delete community post:', error);
+            alert('Failed to delete post');
+        } finally {
+            setIsDeleting(false);
         }
     }
 
@@ -199,23 +218,56 @@ export default function CommunityPage() {
                                             )}
                                         </Link>
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
-                                                    {post.author?.displayName}
-                                                </Link>
-                                                {post.author?.isCreator && (
-                                                    <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-                                                        Creator
-                                                    </span>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
+                                                        {post.author?.displayName}
+                                                    </Link>
+                                                    {post.author?.isCreator && (
+                                                        <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                                                            Creator
+                                                        </span>
+                                                    )}
+                                                    <span className="text-muted-foreground text-xs">@{post.author?.username}</span>
+                                                    <span className="text-muted-foreground text-xs">•</span>
+                                                    <span className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                                </div>
+
+                                                {/* Only show menu if user owns the post */}
+                                                {user && user.id === post.userId && (
+                                                    <div className="relative">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setActivePostMenu(activePostMenu === post.id ? null : post.id)
+                                                            }}
+                                                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                        >
+                                                            <MoreVertical size={16} />
+                                                        </button>
+                                                        {activePostMenu === post.id && (
+                                                            <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        setPostToDelete(post.id);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted/50 transition-colors"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 )}
-                                                <span className="text-muted-foreground text-xs">@{post.author?.username}</span>
-                                                <span className="text-muted-foreground text-xs">•</span>
-                                                <span className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
                                             </div>
 
                                             <Link to={`/community/post/${post.id}`} className="block group">
                                                 <p className="text-foreground/90 whitespace-pre-wrap mb-3 group-hover:text-jence-gold transition-colors">
-                                                    {post.content.length > 258 ? `${post.content.substring(0, 258)}...` : post.content}
+                                                    {(() => {
+                                                        const cleanContent = post.content.replace(/#[\w]+/gi, '').trim();
+                                                        return cleanContent.length > 258 ? `${cleanContent.substring(0, 258)}...` : cleanContent;
+                                                    })()}
                                                 </p>
                                             </Link>
 
@@ -312,6 +364,14 @@ export default function CommunityPage() {
                 </div>
 
             </div>
+
+            {/* Modals */}
+            <DeleteModal
+                isOpen={!!postToDelete}
+                onClose={() => setPostToDelete(null)}
+                onConfirm={handleDeletePost}
+                isDeleting={isDeleting}
+            />
         </section>
     )
 }

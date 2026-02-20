@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { authClient } from '../lib/auth-client'
+import { useCreateWallet } from '@privy-io/react-auth/solana'
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -14,6 +16,8 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+    const { createWallet } = useCreateWallet()
 
     // Password validation logic
     const isPasswordValid =
@@ -37,6 +41,12 @@ export default function RegisterPage() {
         if (result.error) {
             setError(result.error)
         } else {
+            // Provision empty embedded wallet seamlessly upon signup
+            try {
+                await createWallet()
+            } catch (err) {
+                console.error("Failed to provision embedded wallet:", err)
+            }
             navigate(role === 'creator' ? '/creator-onboarding' : '/dashboard')
         }
         setLoading(false)
@@ -57,7 +67,7 @@ export default function RegisterPage() {
                 <div className="card-plug p-8">
                     <h1 className="text-2xl font-bold text-foreground text-center mb-2">Create account</h1>
                     <p className="text-sm text-muted-foreground text-center mb-6">
-                        Join Nigeria's expert analysis platform
+                        Join the premier expert analysis platform
                     </p>
 
                     {error && (
@@ -66,32 +76,35 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    {/* Role Selection */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <button
-                            type="button"
-                            onClick={() => setRole('subscriber')}
-                            className={`p-4 rounded-xl border text-center transition-all active:scale-[0.97] ${role === 'subscriber'
-                                ? 'border-jence-gold bg-jence-gold/10 text-foreground'
-                                : 'border-border text-muted-foreground hover:border-jence-gold/50'
-                                }`}
-                        >
-                            <span className="text-2xl block mb-1">📖</span>
-                            <span className="text-sm font-medium">Subscriber</span>
-                            <p className="text-xs text-muted-foreground mt-1">Access expert content</p>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setRole('creator')}
-                            className={`p-4 rounded-xl border text-center transition-all active:scale-[0.97] ${role === 'creator'
-                                ? 'border-jence-gold bg-jence-gold/10 text-foreground'
-                                : 'border-border text-muted-foreground hover:border-jence-gold/50'
-                                }`}
-                        >
-                            <span className="text-2xl block mb-1">✍️</span>
-                            <span className="text-sm font-medium">Creator</span>
-                            <p className="text-xs text-muted-foreground mt-1">Publish analysis</p>
-                        </button>
+                    {/* Simple Role Toggle */}
+                    <div className="flex flex-col items-center mb-6">
+                        <div className="p-1 max-w-[240px] w-full bg-muted border border-border/50 rounded-full flex items-center mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setRole('subscriber')}
+                                className={`flex-1 py-1.5 px-4 rounded-full text-sm font-medium transition-all duration-300 ${role === 'subscriber'
+                                    ? 'bg-jence-gold text-jence-black shadow-md scale-100'
+                                    : 'text-muted-foreground hover:text-foreground scale-95'
+                                    }`}
+                            >
+                                Subscriber
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRole('creator')}
+                                className={`flex-1 py-1.5 px-4 rounded-full text-sm font-medium transition-all duration-300 ${role === 'creator'
+                                    ? 'bg-jence-gold text-jence-black shadow-md scale-100'
+                                    : 'text-muted-foreground hover:text-foreground scale-95'
+                                    }`}
+                            >
+                                Creator
+                            </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                            {role === 'subscriber'
+                                ? 'Read and unlock expert analysis'
+                                : 'Publish your research and monetize your audience'}
+                        </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,13 +204,59 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
-                    {/* Disclaimer */}
                     <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
                         By creating an account, you agree to Jence's Terms of Service and Privacy Policy.
                         Content on this platform is for informational purposes only.
                     </p>
 
-                    <p className="text-sm text-muted-foreground text-center mt-4">
+                    <div className="flex items-center gap-4 my-6">
+                        <div className="flex-1 h-px bg-border" />
+                        <span className="text-xs text-muted-foreground">or</span>
+                        <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    <button
+                        onClick={async () => {
+                            setIsGoogleLoading(true)
+                            await authClient.signIn.social({
+                                provider: 'google',
+                                callbackURL: `${window.location.origin}/dashboard`
+                            })
+                        }}
+                        disabled={isGoogleLoading || loading}
+                        className="btn-secondary w-full justify-center active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        {isGoogleLoading ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin mr-2" />
+                                Connecting...
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                                    <path
+                                        fill="currentColor"
+                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                    />
+                                    <path
+                                        fill="currentColor"
+                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                    />
+                                    <path
+                                        fill="currentColor"
+                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z"
+                                    />
+                                    <path
+                                        fill="currentColor"
+                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                    />
+                                </svg>
+                                Continue with Google
+                            </>
+                        )}
+                    </button>
+
+                    <p className="text-sm text-muted-foreground text-center mt-6">
                         Already have an account?{' '}
                         <Link to="/login" className="text-jence-gold hover:underline">Sign in</Link>
                     </p>

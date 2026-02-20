@@ -38,8 +38,11 @@ export const api = {
     getFeed: (userId?: string) =>
         request<any[]>(userId ? `/posts?userId=${userId}` : '/posts'),
     getMyPosts: (creatorProfileId: string) => request<any[]>(`/posts/my?creatorProfileId=${creatorProfileId}`),
+    getPost: (id: string, userId?: string) => request<any>(`/posts/${id}${userId ? `?userId=${userId}` : ''}`),
     createPost: (data: any) =>
         request<any>('/posts', { method: 'POST', body: JSON.stringify(data) }),
+    deletePost: (id: string) =>
+        request<any>(`/posts/${id}`, { method: 'DELETE' }),
     votePost: (postId: string, userId: string, value: number) =>
         request<any>(`/posts/${postId}/vote`, { method: 'POST', body: JSON.stringify({ userId, value }) }),
     getPostComments: (postId: string) =>
@@ -48,13 +51,20 @@ export const api = {
         request<any>(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ userId, content }) }),
 
     // Subscriptions
-    subscribe: (subscriberUserId: string, creatorProfileId: string) =>
+    subscribe: (subscriberUserId: string, creatorProfileId: string, txSignature?: string) =>
         request<any>('/subscriptions', {
             method: 'POST',
-            body: JSON.stringify({ subscriberUserId, creatorProfileId }),
+            body: JSON.stringify({ subscriberUserId, creatorProfileId, txSignature }),
         }),
     unsubscribe: (id: string) =>
         request<any>(`/subscriptions/${id}`, { method: 'DELETE' }),
+
+    // Ratings
+    rateCreator: (creatorProfileId: string, rating: number, feedback: string) =>
+        request<any>(`/creators/${creatorProfileId}/rate`, {
+            method: 'POST',
+            body: JSON.stringify({ userId: localStorage.getItem('userId'), rating, feedback }),
+        }),
 
     // Notifications
     getNotifications: (userId: string) =>
@@ -72,6 +82,8 @@ export const api = {
     getTrendingTags: () => request<any[]>('/community/tags'),
     createCommunityPost: (data: { content: string, userId: string }) =>
         request<any>('/community/posts', { method: 'POST', body: JSON.stringify(data) }),
+    deleteCommunityPost: (id: string, userId: string) =>
+        request<any>(`/community/posts/${id}?userId=${userId}`, { method: 'DELETE' }),
     voteCommunityPost: (postId: string, userId: string, value: number) =>
         request<any>(`/community/posts/${postId}/vote`, { method: 'POST', body: JSON.stringify({ userId, value }) }),
     unvoteCommunityPost: (postId: string, userId: string) =>
@@ -84,4 +96,20 @@ export const api = {
     // Users
     updateUser: (id: string, data: any) =>
         request<any>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+    // Uploads
+    uploadImage: (file: File) => {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // Use standard fetch instead of request wrapper since we need to send FormData without Content-Type: application/json
+        return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+        }).then(res => {
+            if (!res.ok) throw new Error('Failed to upload image')
+            return res.json()
+        })
+    },
 }

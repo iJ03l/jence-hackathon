@@ -33,7 +33,7 @@ export default function ExplorePage() {
                         Browse by <span className="text-gradient-gold">vertical</span>
                     </h1>
                     <p className="body-lg max-w-2xl mx-auto">
-                        Independent analysts across every major sector of Nigerian economic and professional life.
+                        Independent analysts across every major sector of global economic and professional life.
                         Find the expert commentary that matters to you.
                     </p>
                 </div>

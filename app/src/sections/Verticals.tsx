@@ -162,7 +162,7 @@ export default function Verticals() {
             Browse by <span className="text-jence-gold">vertical</span>
           </h2>
           <p className="body-md max-w-lg mx-auto">
-            Independent analysts across every major sector of Nigerian economic and professional life.
+            Independent analysts across every major sector of global economic and professional life.
           </p>
         </div>
 

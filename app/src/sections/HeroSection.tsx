@@ -2,8 +2,12 @@ import { useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ArrowRight, Shield, Wallet } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 export default function HeroSection() {
+  const { theme } = useTheme()
+  const themeRef = useRef(theme)
+  useEffect(() => { themeRef.current = theme }, [theme])
   const sectionRef = useRef<HTMLDivElement>(null)
   const headlineRef = useRef<HTMLHeadingElement>(null)
   const subheadlineRef = useRef<HTMLParagraphElement>(null)
@@ -12,26 +16,32 @@ export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouseRef = useRef({ x: 0.5, y: 0.5 })
   const rafRef = useRef<number>(0)
+
   const particlesRef = useRef<Array<{
     x: number; y: number; baseX: number; baseY: number;
-    size: number; alpha: number; speed: number;
+    size: number; alpha: number; speedX: number; speedY: number; z: number; hue: number;
   }>>([])
 
-  // Spatial particle field
+  // Advanced Spatial Particle System
   const initParticles = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const w = canvas.width = canvas.offsetWidth
     const h = canvas.height = canvas.offsetHeight
-    const count = Math.min(Math.floor((w * h) / 8000), 120) // responsive count
+    const count = Math.min(Math.floor((w * h) / 6000), 120)
+
     particlesRef.current = Array.from({ length: count }, () => {
-      const x = Math.random() * w
-      const y = Math.random() * h
       return {
-        x, y, baseX: x, baseY: y,
-        size: Math.random() * 2 + 0.5,
-        alpha: Math.random() * 0.4 + 0.1,
-        speed: Math.random() * 0.5 + 0.2,
+        x: Math.random() * w,
+        y: Math.random() * h,
+        baseX: Math.random() * w,
+        baseY: Math.random() * h,
+        size: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.2, // Opacity
+        speedX: (Math.random() - 0.5) * 0.4, // Continuous horizontal drift
+        speedY: (Math.random() - 0.5) * 0.4, // Continuous vertical drift
+        z: Math.random() * 2 + 0.5, // Parallax depth
+        hue: 0
       }
     })
   }, [])
@@ -43,45 +53,96 @@ export default function HeroSection() {
 
     const w = canvas.width
     const h = canvas.height
+
+    const isDark = themeRef.current === 'dark'
+
+    // Smooth trailing effect instead of clearRect
+    ctx.fillStyle = isDark ? 'rgba(10, 10, 10, 0.3)' : 'rgba(250, 250, 250, 0.3)'
+    ctx.fillRect(0, 0, w, h)
+
     const mx = mouseRef.current.x * w
     const my = mouseRef.current.y * h
 
-    ctx.clearRect(0, 0, w, h)
+    ctx.globalCompositeOperation = 'source-over'
 
     particlesRef.current.forEach((p) => {
-      // Spatial drift towards mouse
-      const dx = mx - p.baseX
-      const dy = my - p.baseY
+      // Continuous slow drift
+      p.baseX += p.speedX
+      p.baseY += p.speedY
+
+      // Wrap around edges seamlessly
+      if (p.baseX < -50) p.baseX = w + 50
+      if (p.baseX > w + 50) p.baseX = -50
+      if (p.baseY < -50) p.baseY = h + 50
+      if (p.baseY > h + 50) p.baseY = -50
+
+      // Parallax effect tracking the mouse relative to center
+      const centerX = w / 2
+      const centerY = h / 2
+      const mouseOffsetX = (mx - centerX) * 0.05
+      const mouseOffsetY = (my - centerY) * 0.05
+
+      // Parallax application (closer particles move more)
+      p.x = p.baseX + (mouseOffsetX * p.z)
+      p.y = p.baseY + (mouseOffsetY * p.z)
+
+      // Mouse repulsion
+      const dx = mx - p.x
+      const dy = my - p.y
       const dist = Math.sqrt(dx * dx + dy * dy)
-      const influence = Math.max(0, 1 - dist / 400) * 30
 
-      p.x += (p.baseX + dx * influence * 0.05 - p.x) * 0.08
-      p.y += (p.baseY + dy * influence * 0.05 - p.y) * 0.08
+      const repulseRadius = 150
+      if (dist < repulseRadius) {
+        const force = (repulseRadius - dist) / repulseRadius
+        p.x -= dx * force * 0.1
+        p.y -= dy * force * 0.1
+      }
 
-      // Gentle float
-      p.y += Math.sin(Date.now() * 0.001 * p.speed + p.baseX) * 0.3
-
+      // Drawing dot
       ctx.beginPath()
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(212, 175, 55, ${p.alpha * (0.5 + influence * 0.02)})`
+      ctx.fillStyle = isDark
+        ? `rgba(212, 175, 55, ${p.alpha})` // Gold
+        : `rgba(15, 23, 42, ${p.alpha * 0.7})` // Slate
       ctx.fill()
     })
 
-    // Draw connections between nearby particles
+    // Draw dynamic glowing constellation connections
     const particles = particlesRef.current
+    ctx.lineWidth = 0.6
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x
         const dy = particles[i].y - particles[j].y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 100) {
+        const connectionDistance = 100
+
+        if (dist < connectionDistance) {
           ctx.beginPath()
           ctx.moveTo(particles[i].x, particles[i].y)
           ctx.lineTo(particles[j].x, particles[j].y)
-          ctx.strokeStyle = `rgba(212, 175, 55, ${0.06 * (1 - dist / 100)})`
-          ctx.lineWidth = 0.5
+
+          const opacity = 0.2 * (1 - dist / connectionDistance)
+          ctx.strokeStyle = isDark
+            ? `rgba(212, 175, 55, ${opacity})`
+            : `rgba(15, 23, 42, ${opacity})`
           ctx.stroke()
         }
+      }
+
+      // Highlight mouse proximity
+      const mdx = mx - particles[i].x
+      const mdy = my - particles[i].y
+      const mdist = Math.sqrt(mdx * mdx + mdy * mdy)
+      if (mdist < 150) {
+        ctx.beginPath()
+        ctx.moveTo(particles[i].x, particles[i].y)
+        ctx.lineTo(mx, my)
+        const mopacity = 0.3 * (1 - mdist / 150)
+        ctx.strokeStyle = isDark
+          ? `rgba(212, 175, 55, ${mopacity})`
+          : `rgba(15, 23, 42, ${mopacity})`
+        ctx.stroke()
       }
     }
 
@@ -103,17 +164,23 @@ export default function HeroSection() {
     }
   }, [initParticles, animate])
 
-  // Mouse + Touch tracking
+  // Mouse + Touch tracking (smoothed using GSAP)
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
 
+    // Initialize to center
+    mouseRef.current = { x: 0.5, y: 0.5 }
+
     const handleMove = (clientX: number, clientY: number) => {
       const rect = section.getBoundingClientRect()
-      mouseRef.current = {
+      // Use GSAP quickTo for incredibly smooth mouse tracking interpolation
+      gsap.to(mouseRef.current, {
         x: (clientX - rect.left) / rect.width,
         y: (clientY - rect.top) / rect.height,
-      }
+        duration: 0.8,
+        ease: 'power3.out'
+      })
     }
 
     const onMouse = (e: MouseEvent) => handleMove(e.clientX, e.clientY)
@@ -129,6 +196,7 @@ export default function HeroSection() {
     return () => {
       section.removeEventListener('mousemove', onMouse)
       section.removeEventListener('touchmove', onTouch)
+      gsap.killTweensOf(mouseRef.current)
     }
   }, [])
 
@@ -187,7 +255,7 @@ export default function HeroSection() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-jence-gold/10 border border-jence-gold/20 mb-8 backdrop-blur-sm">
           <div className="w-2 h-2 rounded-full bg-jence-green animate-pulse" />
-          <span className="text-sm font-medium text-jence-gold">Now live in Nigeria</span>
+          <span className="text-sm font-medium text-jence-gold">Now live globally</span>
         </div>
 
         {/* Headline */}

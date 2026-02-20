@@ -97,12 +97,21 @@ export default function VerticalPage() {
                     <div className="space-y-4">
                         {posts.map((post: any) => (
                             <article key={post.id} className="card-plug p-5">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3">
                                     <Link
-                                        to={`/creator/${post.creatorId || '#'}`}
-                                        className="text-sm font-medium text-jence-gold hover:underline"
+                                        to={`/${post.creatorUsername || '#'}`}
+                                        className="flex items-center gap-2 group"
                                     >
-                                        {post.creatorPseudonym}
+                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 group-hover:opacity-80 transition-opacity">
+                                            {post.creatorImage ? (
+                                                <img src={post.creatorImage} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-muted-foreground">{post.creatorPseudonym?.[0] || '?'}</span>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-medium text-jence-gold group-hover:underline">
+                                            {post.creatorPseudonym}
+                                        </span>
                                     </Link>
                                     <span className="text-xs text-muted-foreground">·</span>
                                     <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -128,9 +137,6 @@ export default function VerticalPage() {
                         <p className="text-sm text-muted-foreground mb-4">
                             Be the first to publish expert analysis in this vertical.
                         </p>
-                        <Link to="/creator-onboarding" className="btn-primary inline-flex">
-                            Become a creator
-                        </Link>
                     </div>
                 )}
             </div>

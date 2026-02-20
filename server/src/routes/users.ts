@@ -32,4 +32,13 @@ usersRoutes.put('/:id', async (c) => {
     return c.json(updatedUser)
 })
 
+// POST /api/users/check-email — check if email exists
+usersRoutes.post('/check-email', async (c) => {
+    const { email } = await c.req.json()
+    if (!email) return c.json({ error: 'Email required' }, 400)
+
+    const [found] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1)
+    return c.json({ exists: !!found })
+})
+
 export default usersRoutes

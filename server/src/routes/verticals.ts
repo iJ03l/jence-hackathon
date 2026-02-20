@@ -27,9 +27,12 @@ verticalsRoutes.get('/:slug', async (c) => {
             excerpt: post.excerpt,
             createdAt: post.createdAt,
             creatorPseudonym: creatorProfile.pseudonym,
+            creatorUsername: user.username,
+            creatorImage: user.image,
         })
         .from(post)
         .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
+        .innerJoin(user, eq(creatorProfile.userId, user.id))
         .where(eq(post.verticalId, found.id))
         .limit(20)
 

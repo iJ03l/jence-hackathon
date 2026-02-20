@@ -1,4 +1,5 @@
 import { useRef, useLayoutEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Star, MessageSquare, TrendingUp, ArrowRight, Lock } from 'lucide-react'
@@ -13,7 +14,7 @@ const creators = [
     categoryColor: 'crypto',
     rating: 4.9,
     subscribers: '1.2k',
-    price: '₦8,000',
+    price: '$8',
     preview: 'Made $340 from this airdrop in 2 hours. Here\'s the exact process...',
     comments: 45,
     views: '2.3k',
@@ -26,7 +27,7 @@ const creators = [
     categoryColor: 'betting',
     rating: 4.7,
     subscribers: '890',
-    price: '₦5,000',
+    price: '$5',
     preview: 'Bookie exploit still working. 7/10 odds hit this weekend...',
     comments: 89,
     views: '5.1k',
@@ -39,7 +40,7 @@ const creators = [
     categoryColor: 'remote',
     rating: 4.8,
     subscribers: '650',
-    price: '₦10,000',
+    price: '$10',
     preview: 'Just landed a $2,500/mo client from this exact proposal template...',
     comments: 34,
     views: '1.8k',
@@ -108,13 +109,13 @@ export default function TrendingCreators() {
               Featured <span className="text-jence-gold">creators</span>
             </h2>
           </div>
-          <a
-            href="#"
+          <Link
+            to="/explore"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-jence-gold transition-colors"
           >
             See all creators
             <ArrowRight size={16} />
-          </a>
+          </Link>
         </div>
 
         {/* Cards */}
@@ -123,17 +124,17 @@ export default function TrendingCreators() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {creators.map((creator) => (
-            <div key={creator.id} className="creator-card">
+            <div key={creator.id} className="creator-card group cursor-pointer">
               {/* Card Header */}
-              <div className="p-5 border-b border-border">
+              <Link to={`/${creator.handle.replace('@', '')}`} className="block p-5 border-b border-border hover:bg-muted/20 transition-colors">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center text-lg font-bold text-jence-gold">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center text-lg font-bold text-jence-gold shrink-0">
                       {creator.handle.charAt(1).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">{creator.handle}</h3>
-                      <span className={`badge category-${creator.categoryColor}`}>
+                      <h3 className="font-semibold text-foreground group-hover:text-jence-gold transition-colors">{creator.handle}</h3>
+                      <span className={`badge category-${creator.categoryColor} mt-1 inline-block`}>
                         {creator.category}
                       </span>
                     </div>
@@ -155,7 +156,7 @@ export default function TrendingCreators() {
                   <span>•</span>
                   <span>{creator.subscribers} subscribers</span>
                 </div>
-              </div>
+              </Link>
 
               {/* Preview Content */}
               <div className="p-5">
@@ -184,9 +185,12 @@ export default function TrendingCreators() {
                 </div>
 
                 {/* CTA */}
-                <button className="w-full btn-primary py-2.5 text-sm">
-                  Subscribe • {creator.price}/month
-                </button>
+                <Link
+                  to={`/${creator.handle.replace('@', '')}`}
+                  className="block w-full btn-primary py-2.5 text-sm text-center"
+                >
+                  Subscribe
+                </Link>
               </div>
             </div>
           ))}

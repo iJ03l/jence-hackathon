@@ -14,7 +14,7 @@ const steps = [
   },
   {
     number: '02',
-    title: 'Find verified creators',
+    title: 'Find expert creators',
     description: 'Browse by category. See ratings, reviews, and preview content.',
     icon: Search,
   },
@@ -100,12 +100,12 @@ export default function HowItWorks() {
             return (
               <div key={step.number} className="step-card relative">
                 <span className="step-number">{step.number}</span>
-                
+
                 <div className="pt-6">
                   <div className="w-12 h-12 rounded-xl bg-jence-gold/10 flex items-center justify-center mb-5">
                     <Icon size={24} className="text-jence-gold" />
                   </div>
-                  
+
                   <h3 className="text-lg font-semibold text-foreground mb-2">
                     {step.title}
                   </h3>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { User, Bell, Shield, CreditCard, DollarSign } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
+import { useWallets, useCreateWallet, useExportWallet } from '@privy-io/react-auth/solana'
 
 const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -17,9 +18,18 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState('profile')
     const [payoutAddress, setPayoutAddress] = useState('')
     const [payoutMethod, setPayoutMethod] = useState('crypto')
+    const [subscriptionPrice, setSubscriptionPrice] = useState('0')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [saving, setSaving] = useState(false)
+    const [saved, setSaved] = useState(false)
+    const [uploadingImage, setUploadingImage] = useState(false)
     const [creatorId, setCreatorId] = useState<string | null>(null)
+
+    // Privy Wallet 
+    const { wallets } = useWallets()
+    const { createWallet } = useCreateWallet()
+    const { exportWallet } = useExportWallet()
+    const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
 
     // Load initial data
     useEffect(() => {
@@ -32,6 +42,7 @@ export default function SettingsPage() {
                     setCreatorId(res.creator.id)
                     setPayoutAddress(res.creator.payoutAddress || '')
                     setPayoutMethod(res.creator.payoutMethod || 'crypto')
+                    setSubscriptionPrice(res.creator.subscriptionPrice || '0')
                 })
                 .catch(console.error)
         }
@@ -48,15 +59,35 @@ export default function SettingsPage() {
         navigate('/')
     }
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploadingImage(true)
+        try {
+            const res = await api.uploadImage(file)
+            if (res.url) {
+                setAvatarUrl(res.url)
+            }
+        } catch (error) {
+            console.error('Failed to upload image:', error)
+            alert('Failed to upload image. Please try again.')
+        } finally {
+            setUploadingImage(false)
+        }
+    }
+
     const handleSaveProfile = async () => {
         if (!user?.id) return
         setSaving(true)
+        setSaved(false)
         try {
             await api.updateUser(user.id, { image: avatarUrl })
-            // Ideally notify success or refresh user context
-            // For now just stop saving
+            setSaved(true)
+            setTimeout(() => setSaved(false), 3000)
         } catch (e) {
             console.error(e)
+            alert('Failed to save. Please try again.')
         } finally {
             setSaving(false)
         }
@@ -66,7 +97,7 @@ export default function SettingsPage() {
         if (!creatorId) return
         setSaving(true)
         try {
-            await api.updateCreatorProfile(creatorId, { payoutAddress, payoutMethod })
+            await api.updateCreatorProfile(creatorId, { payoutAddress, payoutMethod, subscriptionPrice })
         } catch (e) {
             console.error(e)
         } finally {
@@ -129,16 +160,6 @@ export default function SettingsPage() {
                                         <DollarSign size={16} />
                                         <span className="hidden md:inline">Payouts</span>
                                     </button>
-                                    <button
-                                        onClick={() => setActiveTab('verification')}
-                                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all text-left w-full active:scale-[0.97] ${activeTab === 'verification'
-                                            ? 'bg-jence-gold/10 text-jence-gold font-medium'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                                            }`}
-                                    >
-                                        <Shield size={16} />
-                                        <span className="hidden md:inline">Verification</span>
-                                    </button>
                                 </>
                             )}
                         </div>
@@ -160,15 +181,16 @@ export default function SettingsPage() {
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <label className="block text-sm font-medium text-foreground mb-1.5">Profile Picture URL</label>
+                                            <label className="block text-sm font-medium text-foreground mb-1.5">Profile Picture</label>
                                             <input
-                                                type="url"
-                                                value={avatarUrl}
-                                                onChange={(e) => setAvatarUrl(e.target.value)}
-                                                className="input-field"
-                                                placeholder="https://example.com/me.jpg"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                disabled={uploadingImage}
+                                                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-jence-gold/10 file:text-jence-gold hover:file:bg-jence-gold/20 cursor-pointer disabled:opacity-50"
                                             />
-                                            <p className="text-xs text-muted-foreground mt-1">Paste a direct link to an image.</p>
+                                            {uploadingImage && <p className="text-xs text-jence-gold mt-1">Uploading...</p>}
+                                            {!uploadingImage && <p className="text-xs text-muted-foreground mt-1">Upload a JPG, PNG, or WebP.</p>}
                                         </div>
                                     </div>
 
@@ -196,7 +218,7 @@ export default function SettingsPage() {
                                         disabled={saving}
                                         className="btn-primary text-sm active:scale-[0.97] transition-all disabled:opacity-50"
                                     >
-                                        {saving ? 'Saving...' : 'Save changes'}
+                                        {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save changes'}
                                     </button>
                                 </div>
 
@@ -213,49 +235,69 @@ export default function SettingsPage() {
 
                         {activeTab === 'payouts' && (
                             <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Payout Settings</h2>
+                                <h2 className="font-semibold text-foreground mb-4">Subscription & Earnings</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Configure how you receive your earnings. Payments are processed in crypto.
+                                    Configure how much subscribers pay each month to access your premium analysis. Payments are processed in USDC on Solana and sent directly to your wallet.
                                 </p>
 
-                                <div className="p-4 rounded-xl bg-jence-gold/5 border border-jence-gold/20 mb-6">
-                                    <h3 className="text-sm font-medium text-jence-gold mb-2">Revenue Split</h3>
-                                    <div className="flex items-center gap-4 text-sm">
-                                        <div className="flex-1">
-                                            <p className="text-2xl font-bold text-foreground">{creatorShare}%</p>
-                                            <p className="text-muted-foreground">You receive</p>
-                                        </div>
-                                        <div className="w-px h-10 bg-border"></div>
-                                        <div className="flex-1">
-                                            <p className="text-2xl font-bold text-foreground">{platformShare}%</p>
-                                            <p className="text-muted-foreground">Platform fee</p>
-                                        </div>
+                                <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-jence-gold">Revenue Split:</p>
+                                        <p className="text-sm text-foreground"><span className="font-bold">{creatorShare}%</span> Creator / <span className="font-bold">{platformShare}%</span> Platform</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Payout Method</label>
-                                        <select
-                                            value={payoutMethod}
-                                            onChange={(e) => setPayoutMethod(e.target.value)}
-                                            className="input-field"
-                                        >
-                                            <option value="crypto">Crypto Wallet (USDC/ETH)</option>
-                                            <option value="bank">Bank Transfer (Coming Soon)</option>
-                                        </select>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Subscription Price (USDC)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={subscriptionPrice}
+                                                onChange={(e) => setSubscriptionPrice(e.target.value)}
+                                                className="input-field !pl-7 font-mono text-sm"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Set to 0 for free subscriptions.
+                                        </p>
                                     </div>
-
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Wallet Address</label>
-                                        <input
-                                            type="text"
-                                            value={payoutAddress}
-                                            onChange={(e) => setPayoutAddress(e.target.value)}
-                                            className="input-field font-mono text-sm"
-                                            placeholder="0x..."
-                                        />
-                                        <p className="text-xs text-muted-foreground mt-1">Double check your address. We support Ethereum and Polygon networks.</p>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Solana Wallet Address</label>
+                                        <div className="flex gap-2 items-center">
+                                            <input
+                                                type="text"
+                                                value={embeddedWallet?.address || 'No embedded wallet found'}
+                                                className="input-field font-mono text-sm flex-1 bg-muted/50"
+                                                readOnly
+                                            />
+                                            {!embeddedWallet && (
+                                                <button
+                                                    onClick={() => createWallet()}
+                                                    className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap"
+                                                >
+                                                    Create Wallet
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets.
+                                        </p>
+
+                                        {embeddedWallet && (
+                                            <div className="mt-3">
+                                                <button
+                                                    onClick={() => exportWallet()}
+                                                    className="text-sm text-jence-gold hover:text-jence-gold/80 hover:underline transition-all"
+                                                >
+                                                    Export Private Key
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <button
@@ -269,45 +311,6 @@ export default function SettingsPage() {
                             </div>
                         )}
 
-                        {activeTab === 'verification' && (
-                            <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Identity Verification</h2>
-                                <p className="text-sm text-muted-foreground mb-6">
-                                    To receive payouts and get the verified badge, you must complete KYC.
-                                    Your data is encrypted and private.
-                                </p>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Document Type</label>
-                                        <select
-                                            className="input-field"
-                                            defaultValue=""
-                                        >
-                                            <option value="" disabled>Select document type</option>
-                                            <option value="NIN">National Identification Number (NIN)</option>
-                                            <option value="BVN">Bank Verification Number (BVN)</option>
-                                            <option value="Passport">International Passport</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-jence-gold/50 transition-colors cursor-pointer">
-                                        <Shield size={32} className="text-muted-foreground mx-auto mb-3" />
-                                        <p className="text-sm text-foreground font-medium">Upload Document</p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            PDF, JPG, or PNG — max 5MB.
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        className="btn-primary text-sm active:scale-[0.97] transition-all w-full justify-center"
-                                        onClick={() => alert('KYC upload simulation successful. Status updated to Pending Review.')}
-                                    >
-                                        Submit for Review
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
                         {activeTab === 'notifications' && (
                             <div className="card-plug p-6">
@@ -334,7 +337,7 @@ export default function SettingsPage() {
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Privacy & Data</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    In compliance with the Nigeria Data Protection Act (NDPA), you have the right to request
+                                    In compliance with the General Data Protection Regulation (GDPR) and global privacy standards, you have the right to request
                                     deletion of your personal data.
                                 </p>
 
@@ -347,15 +350,7 @@ export default function SettingsPage() {
                                         <button className="btn-secondary text-sm active:scale-[0.97] transition-all">Request data export</button>
                                     </div>
 
-                                    <div className="p-4 rounded-xl border border-red-500/20">
-                                        <h3 className="text-sm font-medium text-red-400 mb-1">Delete account</h3>
-                                        <p className="text-xs text-muted-foreground mb-3">
-                                            Permanently delete your account and all associated data. This action cannot be undone.
-                                        </p>
-                                        <button className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 text-sm hover:bg-red-500/20 transition-all active:scale-[0.97]">
-                                            Delete my account
-                                        </button>
-                                    </div>
+                                    {/* Delete account functionally removed per requirements */}
                                 </div>
                             </div>
                         )}
@@ -364,8 +359,39 @@ export default function SettingsPage() {
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Subscription Management</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Manage your creator subscriptions. Payments are processed via cryptocurrency.
+                                    Manage your creator subscriptions. Payments are processed using your embedded Solana wallet.
                                 </p>
+
+                                <div className="mb-6 p-4 rounded-xl border border-border bg-muted/20">
+                                    <h3 className="text-sm font-medium text-foreground mb-2">Your Solana Wallet</h3>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            value={embeddedWallet?.address || 'No embedded wallet found'}
+                                            className="input-field font-mono text-xs flex-1 bg-background"
+                                            readOnly
+                                        />
+                                        {!embeddedWallet && (
+                                            <button
+                                                onClick={() => createWallet()}
+                                                className="btn-secondary h-[38px] px-3 shrink-0 text-xs"
+                                            >
+                                                Create Wallet
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-3">
+                                        Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets.
+                                    </p>
+                                    {embeddedWallet && (
+                                        <button
+                                            onClick={() => exportWallet()}
+                                            className="text-xs text-jence-gold hover:text-jence-gold/80 hover:underline transition-all"
+                                        >
+                                            Export Private Key
+                                        </button>
+                                    )}
+                                </div>
 
                                 <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
                                     <p className="text-muted-foreground text-sm">No active subscriptions</p>
@@ -378,6 +404,6 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     )
 }
