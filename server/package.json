@@ -23,7 +23,7 @@
         "multer": "^2.0.2",
         "postgres": "^3.4.0",
         "resend": "^6.9.2",
-        "undici": "^7.22.0"
+        "undici": "^7.18.2"
     },
     "devDependencies": {
         "@types/node": "^22.10.0",
