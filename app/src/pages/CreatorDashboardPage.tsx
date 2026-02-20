@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
+import { DeleteModal } from '../components/DeleteModal'
 
 export default function CreatorDashboardPage() {
     const { user } = useAuth()
@@ -239,7 +240,11 @@ export default function CreatorDashboardPage() {
                                         <div className="flex flex-col items-end gap-2">
                                             <div className="relative">
                                                 <button
-                                                    onClick={() => setActivePostMenu(activePostMenu === post.id ? null : post.id)}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setActivePostMenu(activePostMenu === post.id ? null : post.id)
+                                                    }}
                                                     className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                                                 >
                                                     <MoreVertical size={16} />
@@ -247,7 +252,11 @@ export default function CreatorDashboardPage() {
                                                 {activePostMenu === post.id && (
                                                     <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
                                                         <button
-                                                            onClick={() => setPostToDelete(post.id)}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setPostToDelete(post.id);
+                                                            }}
                                                             className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted/50 transition-colors"
                                                         >
                                                             Delete
@@ -291,6 +300,14 @@ export default function CreatorDashboardPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Modals */}
+            <DeleteModal
+                isOpen={!!postToDelete}
+                onClose={() => setPostToDelete(null)}
+                onConfirm={handleDeletePost}
+                isDeleting={isDeleting}
+            />
 
             {/* Create Post Modal */}
             {isPostModalOpen && (

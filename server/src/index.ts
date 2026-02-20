@@ -3,6 +3,15 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
+import { setGlobalDispatcher, Agent } from 'undici'
+
+// Fix Node.js 18+ fetch ETIMEDOUT bug — autoSelectFamily tries both IPv4/IPv6
+// concurrently (Happy Eyeballs) so Google OAuth token exchange doesn't time out
+setGlobalDispatcher(new Agent({
+    connect: { timeout: 60_000 },
+    autoSelectFamily: true,
+    autoSelectFamilyAttemptTimeout: 2_000,
+}))
 
 import authRoutes from './routes/auth.js'
 import usersRoutes from './routes/users.js'

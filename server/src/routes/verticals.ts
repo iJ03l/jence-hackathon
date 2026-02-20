@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { vertical, creatorProfile, post } from '../db/schema.js'
+import { vertical, creatorProfile, post, user } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 
 const verticalsRoutes = new Hono()

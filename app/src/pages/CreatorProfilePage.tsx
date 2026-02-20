@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star } from 'lucide-react'
+import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { buildSubscriptionTransaction } from '../lib/solana'
@@ -20,6 +20,7 @@ export default function CreatorProfilePage() {
     const [ratingValue, setRatingValue] = useState(5)
     const [feedbackText, setFeedbackText] = useState('')
     const [submittingRating, setSubmittingRating] = useState(false)
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
     const { wallets } = useWallets()
     const { signAndSendTransaction } = useSignAndSendTransaction()
@@ -369,85 +370,121 @@ export default function CreatorProfilePage() {
                     </div>
                 )}
 
-                {/* Reviews & Ratings */}
-                <div className="mt-8">
-                    <h2 className="font-semibold text-foreground mb-4">Reviews & Ratings</h2>
+                {/* Reviews & Ratings Floating Button */}
+                <button
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className="fixed right-0 sm:right-4 top-1/2 -translate-y-1/2 bg-card border border-border shadow-lg px-1.5 sm:px-2 py-3 sm:py-4 rounded-l-xl hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2 sm:gap-3 z-40 group"
+                >
+                    <div className="flex flex-col items-center gap-1">
+                        <Star size={12} className="text-jence-gold fill-jence-gold group-hover:scale-110 transition-transform sm:w-[14px] sm:h-[14px]" />
+                        <span
+                            className="text-[9px] sm:text-[10px] font-bold text-foreground tracking-widest uppercase mt-1 sm:mt-2"
+                            style={{ writingMode: 'vertical-rl' }}
+                        >
+                            Reviews
+                        </span>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] font-bold bg-muted px-1 sm:px-1.5 py-0.5 rounded text-muted-foreground mt-0.5 sm:mt-1">
+                        {data.feedback?.length || 0}
+                    </span>
+                </button>
 
-                    {user && user.id !== creator.userId && (
-                        <div className="card-plug p-5 mb-6">
-                            <h3 className="text-sm font-medium mb-3">Leave a Review</h3>
-                            <form onSubmit={handleRate} className="space-y-4">
-                                <div>
-                                    <div className="flex items-center gap-1 mb-2">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <button
-                                                key={star}
-                                                type="button"
-                                                onClick={() => setRatingValue(star)}
-                                                className={`p-1 hover:scale-110 transition-transform ${star <= ratingValue ? 'text-jence-gold' : 'text-muted-foreground hover:text-jence-gold/50'}`}
-                                            >
-                                                <Star size={20} className={star <= ratingValue ? 'fill-jence-gold' : ''} />
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <textarea
-                                        value={feedbackText}
-                                        onChange={(e) => setFeedbackText(e.target.value)}
-                                        placeholder="Share your experience with this creator..."
-                                        className="input-field min-h-[80px] text-sm resize-none"
-                                    />
-                                </div>
-                                <div className="flex justify-end">
-                                    <button
-                                        type="submit"
-                                        disabled={submittingRating}
-                                        className="btn-primary text-sm py-2 px-4"
-                                    >
-                                        {submittingRating ? 'Submitting...' : 'Submit Review'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
+                {/* Reviews Side Modal */}
+                {isReviewModalOpen && (
+                    <div className="fixed inset-0 z-50 flex justify-end bg-background/40 backdrop-blur-sm animate-in fade-in duration-200 p-0 sm:p-4">
+                        {/* Overlay click to close */}
+                        <div className="absolute inset-0" onClick={() => setIsReviewModalOpen(false)} />
 
-                    {data.feedback && data.feedback.length > 0 ? (
-                        <div className="space-y-4">
-                            {data.feedback.map((review: any) => (
-                                <div key={review.id} className="card-plug p-5">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground overflow-hidden">
-                                                {review.user?.image ? (
-                                                    <img src={review.user.image} alt="User avatar" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    review.user?.username?.[0]?.toUpperCase() || '?'
-                                                )}
+                        <div className="relative w-full max-w-sm h-full sm:h-auto sm:max-h-full bg-card border-x sm:border border-border sm:rounded-2xl shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 z-10 overflow-hidden">
+                            <div className="flex items-center justify-between p-5 border-b border-border/50 shrink-0 bg-muted/10">
+                                <h2 className="font-semibold text-foreground flex items-center gap-2">
+                                    <Star size={16} className="text-jence-gold fill-jence-gold" />
+                                    Reviews & Ratings
+                                </h2>
+                                <button onClick={() => setIsReviewModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors">
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
+                                {user && user.id !== creator.userId && (
+                                    <div className="card-plug p-4 mb-6 bg-background">
+                                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Leave a Review</h3>
+                                        <form onSubmit={handleRate} className="space-y-3">
+                                            <div>
+                                                <div className="flex items-center gap-1 mb-2">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setRatingValue(star)}
+                                                            className={`p-1 hover:scale-110 transition-transform ${star <= ratingValue ? 'text-jence-gold' : 'text-muted-foreground hover:text-jence-gold/50'}`}
+                                                        >
+                                                            <Star size={18} className={star <= ratingValue ? 'fill-jence-gold' : ''} />
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-foreground">@{review.user?.username || 'user'}</p>
-                                                <p className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
+                                                <textarea
+                                                    value={feedbackText}
+                                                    onChange={(e) => setFeedbackText(e.target.value)}
+                                                    placeholder="Share your experience with this creator..."
+                                                    className="input-field min-h-[80px] text-sm resize-none"
+                                                />
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-0.5 text-jence-gold">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={12} className={i < review.rating ? 'fill-jence-gold' : 'text-muted-foreground/30'} />
-                                            ))}
-                                        </div>
+                                            <div className="flex justify-end">
+                                                <button
+                                                    type="submit"
+                                                    disabled={submittingRating}
+                                                    className="btn-primary text-xs py-1.5 px-3"
+                                                >
+                                                    {submittingRating ? 'Submitting...' : 'Submit'}
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
-                                    {review.feedback && (
-                                        <p className="text-sm text-foreground/90 mt-2">{review.feedback}</p>
+                                )}
+
+                                <div className="space-y-3">
+                                    {data.feedback && data.feedback.length > 0 ? (
+                                        data.feedback.map((review: any) => (
+                                            <div key={review.id} className="card-plug p-4 bg-background">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground overflow-hidden">
+                                                            {review.user?.image ? (
+                                                                <img src={review.user.image} alt="User avatar" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                review.user?.username?.[0]?.toUpperCase() || '?'
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-foreground">@{review.user?.username || 'user'}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-0.5 text-jence-gold">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Star key={i} size={10} className={i < review.rating ? 'fill-jence-gold' : 'text-muted-foreground/30'} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {review.feedback && (
+                                                    <p className="text-xs text-foreground/90 mt-2 leading-relaxed">{review.feedback}</p>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center border border-dashed border-border/50 rounded-xl bg-muted/10">
+                                            <p className="text-xs text-muted-foreground">No reviews yet.</p>
+                                        </div>
                                     )}
                                 </div>
-                            ))}
+                            </div>
                         </div>
-                    ) : (
-                        <div className="p-6 text-center border border-border/50 rounded-xl bg-muted/20">
-                            <p className="text-sm text-muted-foreground">No reviews yet.</p>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* Disclaimer */}
                 <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
