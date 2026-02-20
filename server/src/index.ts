@@ -22,6 +22,7 @@ import subscriptionsRoutes from './routes/subscriptions.js'
 import notificationsRoutes from './routes/notifications.js'
 import communityRoutes from './routes/community.js'
 import uploadRoutes from './routes/upload.js'
+import privyRoutes from './routes/privy.js'
 
 const app = new Hono()
 
@@ -64,6 +65,7 @@ app.route('/api/subscriptions', subscriptionsRoutes)
 app.route('/api/notifications', notificationsRoutes)
 app.route('/api/community', communityRoutes)
 app.route('/api/upload', uploadRoutes)
+app.route('/api/privy', privyRoutes)
 
 // Start server
 const port = parseInt(process.env.PORT || '8080', 10)

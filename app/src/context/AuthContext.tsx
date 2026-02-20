@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { usePrivy, useSubscribeToJwtAuthWithFlag } from '@privy-io/react-auth'
 
 interface User {
     id: string
@@ -27,6 +28,32 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
+    const { logout: privyLogout } = usePrivy()
+
+    // Determine if the user is authenticated from our Better Auth system
+    const isAuthenticated = !!user
+
+    // Fetch the token from the backend
+    const getExternalJwt = useCallback(async () => {
+        try {
+            const tokenRes = await fetch(`${API_URL}/api/privy/token`, {
+                credentials: 'include',
+            })
+            if (tokenRes.ok) {
+                const { token } = await tokenRes.json()
+                return token
+            }
+        } catch (err) {
+            console.error('Failed to sync Privy session:', err)
+        }
+        return undefined
+    }, [])
+
+    // Synchronize the Custom JWT with Privy automatically
+    useSubscribeToJwtAuthWithFlag({
+        isAuthenticated,
+        getExternalJwt,
+    })
 
     const refreshSession = useCallback(async () => {
         try {
@@ -63,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { error: data?.message || 'Login failed' }
             }
             setUser(data?.user || null)
+            setUser(data?.user || null)
             return {}
         } catch {
             return { error: 'Network error. Please try again.' }
@@ -84,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { error: data?.message || 'Registration failed' }
             }
             setUser(data?.user || null)
+            setUser(data?.user || null)
             return {}
         } catch {
             return { error: 'Network error. Please try again.' }
@@ -92,12 +121,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleSignOut = async () => {
         try {
-            await fetch(`${API_URL}/api/auth/sign-out`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({}),
-            })
+            await Promise.all([
+                fetch(`${API_URL}/api/auth/sign-out`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}),
+                }),
+                privyLogout()
+            ])
         } catch {
             // ignore
         }
