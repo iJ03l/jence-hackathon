@@ -66,11 +66,12 @@ app.route('/api/community', communityRoutes)
 app.route('/api/upload', uploadRoutes)
 
 // Start server
-const port = parseInt(process.env.PORT || '3001', 10)
+const port = parseInt(process.env.PORT || '8080', 10)
 
 serve({
     fetch: app.fetch,
     port,
+    hostname: '0.0.0.0', // Listen on all network interfaces
 }, (info) => {
     console.log(`🚀 Jence server running on http://localhost:${info.port}`)
 })
