@@ -21,7 +21,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       better-auth:
-        specifier: ^1.2.0
+        specifier: ^1.4.18
         version: 1.4.18(drizzle-kit@0.30.6)(drizzle-orm@0.39.3(@types/better-sqlite3@7.6.13)(kysely@0.28.11)(postgres@3.4.8))
       dotenv:
         specifier: ^16.4.0
@@ -41,6 +41,9 @@ importers:
       resend:
         specifier: ^6.9.2
         version: 6.9.2
+      undici:
+        specifier: ^7.18.2
+        version: 7.22.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -1002,6 +1005,10 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
+  undici@7.22.0:
+    resolution: {integrity: sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==}
+    engines: {node: '>=20.18.1'}
+
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
@@ -1679,6 +1686,8 @@ snapshots:
   typescript@5.9.3: {}
 
   undici-types@6.21.0: {}
+
+  undici@7.22.0: {}
 
   util-deprecate@1.0.2: {}
 
