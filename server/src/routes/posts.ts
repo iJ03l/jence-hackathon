@@ -134,13 +134,14 @@ postsRoutes.get('/my', async (c) => {
             title: post.title,
             excerpt: post.excerpt,
             isFree: post.isFree,
+            isPinned: post.isPinned,
             isPublished: post.isPublished,
             moderationStatus: post.moderationStatus,
             createdAt: post.createdAt,
         })
         .from(post)
         .where(eq(post.creatorId, creatorProfileId))
-        .orderBy(desc(post.createdAt))
+        .orderBy(desc(post.isPinned), desc(post.createdAt))
     ).map(async (p) => {
         const likesResult = await db
             .select({ value: sum(postVote.value) })
@@ -330,6 +331,33 @@ postsRoutes.post('/:id/vote', async (c) => {
     })
 
     return c.json({ success: true })
+})
+
+// POST /api/posts/:id/pin — pin a post to the top of the creator's profile
+postsRoutes.post('/:id/pin', async (c) => {
+    const id = c.req.param('id')
+    const { creatorId, isPinned } = await c.req.json()
+
+    if (!creatorId) return c.json({ error: 'creatorId is required' }, 400)
+
+    try {
+        await db.transaction(async (tx) => {
+            // If we are pinning this post, unpin all other posts for this creator
+            if (isPinned) {
+                await tx.update(post)
+                    .set({ isPinned: false })
+                    .where(eq(post.creatorId, creatorId))
+            }
+
+            // Update the target post
+            await tx.update(post)
+                .set({ isPinned: isPinned })
+                .where(eq(post.id, id))
+        })
+        return c.json({ success: true, isPinned })
+    } catch (e: any) {
+        return c.json({ error: e.message || 'Failed to update pin status' }, 500)
+    }
 })
 
 export default postsRoutes

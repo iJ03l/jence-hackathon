@@ -18,8 +18,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     return res.json()
 }
 
-// Verticals
+// Global
 export const api = {
+    getGlobalStats: () => request<any>('/stats/global'),
+
+    // Verticals
     getVerticals: () => request<any[]>('/verticals'),
     getVertical: (slug: string) => request<{ vertical: any; posts: any[] }>(`/verticals/${slug}`),
 
@@ -43,6 +46,8 @@ export const api = {
         request<any>('/posts', { method: 'POST', body: JSON.stringify(data) }),
     deletePost: (id: string) =>
         request<any>(`/posts/${id}`, { method: 'DELETE' }),
+    pinPost: (id: string, creatorId: string, isPinned: boolean) =>
+        request<any>(`/posts/${id}/pin`, { method: 'POST', body: JSON.stringify({ creatorId, isPinned }) }),
     votePost: (postId: string, userId: string, value: number) =>
         request<any>(`/posts/${postId}/vote`, { method: 'POST', body: JSON.stringify({ userId, value }) }),
     getPostComments: (postId: string) =>

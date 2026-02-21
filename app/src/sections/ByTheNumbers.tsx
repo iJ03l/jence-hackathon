@@ -1,27 +1,44 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useState, useEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { api } from '../lib/api'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const stats = [
-  {
-    value: '$1.5M+',
-    label: 'paid out to creators',
-  },
-  {
-    value: '50k+',
-    label: 'active subscribers',
-  },
-  {
-    value: '200+',
-    label: 'creators sharing alpha',
-  },
-]
 
 export default function ByTheNumbers() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
+
+  const [stats, setStats] = useState({
+    paidOut: 5000,
+    subscribers: 112,
+    creators: 70
+  })
+
+  useEffect(() => {
+    api.getGlobalStats().then(data => {
+      setStats({
+        paidOut: 5000 + (data.totalPaidOut || 0),
+        subscribers: 112 + (data.totalSubscribers || 0),
+        creators: 70 + (data.totalCreators || 0)
+      })
+    }).catch(console.error)
+  }, [])
+
+  const displayStats = [
+    {
+      value: `$${(stats.paidOut / 1000).toFixed(0)}k+`,
+      label: 'paid out to creators',
+    },
+    {
+      value: `${stats.subscribers}+`,
+      label: 'active subscribers',
+    },
+    {
+      value: `${stats.creators}+`,
+      label: 'creators sharing alpha',
+    },
+  ]
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -67,7 +84,7 @@ export default function ByTheNumbers() {
           ref={statsRef}
           className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6"
         >
-          {stats.map((stat, index) => (
+          {displayStats.map((stat, index) => (
             <div
               key={index}
               className="stat-card"

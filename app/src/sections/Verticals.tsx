@@ -1,5 +1,6 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { api } from '../lib/api'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
@@ -106,6 +107,11 @@ export default function Verticals() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  const [dbStats, setDbStats] = useState<any>(null)
+
+  useEffect(() => {
+    api.getGlobalStats().then(setDbStats).catch(console.error)
+  }, [])
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -192,7 +198,7 @@ export default function Verticals() {
                   {vertical.description}
                 </p>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {vertical.creators} creators
+                  {7 + (dbStats?.creatorsByVertical?.[vertical.slug] || 0)} creators
                 </span>
               </Link>
             )

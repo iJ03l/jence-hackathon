@@ -124,9 +124,9 @@ export default function TrendingCreators() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {creators.map((creator) => (
-            <div key={creator.id} className="creator-card group cursor-pointer">
+            <div key={creator.id} className="creator-card group cursor-default">
               {/* Card Header */}
-              <Link to={`/${creator.handle.replace('@', '')}`} className="block p-5 border-b border-border hover:bg-muted/20 transition-colors">
+              <div className="block p-5 border-b border-border hover:bg-muted/20 transition-colors">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center text-lg font-bold text-jence-gold shrink-0">
@@ -156,7 +156,7 @@ export default function TrendingCreators() {
                   <span>•</span>
                   <span>{creator.subscribers} subscribers</span>
                 </div>
-              </Link>
+              </div>
 
               {/* Preview Content */}
               <div className="p-5">
@@ -185,12 +185,12 @@ export default function TrendingCreators() {
                 </div>
 
                 {/* CTA */}
-                <Link
-                  to={`/${creator.handle.replace('@', '')}`}
-                  className="block w-full btn-primary py-2.5 text-sm text-center"
+                <button
+                  onClick={(e) => e.preventDefault()}
+                  className="block w-full btn-primary py-2.5 text-sm text-center cursor-not-allowed opacity-75"
                 >
                   Subscribe
-                </Link>
+                </button>
               </div>
             </div>
           ))}

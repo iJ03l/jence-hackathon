@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -109,6 +109,38 @@ export default function CreatorDashboardPage() {
             alert('Failed to delete post');
         } finally {
             setIsDeleting(false);
+        }
+    }
+
+    const handlePinPost = async (e: any, post: any) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const isCurrentlyPinned = post.isPinned || false;
+
+        try {
+            await api.pinPost(post.id, creatorId, !isCurrentlyPinned);
+
+            // Optimistically update the UI to sort pinned posts first
+            setPosts(prevPosts => {
+                const updated = prevPosts.map(p => {
+                    if (p.id === post.id) return { ...p, isPinned: !isCurrentlyPinned };
+                    // If we're pinning this post, unpin everything else
+                    if (!isCurrentlyPinned) return { ...p, isPinned: false };
+                    return p;
+                });
+
+                // Sort to keep pinned first, then by date
+                return updated.sort((a, b) => {
+                    if (a.isPinned && !b.isPinned) return -1;
+                    if (!a.isPinned && b.isPinned) return 1;
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                });
+            });
+            setActivePostMenu(null);
+        } catch (error) {
+            console.error('Failed to pin post:', error);
+            alert('Failed to pin post');
         }
     }
 
@@ -226,9 +258,15 @@ export default function CreatorDashboardPage() {
                                                     <Clock size={10} />
                                                     {new Date(post.createdAt).toLocaleDateString()}
                                                 </span>
-                                                {!post.isFree && (
+                                                {!post.isFree && !post.isPinned && (
                                                     <span className="text-xs text-jence-gold flex items-center gap-0.5">
                                                         <DollarSign size={10} /> Paid
+                                                    </span>
+                                                )}
+                                                {post.isPinned && (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-jence-gold/10 text-jence-gold flex items-center gap-1">
+                                                        <Pin size={10} className="fill-current" />
+                                                        Pinned
                                                     </span>
                                                 )}
                                             </div>
@@ -260,6 +298,12 @@ export default function CreatorDashboardPage() {
                                                             className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted/50 transition-colors"
                                                         >
                                                             Delete
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => handlePinPost(e, post)}
+                                                            className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors border-t border-border/50"
+                                                        >
+                                                            {post.isPinned ? 'Unpin' : 'Pin to Profile'}
                                                         </button>
                                                     </div>
                                                 )}

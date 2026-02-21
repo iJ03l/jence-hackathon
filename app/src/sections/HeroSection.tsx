@@ -1,8 +1,16 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
-import { ArrowRight, Shield, Wallet } from 'lucide-react'
+import { ArrowRight, Shield, Wallet, Clock, Lock } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+
+const mockPosts = [
+  { id: 'm1', title: 'NFL Week 12: Sharp money fading favorites', time: '1m ago', author: 'VegasInsider', vertical: 'Sports Betting' },
+  { id: 'm2', title: 'USD/JPY correlation with Treasury yields breaking', time: '15m ago', author: 'FXMacro', vertical: 'Forex' },
+  { id: 'm3', title: 'On-chain accumulation patterns for tier-1 altcoins', time: '1h ago', author: 'ChainIntel', vertical: 'Crypto' },
+  { id: 'm4', title: 'Tracking dev activity spikes in low-cap memecoins', time: '3h ago', author: 'DegenWatch', vertical: 'Memecoins' },
+  { id: 'm5', title: 'Election odds decoupling from polling data', time: '5h ago', author: 'PolyPredicts', vertical: 'Prediction Market' },
+]
 
 export default function HeroSection() {
   const { theme } = useTheme()
@@ -13,6 +21,9 @@ export default function HeroSection() {
   const subheadlineRef = useRef<HTMLParagraphElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
   const featuresRef = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
+  const badgeRef = useRef<HTMLDivElement>(null)
+  const mockPostsRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouseRef = useRef({ x: 0.5, y: 0.5 })
   const rafRef = useRef<number>(0)
@@ -230,10 +241,57 @@ export default function HeroSection() {
           '-=0.2'
         )
       }
+
+      // Doorknob falling animation & Mock Posts flowing
+      const badge = badgeRef.current
+      const mockPostCards = mockPostsRef.current?.querySelectorAll('.mock-post-card')
+
+      if (badge && mockPostCards && portalRef.current) {
+        const isDark = themeRef.current === 'dark'
+        // Wait 1.5s, then make the badge fall off a hinge
+        const doorknobTl = gsap.timeline({ delay: 1.5 })
+
+        doorknobTl.to(badge, {
+          rotationZ: 45,
+          transformOrigin: "left center",
+          duration: 0.3,
+          ease: 'power2.inOut',
+        })
+          .to(badge, {
+            y: 200,
+            rotationZ: 120,
+            opacity: 0,
+            duration: 0.6,
+            ease: 'power2.in',
+          })
+
+        // Reveal the portal and flow posts out
+        doorknobTl.to(portalRef.current, {
+          boxShadow: isDark ? 'inset 0 0 20px rgba(0,0,0,0.8)' : 'inset 0 0 15px rgba(0,0,0,0.2)',
+          duration: 0.3,
+        }, "-=0.2")
+
+        // Flow posts out sequentially in an infinite loop
+        gsap.to(mockPostCards, {
+          keyframes: [
+            { y: -20, opacity: 1, scale: 1, duration: 0.5 },
+            { y: -100, opacity: 1, scale: 1.05, duration: 1.5 },
+            { y: -150, opacity: 0, scale: 1.1, duration: 0.5 }
+          ],
+          stagger: {
+            each: 1.2,
+            repeat: -1,
+            repeatDelay: 0.5
+          },
+          ease: 'power1.out',
+          delay: 2.2 // Start flowing immediately after door falls
+        })
+      }
+
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [themeRef])
 
   return (
     <section
@@ -252,10 +310,41 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-radial from-jence-gold/5 to-transparent pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-jence-gold/10 border border-jence-gold/20 mb-8 backdrop-blur-sm">
-          <div className="w-2 h-2 rounded-full bg-jence-green animate-pulse" />
-          <span className="text-sm font-medium text-jence-gold">Now live globally</span>
+        {/* Badge / Doorknob / Portal */}
+        <div className="relative mx-auto mb-10 w-[180px] h-[40px] flex justify-center items-center">
+
+          {/* Internal Portal hole (behind the doorknob) */}
+          <div
+            ref={portalRef}
+            className="absolute inset-0 rounded-full bg-black/40 border border-black/20 overflow-visible"
+          >
+            {/* Posts flowing out of portal */}
+            <div ref={mockPostsRef} className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[260px] pointer-events-none">
+              {mockPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="mock-post-card absolute bottom-0 left-0 w-full card-plug p-3 bg-background/95 backdrop-blur shadow-xl border-jence-gold/30 flex flex-col gap-1 z-0 origin-bottom"
+                  style={{ opacity: 0, transform: 'translateY(20px) scale(0.8)' }}
+                >
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock size={10} /> {post.time}</span>
+                    <span className="text-[10px] text-jence-gold bg-jence-gold/10 px-1.5 py-0.5 rounded flex items-center gap-1"><Lock size={8} /> {post.vertical}</span>
+                  </div>
+                  <h4 className="text-xs font-semibold text-foreground truncate text-left">{post.title}</h4>
+                  <span className="text-[10px] text-muted-foreground text-left">{post.author}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Doorknob (The original badge) */}
+          <div
+            ref={badgeRef}
+            className="absolute z-10 inset-0 flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-background border border-border shadow-sm shadow-jence-gold/10"
+          >
+            <div className="w-2 h-2 rounded-full bg-jence-green animate-pulse" />
+            <span className="text-sm font-medium text-muted-foreground">Now live globally</span>
+          </div>
         </div>
 
         {/* Headline */}

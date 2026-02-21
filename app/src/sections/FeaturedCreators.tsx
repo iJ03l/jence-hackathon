@@ -95,7 +95,8 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
           </h2>
           <a
             href="#"
-            className="hidden sm:flex items-center gap-2 text-jence-gray hover:text-jence-green transition-colors"
+            onClick={(e) => e.preventDefault()}
+            className="hidden sm:flex items-center gap-2 text-jence-gray transition-colors cursor-not-allowed opacity-50"
           >
             <span className="text-sm">View all</span>
             <ArrowRight size={16} />
@@ -110,7 +111,7 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
           {creators.map((creator) => (
             <div
               key={creator.id}
-              className="creator-card group relative h-[420px] rounded-[22px] overflow-hidden border border-white/5 card-hover cursor-pointer"
+              className="creator-card group relative h-[420px] rounded-[22px] overflow-hidden border border-white/5 card-hover"
             >
               {/* Image */}
               <div className="absolute inset-0 overflow-hidden">
@@ -143,7 +144,8 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
         <div className="mt-8 sm:hidden">
           <a
             href="#"
-            className="flex items-center justify-center gap-2 text-jence-gray hover:text-jence-green transition-colors"
+            onClick={(e) => e.preventDefault()}
+            className="flex items-center justify-center gap-2 text-jence-gray transition-colors cursor-not-allowed opacity-50"
           >
             <span className="text-sm">View all creators</span>
             <ArrowRight size={16} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X } from 'lucide-react'
+import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { buildSubscriptionTransaction } from '../lib/solana'
@@ -336,6 +336,12 @@ export default function CreatorProfilePage() {
                                             Paid
                                         </span>
                                     )}
+                                    {post.isPinned && (
+                                        <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs flex items-center gap-1">
+                                            <Pin size={10} className="fill-current" />
+                                            Pinned
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="relative">
                                     <Link to={`/post/${post.id}`} className="block group">
@@ -424,42 +430,48 @@ export default function CreatorProfilePage() {
 
                             <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
                                 {user && user.id !== creator.userId && (
-                                    <div className="card-plug p-4 mb-6 bg-background">
-                                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Leave a Review</h3>
-                                        <form onSubmit={handleRate} className="space-y-3">
-                                            <div>
-                                                <div className="flex items-center gap-1 mb-2">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <button
-                                                            key={star}
-                                                            type="button"
-                                                            onClick={() => setRatingValue(star)}
-                                                            className={`p-1 hover:scale-110 transition-transform ${star <= ratingValue ? 'text-jence-gold' : 'text-muted-foreground hover:text-jence-gold/50'}`}
-                                                        >
-                                                            <Star size={18} className={star <= ratingValue ? 'fill-jence-gold' : ''} />
-                                                        </button>
-                                                    ))}
+                                    subscribed ? (
+                                        <div className="card-plug p-4 mb-6 bg-background">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Leave a Review</h3>
+                                            <form onSubmit={handleRate} className="space-y-3">
+                                                <div>
+                                                    <div className="flex items-center gap-1 mb-2">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <button
+                                                                key={star}
+                                                                type="button"
+                                                                onClick={() => setRatingValue(star)}
+                                                                className={`p-1 hover:scale-110 transition-transform ${star <= ratingValue ? 'text-jence-gold' : 'text-muted-foreground hover:text-jence-gold/50'}`}
+                                                            >
+                                                                <Star size={18} className={star <= ratingValue ? 'fill-jence-gold' : ''} />
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <textarea
-                                                    value={feedbackText}
-                                                    onChange={(e) => setFeedbackText(e.target.value)}
-                                                    placeholder="Share your experience with this creator..."
-                                                    className="input-field min-h-[80px] text-sm resize-none"
-                                                />
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <button
-                                                    type="submit"
-                                                    disabled={submittingRating}
-                                                    className="btn-primary text-xs py-1.5 px-3"
-                                                >
-                                                    {submittingRating ? 'Submitting...' : 'Submit'}
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
+                                                <div>
+                                                    <textarea
+                                                        value={feedbackText}
+                                                        onChange={(e) => setFeedbackText(e.target.value)}
+                                                        placeholder="Share your experience with this creator..."
+                                                        className="input-field min-h-[80px] text-sm resize-none"
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={submittingRating}
+                                                        className="btn-primary text-xs py-1.5 px-3"
+                                                    >
+                                                        {submittingRating ? 'Submitting...' : 'Submit'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    ) : (
+                                        <div className="card-plug p-4 mb-6 bg-background text-center border-dashed">
+                                            <p className="text-xs text-muted-foreground">Subscribe to leave a review.</p>
+                                        </div>
+                                    )
                                 )}
 
                                 <div className="space-y-3">

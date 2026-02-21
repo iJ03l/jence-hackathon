@@ -92,6 +92,7 @@ export const post = pgTable('post', {
     verticalId: uuid('vertical_id').notNull().references(() => vertical.id),
     isPublished: boolean('is_published').notNull().default(true),
     isFree: boolean('is_free').notNull().default(false),
+    isPinned: boolean('is_pinned').notNull().default(false),
     moderationStatus: text('moderation_status').notNull().default('published'), // 'published' | 'under_review' | 'removed'
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),

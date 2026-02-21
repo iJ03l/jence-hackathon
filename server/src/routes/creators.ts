@@ -195,7 +195,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
         .select()
         .from(post)
         .where(eq(post.creatorId, creator.id))
-        .orderBy(desc(post.createdAt)) // Ensure recent posts first
+        .orderBy(desc(post.isPinned), desc(post.createdAt)) // Ensure pinned post first, then recent
         .limit(20)
 
     return c.json({
@@ -270,6 +270,22 @@ creatorsRoutes.post('/:id/rate', async (c) => {
 
     if (!userId || !rating || rating < 1 || rating > 5) {
         return c.json({ error: 'Valid userId and rating (1-5) are required' }, 400)
+    }
+
+    // Must be an active subscriber to rate
+    const [sub] = await db
+        .select()
+        .from(subscription)
+        .where(
+            and(
+                eq(subscription.subscriberUserId, userId),
+                eq(subscription.creatorProfileId, creatorProfileId),
+                eq(subscription.status, 'active')
+            )
+        )
+
+    if (!sub) {
+        return c.json({ error: 'You must be an active subscriber to leave a review.' }, 403)
     }
 
     try {
