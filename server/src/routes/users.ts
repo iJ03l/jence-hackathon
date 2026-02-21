@@ -9,9 +9,9 @@ const usersRoutes = new Hono()
 usersRoutes.put('/:id', async (c) => {
     const id = c.req.param('id')
     const body = await c.req.json()
-    const { image, name } = body
+    const { image, name, role } = body
 
-    if (!image && !name) {
+    if (!image && !name && !role) {
         return c.json({ error: 'Nothing to update' }, 400)
     }
 
@@ -20,6 +20,7 @@ usersRoutes.put('/:id', async (c) => {
         .set({
             ...(image && { image }),
             ...(name && { name }),
+            ...(role && { role }),
             updatedAt: new Date(),
         })
         .where(eq(user.id, id))

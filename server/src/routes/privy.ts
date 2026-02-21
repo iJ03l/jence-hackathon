@@ -30,20 +30,21 @@ privyRoutes.use('/*', async (c, next) => {
 privyRoutes.get('/token', async (c) => {
     const user = c.get('user')
     const appId = process.env.PRIVY_APP_ID || process.env.VITE_PRIVY_APP_ID
-    const appSecret = process.env.PRIVY_APP_SECRET
+    const customAuthKey = process.env.PRIVY_CUSTOM_AUTH_KEY
 
-    if (!appId || !appSecret) {
-        console.error('Missing Privy credentials in environment variables.')
+    if (!appId || !customAuthKey) {
+        console.error('Missing Privy configuration (App ID or Custom Auth Key).')
         return c.json({ error: 'Server configuration error' }, 500)
     }
 
     try {
-        // Import the private key (app secret) for use with jose
-        const privateKey = await importPKCS8(appSecret, 'ES256')
+        // Import the private key for use with jose. 
+        // The key must be a valid PKCS8 PEM string.
+        const privateKey = await importPKCS8(customAuthKey, 'RS256')
 
         // Create the JWT
         const jwt = await new SignJWT({})
-            .setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+            .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
             .setSubject(user.id)
             .setIssuer(appId)
             .setAudience(appId)
