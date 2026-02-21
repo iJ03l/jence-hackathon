@@ -217,6 +217,7 @@ export default function RegisterPage() {
 
                     <button
                         onClick={async () => {
+                            localStorage.setItem('intendedRole', role)
                             setIsGoogleLoading(true)
                             await authClient.signIn.social({
                                 provider: 'google',

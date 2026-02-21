@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Bell, Shield, CreditCard, DollarSign } from 'lucide-react'
+import { User, Bell, Shield, CreditCard, DollarSign, Copy, Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { useWallets, useCreateWallet, useExportWallet } from '@privy-io/react-auth/solana'
-
+import { usePrivy } from '@privy-io/react-auth'
 const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -26,12 +26,25 @@ export default function SettingsPage() {
     const [creatorId, setCreatorId] = useState<string | null>(null)
     const [walletCreating, setWalletCreating] = useState(false)
     const [walletError, setWalletError] = useState('')
+    const [copied, setCopied] = useState(false)
 
     // Privy Wallet 
     const { wallets } = useWallets()
     const { createWallet } = useCreateWallet()
     const { exportWallet } = useExportWallet()
+    const { ready: privyReady, user: privyUser } = usePrivy()
+
+    const privyLinkedWallet = privyUser?.linkedAccounts?.find(
+        (acc) => acc.type === 'wallet' && acc.walletClientType === 'privy'
+    )
+    const hasPrivyLinkedWallet = !!privyLinkedWallet
+
+    // The embeddedWallet might take a moment to appear in 'wallets' even after 'ready'
     const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
+    const hasWallet = !!embeddedWallet || !!hasPrivyLinkedWallet
+
+    // Some types in Privy linkedAccounts have 'address' field
+    const walletAddress = embeddedWallet?.address || (privyLinkedWallet as any)?.address || ''
 
     // Load initial data
     useEffect(() => {
@@ -58,13 +71,13 @@ export default function SettingsPage() {
 
     // Auto-provision Privy embedded wallet if missing
     useEffect(() => {
-        if (!user || authLoading) return
-        if (!embeddedWallet) {
+        if (!user || authLoading || !privyReady) return
+        if (!hasWallet) {
             createWallet().catch((err) =>
                 console.error('Failed to provision embedded wallet:', err)
             )
         }
-    }, [user, authLoading, embeddedWallet, createWallet])
+    }, [user, authLoading, privyReady, hasWallet, createWallet])
 
     const handleCreateWallet = async () => {
         setWalletCreating(true)
@@ -128,6 +141,13 @@ export default function SettingsPage() {
         } finally {
             setSaving(false)
         }
+    }
+
+    const handleCopyAddress = () => {
+        if (!walletAddress) return
+        navigator.clipboard.writeText(walletAddress)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     if (authLoading) {
@@ -296,14 +316,23 @@ export default function SettingsPage() {
                                         <div className="flex gap-2 items-center">
                                             <input
                                                 type="text"
-                                                value={embeddedWallet?.address || 'No embedded wallet found'}
+                                                value={walletAddress || 'No embedded wallet found'}
                                                 className="input-field font-mono text-sm flex-1 bg-muted/50"
                                                 readOnly
                                             />
-                                            {!embeddedWallet && (
+                                            {hasWallet && (
+                                                <button
+                                                    onClick={handleCopyAddress}
+                                                    className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                                                    title="Copy Address"
+                                                >
+                                                    {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                                                </button>
+                                            )}
+                                            {!hasWallet && (
                                                 <button
                                                     onClick={handleCreateWallet}
-                                                    disabled={walletCreating}
+                                                    disabled={walletCreating || !privyReady}
                                                     className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50"
                                                 >
                                                     {walletCreating ? 'Creating...' : 'Create Wallet'}
@@ -312,14 +341,15 @@ export default function SettingsPage() {
                                             {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets.
+                                            This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets. Your current wallet balance can be seen on the wallet you export it to.
                                         </p>
 
-                                        {embeddedWallet && (
+                                        {hasWallet && (
                                             <div className="mt-3">
                                                 <button
                                                     onClick={() => exportWallet()}
-                                                    className="text-sm text-jence-gold hover:text-jence-gold/80 hover:underline transition-all"
+                                                    disabled={!privyReady}
+                                                    className="text-sm text-jence-gold hover:text-jence-gold/80 hover:underline transition-all disabled:opacity-50"
                                                 >
                                                     Export Private Key
                                                 </button>
@@ -394,14 +424,23 @@ export default function SettingsPage() {
                                     <div className="flex items-center gap-2 mb-2">
                                         <input
                                             type="text"
-                                            value={embeddedWallet?.address || 'No embedded wallet found'}
+                                            value={walletAddress || 'No embedded wallet found'}
                                             className="input-field font-mono text-xs flex-1 bg-background"
                                             readOnly
                                         />
-                                        {!embeddedWallet && (
+                                        {hasWallet && (
+                                            <button
+                                                onClick={handleCopyAddress}
+                                                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0"
+                                                title="Copy Address"
+                                            >
+                                                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                            </button>
+                                        )}
+                                        {!hasWallet && (
                                             <button
                                                 onClick={handleCreateWallet}
-                                                disabled={walletCreating}
+                                                disabled={walletCreating || !privyReady}
                                                 className="btn-secondary h-[38px] px-3 shrink-0 text-xs disabled:opacity-50"
                                             >
                                                 {walletCreating ? 'Creating...' : 'Create Wallet'}
@@ -410,12 +449,13 @@ export default function SettingsPage() {
                                         {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                     </div>
                                     <p className="text-xs text-muted-foreground mb-3">
-                                        Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets.
+                                        Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets and check your balance there.
                                     </p>
-                                    {embeddedWallet && (
+                                    {hasWallet && (
                                         <button
                                             onClick={() => exportWallet()}
-                                            className="text-xs text-jence-gold hover:text-jence-gold/80 hover:underline transition-all"
+                                            disabled={!privyReady}
+                                            className="text-xs text-jence-gold hover:text-jence-gold/80 hover:underline transition-all disabled:opacity-50"
                                         >
                                             Export Private Key
                                         </button>

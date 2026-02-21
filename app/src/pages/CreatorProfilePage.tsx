@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { buildSubscriptionTransaction } from '../lib/solana'
 import { useWallets, useSignAndSendTransaction } from '@privy-io/react-auth/solana'
+import { usePrivy } from '@privy-io/react-auth'
 import { PublicKey } from '@solana/web3.js'
 
 export default function CreatorProfilePage() {
@@ -24,6 +25,7 @@ export default function CreatorProfilePage() {
 
     const { wallets } = useWallets()
     const { signAndSendTransaction } = useSignAndSendTransaction()
+    const { user: privyUser } = usePrivy()
 
     const creatorSharePercent = parseInt(import.meta.env.VITE_CREATOR_PAYOUT_PERCENT || '80')
 
@@ -54,7 +56,14 @@ export default function CreatorProfilePage() {
             if (price > 0) {
                 // Find the embedded Privy wallet
                 const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
-                if (!embeddedWallet) {
+                const privyLinkedWallet = privyUser?.linkedAccounts?.find(
+                    (acc: any) => acc.type === 'wallet' && acc.walletClientType === 'privy'
+                )
+
+                // Fallback to linked wallet address if embeddedWallet isn't fully populated yet
+                const walletAddress = embeddedWallet?.address || (privyLinkedWallet as any)?.address
+
+                if (!walletAddress) {
                     setPaymentError('No embedded wallet found. Please create one in Settings.')
                     setSubscribing(false)
                     return
@@ -70,13 +79,20 @@ export default function CreatorProfilePage() {
 
                 // Build the USDC transfer transaction
                 const tx = await buildSubscriptionTransaction({
-                    payerPublicKey: new PublicKey(embeddedWallet.address),
+                    payerPublicKey: new PublicKey(walletAddress),
                     creatorWalletAddress: creatorWallet,
                     priceUsdc: price,
                     creatorSharePercent,
                 })
 
                 if (tx) {
+                    // We must have the full embeddedWallet object to sign via Privy React SDK
+                    if (!embeddedWallet) {
+                        setPaymentError('Wallet is still initializing. Please try again in a few seconds.')
+                        setSubscribing(false)
+                        return
+                    }
+
                     // Serialize and send via Privy
                     const serializedTx = tx.serialize({ requireAllSignatures: false, verifySignatures: false })
                     const { signature } = await signAndSendTransaction({

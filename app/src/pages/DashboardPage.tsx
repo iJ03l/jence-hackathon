@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { useWallets, useCreateWallet } from '@privy-io/react-auth/solana'
+import { usePrivy } from '@privy-io/react-auth'
 import CreatorDashboardPage from './CreatorDashboardPage'
 
 const iconMap: Record<string, any> = {
@@ -16,13 +17,14 @@ const iconMap: Record<string, any> = {
 }
 
 export default function DashboardPage() {
-    const { user, loading: authLoading, signOut } = useAuth()
+    const { user, loading: authLoading, signOut, refreshSession } = useAuth()
     const navigate = useNavigate()
     const [verticals, setVerticals] = useState<any[]>([])
     const [posts, setPosts] = useState<any[]>([])
     const [loadingPosts, setLoadingPosts] = useState(true)
     const { wallets } = useWallets()
     const { createWallet } = useCreateWallet()
+    const { ready: privyReady, user: privyUser } = usePrivy()
 
     // Redirect if not logged in
     useEffect(() => {
@@ -31,17 +33,45 @@ export default function DashboardPage() {
         }
     }, [user, authLoading, navigate])
 
+    // Role migration check for Google Auth
+    useEffect(() => {
+        const migrateRole = async () => {
+            if (!user) return
+            const intendedRole = localStorage.getItem('intendedRole')
+            if (intendedRole && intendedRole !== user.role) {
+                try {
+                    await api.updateUser(user.id, { role: intendedRole })
+                    localStorage.removeItem('intendedRole')
+                    await refreshSession()
+                    if (intendedRole === 'creator') {
+                        navigate('/creator-onboarding')
+                    }
+                } catch (e) {
+                    console.error('Failed to migrate role', e)
+                }
+            } else if (intendedRole === user.role) {
+                localStorage.removeItem('intendedRole')
+            }
+        }
+        migrateRole()
+    }, [user, navigate, refreshSession])
+
     // Provision Privy embedded wallet for users who don't have one yet
     // (e.g. Google OAuth users landing here for the first time)
     useEffect(() => {
-        if (!user || authLoading) return
+        if (!user || authLoading || !privyReady) return
+
+        const hasPrivyLinkedWallet = privyUser?.linkedAccounts?.some(
+            (acc) => acc.type === 'wallet' && acc.walletClientType === 'privy'
+        )
         const hasEmbedded = wallets.some((w: any) => w.walletClientType === 'privy')
-        if (!hasEmbedded) {
+
+        if (!hasEmbedded && !hasPrivyLinkedWallet) {
             createWallet().catch((err) =>
                 console.error('Failed to provision embedded wallet:', err)
             )
         }
-    }, [user, authLoading, wallets, createWallet])
+    }, [user, authLoading, privyReady, privyUser, wallets, createWallet])
 
     useEffect(() => {
         if (user?.role === 'creator') return // Don't fetch feed if creator
