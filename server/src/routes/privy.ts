@@ -29,7 +29,7 @@ privyRoutes.use('/*', async (c, next) => {
 // GET /api/privy/token — Generate a Custom JWT for Privy
 privyRoutes.get('/token', async (c) => {
     const user = c.get('user')
-    const appId = process.env.VITE_PRIVY_APP_ID
+    const appId = process.env.PRIVY_APP_ID || process.env.VITE_PRIVY_APP_ID
     const appSecret = process.env.PRIVY_APP_SECRET
 
     if (!appId || !appSecret) {
