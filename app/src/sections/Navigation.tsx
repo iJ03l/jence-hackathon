@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Sun, Moon, Zap, LogOut, Bell, Loader2 } from 'lucide-react'
+import { Sun, Moon, Zap, LogOut, Bell, Loader2, Menu, X } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
@@ -15,6 +16,11 @@ export default function Navigation() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   const isLoggedIn = !!user
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -270,15 +276,110 @@ export default function Navigation() {
                 </button>
               </div>
             )}
-            {!isLoggedIn && (
-              <Link to="/login" className="btn-primary text-xs py-1.5 px-3">
-                Log in
-              </Link>
-            )}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* Sidebar */}
+          <div className="absolute inset-y-0 right-0 w-3/4 max-w-sm bg-background border-l border-border shadow-2xl animate-in slide-in-from-right sm:w-1/2">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-border/50">
+                <span className="font-bold text-lg">Menu</span>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* User Profile (if logged in) */}
+              {isLoggedIn ? (
+                <div className="p-4 border-b border-border/50 bg-muted/20">
+                  <div className="flex items-center gap-3">
+                    {user.image ? (
+                      <img src={user.image} className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-jence-gold/20 flex items-center justify-center text-sm font-bold text-jence-gold">
+                        {user.name?.[0] || '?'}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-foreground">{user.name}</p>
+                      {user.username && <p className="text-sm text-muted-foreground">@{user.username}</p>}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border-b border-border/50 flex flex-col gap-2">
+                  <Link to="/login" className="btn-secondary w-full text-center py-2">Log in</Link>
+                  <Link to="/register" className="btn-primary w-full text-center py-2">Get started</Link>
+                </div>
+              )}
+
+              {/* Links */}
+              <div className="flex-1 overflow-y-auto py-2">
+                <div className="flex flex-col px-2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.label}
+                      to={link.href}
+                      className={`px-4 py-3 rounded-xl flex items-center text-sm font-medium transition-colors ${location.pathname === link.href
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                        }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+
+                  {isLoggedIn && (
+                    <Link
+                      to="/dashboard"
+                      className={`px-4 py-3 rounded-xl flex items-center text-sm font-medium transition-colors mt-2 ${location.pathname === '/dashboard'
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                        }`}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              {isLoggedIn && (
+                <div className="p-4 border-t border-border/50">
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut size={18} />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </nav>
   )

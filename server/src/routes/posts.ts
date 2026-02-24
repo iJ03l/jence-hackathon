@@ -227,6 +227,37 @@ postsRoutes.get('/:id', async (c) => {
         return c.json({ error: 'Post not found' }, 404)
     }
 
+    // Security check: if post is not free, only send full content to subscribers or the creator
+    let canViewFullContent = postData.isFree === true
+
+    if (!canViewFullContent && userId) {
+        // Check if user is the creator
+        const creatorUser = await db.query.creatorProfile.findFirst({
+            where: eq(creatorProfile.id, postData.creatorId),
+            columns: { userId: true }
+        })
+
+        if (creatorUser?.userId === userId) {
+            canViewFullContent = true
+        } else {
+            // Check if subscribed
+            const sub = await db.query.subscription.findFirst({
+                where: and(
+                    eq(subscription.subscriberUserId, userId),
+                    eq(subscription.creatorProfileId, postData.creatorId)
+                )
+            })
+            if (sub) {
+                canViewFullContent = true
+            }
+        }
+    }
+
+    if (!canViewFullContent) {
+        // Truncate content so frontend can still show blurred/paywall preview but not the actual content
+        postData.content = postData.excerpt || postData.content.substring(0, 200) + '...'
+    }
+
     // Get stats
     const likesResult = await db
         .select({ value: sum(postVote.value) })
