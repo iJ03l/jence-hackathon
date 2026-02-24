@@ -66,11 +66,15 @@ export const api = {
     unsubscribe: (id: string) =>
         request<any>(`/subscriptions/${id}`, { method: 'DELETE' }),
 
+    // Wallet
+    createWallet: () => request<any>('/wallet/create', { method: 'POST' }),
+    exportWallet: () => request<{ privateKey: string }>('/wallet/export'),
+
     // Ratings
-    rateCreator: (creatorProfileId: string, rating: number, feedback: string) =>
+    rateCreator: (creatorProfileId: string, userId: string, rating: number, feedback: string) =>
         request<any>(`/creators/${creatorProfileId}/rate`, {
             method: 'POST',
-            body: JSON.stringify({ userId: localStorage.getItem('userId'), rating, feedback }),
+            body: JSON.stringify({ userId, rating, feedback }),
         }),
 
     // Notifications

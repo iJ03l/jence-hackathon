@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { usePrivy, useSubscribeToJwtAuthWithFlag } from '@privy-io/react-auth'
 
 interface User {
     id: string
@@ -12,6 +11,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null
+    walletAddress: string | null
     loading: boolean
     signIn: (email: string, password: string) => Promise<{ error?: string }>
     signUp: (username: string, email: string, password: string, role: string) => Promise<{ error?: string }>
@@ -27,33 +27,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
+    const [walletAddress, setWalletAddress] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
-    const { logout: privyLogout } = usePrivy()
-
-    // Determine if the user is authenticated from our Better Auth system
-    const isAuthenticated = !!user
-
-    // Fetch the token from the backend
-    const getExternalJwt = useCallback(async () => {
-        try {
-            const tokenRes = await fetch(`${API_URL}/api/privy/token`, {
-                credentials: 'include',
-            })
-            if (tokenRes.ok) {
-                const { token } = await tokenRes.json()
-                return token
-            }
-        } catch (err) {
-            console.error('Failed to sync Privy session:', err)
-        }
-        return undefined
-    }, [])
-
-    // Synchronize the Custom JWT with Privy automatically
-    useSubscribeToJwtAuthWithFlag({
-        isAuthenticated,
-        getExternalJwt,
-    })
 
     const refreshSession = useCallback(async () => {
         try {
@@ -62,12 +37,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             if (res.ok) {
                 const data = await res.json()
-                setUser(data?.user || null)
+                const fetchedUser = data?.user || null
+                setUser(fetchedUser)
+
+                if (fetchedUser) {
+                    try {
+                        const walletRes = await fetch(`${API_URL}/api/wallet/me`, { credentials: 'include' })
+                        if (walletRes.ok) {
+                            const walletData = await walletRes.json()
+                            setWalletAddress(walletData?.address || null)
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch wallet address', e)
+                    }
+                } else {
+                    setWalletAddress(null)
+                }
             } else {
                 setUser(null)
+                setWalletAddress(null)
             }
         } catch {
             setUser(null)
+            setWalletAddress(null)
         } finally {
             setLoading(false)
         }
@@ -89,8 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!res.ok) {
                 return { error: data?.message || 'Login failed' }
             }
-            setUser(data?.user || null)
-            setUser(data?.user || null)
+            await refreshSession()
             return {}
         } catch {
             return { error: 'Network error. Please try again.' }
@@ -111,8 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!res.ok) {
                 return { error: data?.message || 'Registration failed' }
             }
-            setUser(data?.user || null)
-            setUser(data?.user || null)
+            await refreshSession()
             return {}
         } catch {
             return { error: 'Network error. Please try again.' }
@@ -121,23 +111,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleSignOut = async () => {
         try {
-            await Promise.all([
-                fetch(`${API_URL}/api/auth/sign-out`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                }),
-                privyLogout()
-            ])
+            await fetch(`${API_URL}/api/auth/sign-out`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+            })
         } catch {
             // ignore
         }
         setUser(null)
+        setWalletAddress(null)
     }
 
     return (
-        <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut: handleSignOut, refreshSession }}>
+        <AuthContext.Provider value={{ user, walletAddress, loading, signIn, signUp, signOut: handleSignOut, refreshSession }}>
             {children}
         </AuthContext.Provider>
     )

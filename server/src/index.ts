@@ -22,8 +22,9 @@ import subscriptionsRoutes from './routes/subscriptions.js'
 import notificationsRoutes from './routes/notifications.js'
 import communityRoutes from './routes/community.js'
 import uploadRoutes from './routes/upload.js'
-import privyRoutes from './routes/privy.js'
+import walletRoutes from './routes/wallet.js'
 import statsRoutes from './routes/stats.js'
+import { startSubscriptionCron } from './cron/subscriptions.js'
 
 const app = new Hono()
 
@@ -66,7 +67,7 @@ app.route('/api/subscriptions', subscriptionsRoutes)
 app.route('/api/notifications', notificationsRoutes)
 app.route('/api/community', communityRoutes)
 app.route('/api/upload', uploadRoutes)
-app.route('/api/privy', privyRoutes)
+app.route('/api/wallet', walletRoutes)
 app.route('/api/stats', statsRoutes)
 
 // Start server
@@ -78,6 +79,7 @@ serve({
     hostname: '0.0.0.0', // Listen on all network interfaces
 }, (info) => {
     console.log(`🚀 Jence server running on http://localhost:${info.port}`)
+    startSubscriptionCron()
 })
 
 export default app

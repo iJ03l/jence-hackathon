@@ -7,9 +7,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
-import { useWallets, useCreateWallet } from '@privy-io/react-auth/solana'
-import { usePrivy } from '@privy-io/react-auth'
 import CreatorDashboardPage from './CreatorDashboardPage'
+import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
     Landmark, Shield, Trophy, Bitcoin, Building2,
@@ -17,14 +16,11 @@ const iconMap: Record<string, any> = {
 }
 
 export default function DashboardPage() {
-    const { user, loading: authLoading, signOut, refreshSession } = useAuth()
+    const { user, walletAddress, refreshSession, loading: authLoading, signOut } = useAuth()
     const navigate = useNavigate()
     const [verticals, setVerticals] = useState<any[]>([])
     const [posts, setPosts] = useState<any[]>([])
     const [loadingPosts, setLoadingPosts] = useState(true)
-    const { wallets } = useWallets()
-    const { createWallet } = useCreateWallet()
-    const { ready: privyReady, user: privyUser } = usePrivy()
 
     // Redirect if not logged in
     useEffect(() => {
@@ -56,22 +52,19 @@ export default function DashboardPage() {
         migrateRole()
     }, [user, navigate, refreshSession])
 
-    // Provision Privy embedded wallet for users who don't have one yet
+    // Provision embedded wallet for users who don't have one yet
     // (e.g. Google OAuth users landing here for the first time)
     useEffect(() => {
-        if (!user || authLoading || !privyReady) return
+        if (!user || authLoading) return
 
-        const hasPrivyLinkedWallet = privyUser?.linkedAccounts?.some(
-            (acc) => acc.type === 'wallet' && acc.walletClientType === 'privy'
-        )
-        const hasEmbedded = wallets.some((w: any) => w.walletClientType === 'privy')
-
-        if (!hasEmbedded && !hasPrivyLinkedWallet) {
-            createWallet().catch((err) =>
-                console.error('Failed to provision embedded wallet:', err)
-            )
+        if (!walletAddress) {
+            api.createWallet()
+                .then(() => refreshSession())
+                .catch((err: any) =>
+                    console.error('Failed to provision embedded wallet:', err)
+                )
         }
-    }, [user, authLoading, privyReady, privyUser, wallets, createWallet])
+    }, [user, authLoading, walletAddress])
 
     useEffect(() => {
         if (user?.role === 'creator') return // Don't fetch feed if creator
@@ -106,6 +99,7 @@ export default function DashboardPage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
+            <SEO title="Dashboard" url="/dashboard" noIndex />
             <div className="max-w-6xl mx-auto flex gap-8">
                 {/* Sidebar */}
                 <aside className="hidden lg:block w-64 shrink-0">

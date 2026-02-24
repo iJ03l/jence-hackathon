@@ -77,6 +77,7 @@ creatorsRoutes.get('/:id', async (c) => {
             createdAt: creatorRating.createdAt,
             user: {
                 username: user.username,
+                name: user.name,
                 image: user.image,
             }
         })
@@ -181,6 +182,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
             createdAt: creatorRating.createdAt,
             user: {
                 username: user.username,
+                name: user.name,
                 image: user.image,
             }
         })
@@ -286,6 +288,7 @@ creatorsRoutes.get('/user/:userId', async (c) => {
             createdAt: creatorRating.createdAt,
             user: {
                 username: user.username,
+                name: user.name,
                 image: user.image,
             }
         })

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
+import SEO from '../components/SEO'
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -31,6 +32,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+            <SEO title="Sign In" url="/login" description="Sign in to your Jence account to access premium expert analysis and subscriptions." />
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <Link to="/" className="flex items-center justify-center gap-2 mb-8">
@@ -167,6 +169,12 @@ export default function LoginPage() {
                         <Link to="/register" className="text-jence-gold hover:underline">Create one</Link>
                     </p>
                 </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                    <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                    {' · '}
+                    <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+                </p>
             </div>
         </div>
     )

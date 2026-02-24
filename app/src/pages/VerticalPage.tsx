@@ -6,6 +6,7 @@ import {
     AlertTriangle, Clock, FileText
 } from 'lucide-react'
 import { api } from '../lib/api'
+import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
     Landmark, Shield, Trophy, Bitcoin, Building2,
@@ -64,6 +65,11 @@ export default function VerticalPage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
+            <SEO
+                title={`${vertical.name} — Expert Analysis`}
+                url={`/verticals/${slug}`}
+                description={vertical.description || `Browse expert analysis in ${vertical.name}. Anonymous insider insights from verified industry experts on Jence.`}
+            />
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-6">

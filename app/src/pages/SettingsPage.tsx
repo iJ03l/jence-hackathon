@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Bell, Shield, CreditCard, DollarSign, Copy, Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
-import { useWallets, useCreateWallet, useExportWallet } from '@privy-io/react-auth/solana'
-import { usePrivy } from '@privy-io/react-auth'
 const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -13,7 +11,7 @@ const tabs = [
 ]
 
 export default function SettingsPage() {
-    const { user, loading: authLoading, signOut } = useAuth()
+    const { user, walletAddress, refreshSession, loading: authLoading, signOut } = useAuth()
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('profile')
     const [payoutAddress, setPayoutAddress] = useState('')
@@ -22,32 +20,23 @@ export default function SettingsPage() {
     const [avatarUrl, setAvatarUrl] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [anonymousName, setAnonymousName] = useState('')
-    const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
+
     const [uploadingImage, setUploadingImage] = useState(false)
     const [exportingData, setExportingData] = useState(false)
     const [creatorId, setCreatorId] = useState<string | null>(null)
     const [walletCreating, setWalletCreating] = useState(false)
     const [walletError, setWalletError] = useState('')
     const [copied, setCopied] = useState(false)
+    const [exportingWallet, setExportingWallet] = useState(false)
+    const [exportModalOpen, setExportModalOpen] = useState(false)
+    const [privateKeyToDisplay, setPrivateKeyToDisplay] = useState('')
+    const [copiedPrivateKey, setCopiedPrivateKey] = useState(false)
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const initialLoadDone = useRef(false)
+    const profileSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const payoutSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // Privy Wallet 
-    const { wallets } = useWallets()
-    const { createWallet } = useCreateWallet()
-    const { exportWallet } = useExportWallet()
-    const { ready: privyReady, user: privyUser } = usePrivy()
-
-    const privyLinkedWallet = privyUser?.linkedAccounts?.find(
-        (acc) => acc.type === 'wallet' && acc.walletClientType === 'privy'
-    )
-    const hasPrivyLinkedWallet = !!privyLinkedWallet
-
-    // The embeddedWallet might take a moment to appear in 'wallets' even after 'ready'
-    const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
-    const hasWallet = !!embeddedWallet || !!hasPrivyLinkedWallet
-
-    // Some types in Privy linkedAccounts have 'address' field
-    const walletAddress = embeddedWallet?.address || (privyLinkedWallet as any)?.address || ''
+    const hasWallet = !!walletAddress
 
     // Load initial data
     useEffect(() => {
@@ -63,8 +52,12 @@ export default function SettingsPage() {
                     setPayoutAddress(res.creator.payoutAddress || '')
                     setPayoutMethod(res.creator.payoutMethod || 'crypto')
                     setSubscriptionPrice(res.creator.subscriptionPrice || '0')
+                    // Mark initial load as done after a tick so auto-save effects don't fire
+                    setTimeout(() => { initialLoadDone.current = true }, 500)
                 })
                 .catch(console.error)
+        } else {
+            setTimeout(() => { initialLoadDone.current = true }, 500)
         }
     }, [user])
 
@@ -74,21 +67,22 @@ export default function SettingsPage() {
         }
     }, [user, authLoading, navigate])
 
-    // Auto-provision Privy embedded wallet if missing
+    // Auto-provision embedded wallet if missing
     useEffect(() => {
-        if (!user || authLoading || !privyReady) return
+        if (!user || authLoading) return
         if (!hasWallet) {
-            createWallet().catch((err) =>
+            api.createWallet().then(() => refreshSession()).catch((err) =>
                 console.error('Failed to provision embedded wallet:', err)
             )
         }
-    }, [user, authLoading, privyReady, hasWallet, createWallet])
+    }, [user, authLoading, hasWallet])
 
     const handleCreateWallet = async () => {
         setWalletCreating(true)
         setWalletError('')
         try {
-            await createWallet()
+            await api.createWallet()
+            await refreshSession()
         } catch (err: any) {
             console.error('Failed to create wallet:', err)
             setWalletError(err?.message || 'Failed to create wallet. Please try again.')
@@ -120,26 +114,52 @@ export default function SettingsPage() {
         }
     }
 
-    const handleSaveProfile = async () => {
+    // Debounced auto-save for profile fields
+    const autoSaveProfile = useCallback(async () => {
         if (!user?.id) return
-        setSaving(true)
-        setSaved(false)
+        setAutoSaveStatus('saving')
         try {
             await api.updateUser(user.id, { image: avatarUrl, name: displayName })
-
             if (creatorId) {
                 await api.updateCreatorProfile(creatorId, { pseudonym: anonymousName })
             }
-
-            setSaved(true)
-            setTimeout(() => setSaved(false), 3000)
+            setAutoSaveStatus('saved')
+            setTimeout(() => setAutoSaveStatus('idle'), 2000)
         } catch (e) {
             console.error(e)
-            alert('Failed to save. Please try again.')
-        } finally {
-            setSaving(false)
+            setAutoSaveStatus('error')
+            setTimeout(() => setAutoSaveStatus('idle'), 3000)
         }
-    }
+    }, [user?.id, avatarUrl, displayName, anonymousName, creatorId])
+
+    useEffect(() => {
+        if (!initialLoadDone.current) return
+        if (profileSaveTimer.current) clearTimeout(profileSaveTimer.current)
+        profileSaveTimer.current = setTimeout(() => autoSaveProfile(), 800)
+        return () => { if (profileSaveTimer.current) clearTimeout(profileSaveTimer.current) }
+    }, [displayName, anonymousName, avatarUrl, autoSaveProfile])
+
+    // Debounced auto-save for payout/subscription fields
+    const autoSavePayout = useCallback(async () => {
+        if (!creatorId) return
+        setAutoSaveStatus('saving')
+        try {
+            await api.updateCreatorProfile(creatorId, { payoutAddress, payoutMethod, subscriptionPrice })
+            setAutoSaveStatus('saved')
+            setTimeout(() => setAutoSaveStatus('idle'), 2000)
+        } catch (e) {
+            console.error(e)
+            setAutoSaveStatus('error')
+            setTimeout(() => setAutoSaveStatus('idle'), 3000)
+        }
+    }, [creatorId, payoutAddress, payoutMethod, subscriptionPrice])
+
+    useEffect(() => {
+        if (!initialLoadDone.current || !creatorId) return
+        if (payoutSaveTimer.current) clearTimeout(payoutSaveTimer.current)
+        payoutSaveTimer.current = setTimeout(() => autoSavePayout(), 800)
+        return () => { if (payoutSaveTimer.current) clearTimeout(payoutSaveTimer.current) }
+    }, [subscriptionPrice, payoutAddress, payoutMethod, autoSavePayout, creatorId])
 
     const handleExportData = async () => {
         if (!user?.id) return
@@ -163,23 +183,46 @@ export default function SettingsPage() {
         }
     }
 
-    const handleSavePayout = async () => {
-        if (!creatorId) return
-        setSaving(true)
-        try {
-            await api.updateCreatorProfile(creatorId, { payoutAddress, payoutMethod, subscriptionPrice })
-        } catch (e) {
-            console.error(e)
-        } finally {
-            setSaving(false)
-        }
-    }
+
 
     const handleCopyAddress = () => {
         if (!walletAddress) return
         navigator.clipboard.writeText(walletAddress)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
+    }
+
+    const handleExportWallet = () => {
+        setExportModalOpen(true)
+        setPrivateKeyToDisplay('')
+    }
+
+    const confirmExportWallet = async () => {
+        setExportingWallet(true)
+        try {
+            const res = await api.exportWallet()
+            if (res.privateKey) {
+                setPrivateKeyToDisplay(res.privateKey)
+            }
+        } catch (err: any) {
+            console.error('Failed to export wallet:', err)
+            alert(err?.message || 'Failed to export private key')
+        } finally {
+            setExportingWallet(false)
+        }
+    }
+
+    const handleCopyPrivateKey = () => {
+        if (!privateKeyToDisplay) return
+        navigator.clipboard.writeText(privateKeyToDisplay)
+        setCopiedPrivateKey(true)
+        setTimeout(() => setCopiedPrivateKey(false), 2000)
+    }
+
+    const closeExportModal = () => {
+        setExportModalOpen(false)
+        setPrivateKeyToDisplay('')
+        setCopiedPrivateKey(false)
     }
 
     if (authLoading) {
@@ -303,13 +346,11 @@ export default function SettingsPage() {
                                         />
                                         <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
                                     </div>
-                                    <button
-                                        onClick={handleSaveProfile}
-                                        disabled={saving}
-                                        className="btn-primary text-sm active:scale-[0.97] transition-all disabled:opacity-50"
-                                    >
-                                        {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save changes'}
-                                    </button>
+                                    <div className="flex items-center gap-2 h-8">
+                                        {autoSaveStatus === 'saving' && <p className="text-xs text-jence-gold animate-pulse">Saving...</p>}
+                                        {autoSaveStatus === 'saved' && <p className="text-xs text-green-500 flex items-center gap-1"><Check size={12} /> Saved</p>}
+                                        {autoSaveStatus === 'error' && <p className="text-xs text-red-400">Failed to save</p>}
+                                    </div>
                                 </div>
 
                                 <div className="mt-8 pt-6 border-t border-border">
@@ -366,18 +407,27 @@ export default function SettingsPage() {
                                                 readOnly
                                             />
                                             {hasWallet && (
-                                                <button
-                                                    onClick={handleCopyAddress}
-                                                    className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                                                    title="Copy Address"
-                                                >
-                                                    {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={handleCopyAddress}
+                                                        className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                                                        title="Copy Address"
+                                                    >
+                                                        {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                                                    </button>
+                                                    <button
+                                                        onClick={handleExportWallet}
+                                                        disabled={exportingWallet}
+                                                        className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50 text-xs"
+                                                    >
+                                                        {exportingWallet ? 'Exporting...' : 'Export Key'}
+                                                    </button>
+                                                </>
                                             )}
                                             {!hasWallet && (
                                                 <button
                                                     onClick={handleCreateWallet}
-                                                    disabled={walletCreating || !privyReady}
+                                                    disabled={walletCreating}
                                                     className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50"
                                                 >
                                                     {walletCreating ? 'Creating...' : 'Create Wallet'}
@@ -389,26 +439,14 @@ export default function SettingsPage() {
                                             This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets. Your current wallet balance can be seen on the wallet you export it to.
                                         </p>
 
-                                        {hasWallet && (
-                                            <div className="mt-3">
-                                                <button
-                                                    onClick={() => exportWallet()}
-                                                    disabled={!privyReady}
-                                                    className="text-sm text-jence-gold hover:text-jence-gold/80 hover:underline transition-all disabled:opacity-50"
-                                                >
-                                                    Export Private Key
-                                                </button>
-                                            </div>
-                                        )}
+
                                     </div>
 
-                                    <button
-                                        onClick={handleSavePayout}
-                                        disabled={saving}
-                                        className="btn-primary text-sm active:scale-[0.97] transition-all disabled:opacity-50"
-                                    >
-                                        {saving ? 'Saving...' : 'Save Payout Settings'}
-                                    </button>
+                                    <div className="flex items-center gap-2 h-8">
+                                        {autoSaveStatus === 'saving' && <p className="text-xs text-jence-gold animate-pulse">Saving payout settings...</p>}
+                                        {autoSaveStatus === 'saved' && <p className="text-xs text-green-500 flex items-center gap-1"><Check size={12} /> Payout settings saved</p>}
+                                        {autoSaveStatus === 'error' && <p className="text-xs text-red-400">Failed to save</p>}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -480,18 +518,27 @@ export default function SettingsPage() {
                                             readOnly
                                         />
                                         {hasWallet && (
-                                            <button
-                                                onClick={handleCopyAddress}
-                                                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0"
-                                                title="Copy Address"
-                                            >
-                                                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={handleCopyAddress}
+                                                    className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0"
+                                                    title="Copy Address"
+                                                >
+                                                    {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={handleExportWallet}
+                                                    disabled={exportingWallet}
+                                                    className="btn-secondary h-[38px] px-3 shrink-0 text-xs disabled:opacity-50"
+                                                >
+                                                    {exportingWallet ? 'Exporting...' : 'Export Key'}
+                                                </button>
+                                            </>
                                         )}
                                         {!hasWallet && (
                                             <button
                                                 onClick={handleCreateWallet}
-                                                disabled={walletCreating || !privyReady}
+                                                disabled={walletCreating}
                                                 className="btn-secondary h-[38px] px-3 shrink-0 text-xs disabled:opacity-50"
                                             >
                                                 {walletCreating ? 'Creating...' : 'Create Wallet'}
@@ -502,15 +549,7 @@ export default function SettingsPage() {
                                     <p className="text-xs text-muted-foreground mb-3">
                                         Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets and check your balance there.
                                     </p>
-                                    {hasWallet && (
-                                        <button
-                                            onClick={() => exportWallet()}
-                                            disabled={!privyReady}
-                                            className="text-xs text-jence-gold hover:text-jence-gold/80 hover:underline transition-all disabled:opacity-50"
-                                        >
-                                            Export Private Key
-                                        </button>
-                                    )}
+
                                 </div>
 
                                 <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
@@ -524,6 +563,72 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Wallet Export Modal */}
+            {exportModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+                    <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden">
+                        <div className="p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                                <Shield className="text-red-500" size={20} />
+                                Export Private Key
+                            </h3>
+
+                            {!privateKeyToDisplay ? (
+                                <>
+                                    <p className="text-sm text-muted-foreground mb-6">
+                                        <strong className="text-red-500 font-semibold block mb-2">WARNING: Never share this key with anyone.</strong>
+                                        Anyone who has your private key has full access to your wallet and can steal your funds. Jence staff will never ask for your private key.
+                                    </p>
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button
+                                            onClick={closeExportModal}
+                                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={confirmExportWallet}
+                                            disabled={exportingWallet}
+                                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors rounded-lg"
+                                        >
+                                            {exportingWallet ? 'Revealing...' : 'Reveal Private Key'}
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-foreground mb-4">
+                                        Your Base58 private key is revealed below. Copy it immediately and store it in a secure password manager.
+                                    </p>
+                                    <div className="relative mb-6">
+                                        <textarea
+                                            readOnly
+                                            value={privateKeyToDisplay}
+                                            className="w-full h-24 p-3 bg-muted/50 rounded-lg font-mono text-sm resize-none pr-12 text-foreground outline-none focus:ring-1 focus:ring-jence-gold/50"
+                                        />
+                                        <button
+                                            onClick={handleCopyPrivateKey}
+                                            className="absolute top-3 right-3 p-2 bg-background hover:bg-muted border border-border shadow-sm rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                                            title="Copy Private Key"
+                                        >
+                                            {copiedPrivateKey ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                        </button>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={closeExportModal}
+                                            className="px-4 py-2 text-sm font-medium text-background bg-foreground rounded-lg hover:bg-jence-gold transition-colors"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </section >
     )
 }

@@ -16,6 +16,8 @@ import CreatorPostDetail from './pages/CreatorPostDetail'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
+import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
 import './App.css'
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/guidelines" element={<CommunityGuidelinesPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/creator-onboarding" element={<CreatorOnboardingPage />} />
           {/* Catch-all for creator profiles (e.g. jence.xyz/username) */}

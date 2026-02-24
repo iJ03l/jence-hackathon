@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { Loader2, Hash, MessageCircle, Send, ArrowBigUp, ArrowBigDown, MoreVertical } from 'lucide-react'
 import { DeleteModal } from '../components/DeleteModal'
 import { linkifyText } from '../lib/linkify'
+import SEO from '../components/SEO'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -140,6 +141,7 @@ export default function CommunityPage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 bg-background min-h-screen">
+            <SEO title="Community" url="/community" description="Join the Jence community — discuss market trends, share insights, and connect with expert analysts and fellow subscribers." />
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
                 {/* Main Feed */}

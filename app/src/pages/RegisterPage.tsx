@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
-import { useCreateWallet } from '@privy-io/react-auth/solana'
+import { api } from '../lib/api'
+import SEO from '../components/SEO'
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -17,7 +18,6 @@ export default function RegisterPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-    const { createWallet } = useCreateWallet()
 
     // Password validation logic
     const isPasswordValid =
@@ -43,7 +43,7 @@ export default function RegisterPage() {
         } else {
             // Provision empty embedded wallet seamlessly upon signup
             try {
-                await createWallet()
+                await api.createWallet()
             } catch (err) {
                 console.error("Failed to provision embedded wallet:", err)
             }
@@ -262,6 +262,13 @@ export default function RegisterPage() {
                         <Link to="/login" className="text-jence-gold hover:underline">Sign in</Link>
                     </p>
                 </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                    By creating an account, you agree to our{' '}
+                    <Link to="/terms" className="text-jence-gold hover:underline">Terms</Link>
+                    {' and '}
+                    <Link to="/privacy" className="text-jence-gold hover:underline">Privacy Policy</Link>.
+                </p>
             </div>
         </div>
     )

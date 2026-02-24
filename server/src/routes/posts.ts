@@ -316,19 +316,26 @@ postsRoutes.get('/:id/comments', async (c) => {
 // POST /api/posts/:id/vote
 postsRoutes.post('/:id/vote', async (c) => {
     const id = c.req.param('id')
-    const { userId, value } = await c.req.json() // 1 or -1
+    const { userId, value } = await c.req.json() // 1, -1, or 0 (remove vote)
 
-    if (!userId || !value) return c.json({ error: 'Missing fields' }, 400)
+    if (!userId || value === undefined || value === null) return c.json({ error: 'Missing fields' }, 400)
 
-    // Upsert vote
-    await db.insert(postVote).values({
-        postId: id,
-        userId,
-        value
-    }).onConflictDoUpdate({
-        target: [postVote.postId, postVote.userId],
-        set: { value }
-    })
+    if (value === 0) {
+        // Remove vote
+        await db.delete(postVote).where(
+            and(eq(postVote.postId, id), eq(postVote.userId, userId))
+        )
+    } else {
+        // Upsert vote
+        await db.insert(postVote).values({
+            postId: id,
+            userId,
+            value
+        }).onConflictDoUpdate({
+            target: [postVote.postId, postVote.userId],
+            set: { value }
+        })
+    }
 
     return c.json({ success: true })
 })

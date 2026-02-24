@@ -3,10 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
-import { buildSubscriptionTransaction } from '../lib/solana'
-import { useWallets, useSignAndSendTransaction } from '@privy-io/react-auth/solana'
-import { usePrivy } from '@privy-io/react-auth'
-import { PublicKey } from '@solana/web3.js'
+import SEO from '../components/SEO'
 
 export default function CreatorProfilePage() {
     const { username } = useParams<{ username: string }>()
@@ -18,16 +15,12 @@ export default function CreatorProfilePage() {
     const [paymentError, setPaymentError] = useState('')
 
     // Rating state
-    const [ratingValue, setRatingValue] = useState(5)
+    const [ratingValue, setRatingValue] = useState(0)
     const [feedbackText, setFeedbackText] = useState('')
     const [submittingRating, setSubmittingRating] = useState(false)
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
-    const { wallets } = useWallets()
-    const { signAndSendTransaction } = useSignAndSendTransaction()
-    const { user: privyUser } = usePrivy()
 
-    const creatorSharePercent = parseInt(import.meta.env.VITE_CREATOR_PAYOUT_PERCENT || '80')
 
     useEffect(() => {
         if (!username) return
@@ -50,69 +43,9 @@ export default function CreatorProfilePage() {
         setPaymentError('')
 
         try {
-            const price = parseFloat(data.creator.subscriptionPrice || '0')
-            let txSignature: string | undefined
-
-            if (price > 0) {
-                // Find the embedded Privy wallet
-                const embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy')
-                const privyLinkedWallet = privyUser?.linkedAccounts?.find(
-                    (acc: any) => acc.type === 'wallet' && acc.walletClientType === 'privy'
-                )
-
-                // Fallback to linked wallet address if embeddedWallet isn't fully populated yet
-                const walletAddress = embeddedWallet?.address || (privyLinkedWallet as any)?.address
-
-                if (!walletAddress) {
-                    setPaymentError('No embedded wallet found. Please create one in Settings.')
-                    setSubscribing(false)
-                    return
-                }
-
-                // Creator must have a payout address
-                const creatorWallet = data.creator.payoutAddress
-                if (!creatorWallet) {
-                    setPaymentError('Creator has not set up a payout wallet yet.')
-                    setSubscribing(false)
-                    return
-                }
-
-                // Build the USDC transfer transaction
-                const tx = await buildSubscriptionTransaction({
-                    payerPublicKey: new PublicKey(walletAddress),
-                    creatorWalletAddress: creatorWallet,
-                    priceUsdc: price,
-                    creatorSharePercent,
-                })
-
-                if (tx) {
-                    // We must have the full embeddedWallet object to sign via Privy React SDK
-                    if (!embeddedWallet) {
-                        setPaymentError('Wallet is still initializing. Please try again in a few seconds.')
-                        setSubscribing(false)
-                        return
-                    }
-
-                    // Serialize and send via Privy
-                    const serializedTx = tx.serialize({ requireAllSignatures: false, verifySignatures: false })
-                    const { signature } = await signAndSendTransaction({
-                        transaction: serializedTx,
-                        wallet: embeddedWallet,
-                        options: { sponsor: true },
-                    })
-                    // Convert signature Uint8Array to base58 string
-                    const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-                    let sigStr = ''
-                    let num = BigInt('0x' + Array.from(signature).map(b => b.toString(16).padStart(2, '0')).join(''))
-                    while (num > 0n) {
-                        sigStr = bs58Chars[Number(num % 58n)] + sigStr
-                        num = num / 58n
-                    }
-                    txSignature = sigStr || undefined
-                }
-            }
-
-            await api.subscribe(user.id, data.creator.id, txSignature)
+            // Note: The backend POST /api/subscriptions route now handles 
+            // the actual USDC transaction using the user's managed wallet.
+            await api.subscribe(user.id, data.creator.id)
             setSubscribed(true)
         } catch (err: any) {
             console.error('Subscription failed:', err)
@@ -127,7 +60,7 @@ export default function CreatorProfilePage() {
         if (!user || !data?.creator?.id) return
         setSubmittingRating(true)
         try {
-            await api.rateCreator(data.creator.id, ratingValue, feedbackText)
+            await api.rateCreator(data.creator.id, user.id, ratingValue, feedbackText)
             // Refresh data
             const res = await api.getCreatorByUsername(username!)
             setData(res)
@@ -229,6 +162,13 @@ export default function CreatorProfilePage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
+            <SEO
+                title={`${creator.pseudonym || creator.user?.name || username} — Expert Analysis`}
+                description={`Subscribe to ${creator.pseudonym || username}'s premium analysis on Jence. ${creator.bio || 'Anonymous expert insights from a verified industry insider.'}`}
+                url={`/${username}`}
+                image={creator.user?.image || undefined}
+                type="profile"
+            />
             <div className="max-w-3xl mx-auto">
                 {/* Profile Header */}
                 <div className="card-plug p-6 mb-6">
@@ -476,8 +416,8 @@ export default function CreatorProfilePage() {
                                 )}
 
                                 <div className="space-y-3">
-                                    {data.feedback && data.feedback.length > 0 ? (
-                                        data.feedback.map((review: any) => (
+                                    {data.feedback && data.feedback.filter((r: any) => r.feedback).length > 0 ? (
+                                        data.feedback.filter((r: any) => r.feedback).map((review: any) => (
                                             <div key={review.id} className="card-plug p-4 bg-background">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex items-center gap-2">
@@ -489,7 +429,7 @@ export default function CreatorProfilePage() {
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-medium text-foreground">@{review.user?.username || 'user'}</p>
+                                                            <p className="text-xs font-medium text-foreground">{review.user?.name || review.user?.username || 'Anonymous'}</p>
                                                             <p className="text-[10px] text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
                                                         </div>
                                                     </div>
@@ -499,9 +439,11 @@ export default function CreatorProfilePage() {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                {review.feedback && (
-                                                    <p className="text-xs text-foreground/90 mt-2 leading-relaxed">{review.feedback}</p>
-                                                )}
+                                                {
+                                                    review.feedback && (
+                                                        <p className="text-xs text-foreground/90 mt-2 leading-relaxed">{review.feedback}</p>
+                                                    )
+                                                }
                                             </div>
                                         ))
                                     ) : (
@@ -526,6 +468,6 @@ export default function CreatorProfilePage() {
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     )
 }

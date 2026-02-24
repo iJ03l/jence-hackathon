@@ -6,6 +6,7 @@ import {
     ArrowRight, FileText
 } from 'lucide-react'
 import { api } from '../lib/api'
+import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
     Landmark, Shield, Trophy, Bitcoin, Building2,
@@ -25,6 +26,7 @@ export default function ExplorePage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
+            <SEO title="Explore" url="/explore" description="Browse expert analysis by vertical — crypto, finance, real estate, sports, and more. Find the anonymous insider insights that matter to you." />
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
