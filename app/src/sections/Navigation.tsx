@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Sun, Moon, Zap, LogOut, Bell, Loader2 } from 'lucide-react'
+import { Sun, Moon, Zap, LogOut, Bell, Loader2 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()

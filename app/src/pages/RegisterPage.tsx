@@ -4,7 +4,7 @@ import { Zap, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
 import { api } from '../lib/api'
-import SEO from '../components/SEO'
+
 
 export default function RegisterPage() {
     const navigate = useNavigate()
