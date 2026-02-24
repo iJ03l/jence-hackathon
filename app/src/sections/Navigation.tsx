@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Sun, Moon, Zap, LogOut, Bell, Loader2, Menu, X } from 'lucide-react'
+import { Sun, Moon, Zap, LogOut, Bell, Loader2, X, Menu } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -278,18 +279,18 @@ export default function Navigation() {
             )}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="p-2 -mr-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex items-center justify-center w-10 h-10 group"
               aria-label="Open menu"
             >
-              <Menu size={20} />
+              <Menu size={20} className="transition-transform group-hover:scale-110" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+      {isMobileMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] md:hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
@@ -311,7 +312,7 @@ export default function Navigation() {
               </div>
 
               {/* User Profile (if logged in) */}
-              {isLoggedIn ? (
+              {isLoggedIn && user ? (
                 <div className="p-4 border-b border-border/50 bg-muted/20">
                   <div className="flex items-center gap-3">
                     {user.image ? (
@@ -378,7 +379,8 @@ export default function Navigation() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </nav>
