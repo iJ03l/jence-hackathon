@@ -245,7 +245,7 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Actions (Theme Toggle & Notifications) */}
           <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={toggleTheme}
@@ -254,80 +254,32 @@ export default function Navigation() {
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <button
-              className="p-2 text-foreground"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {isLoggedIn && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors outline-none"
+                  title="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-jence-gold text-jence-black text-[10px] font-bold flex items-center justify-center border-2 border-background">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+            {!isLoggedIn && (
+              <Link to="/login" className="btn-primary text-xs py-1.5 px-3">
+                Log in
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-xl border-t border-border">
-          <div className="px-4 py-6 space-y-4">
-            {navLinks.map((link) =>
-              link.href.startsWith('#') ? (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="block text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  className="block text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              )
-            )}
-            <div className="pt-4 border-t border-border space-y-3">
-              {isLoggedIn ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="btn-primary w-full text-center block mb-4"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => { handleSignOut(); setIsMobileMenuOpen(false) }}
-                    className="block w-full text-left text-red-400 mt-2"
-                  >
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="block w-full text-left text-muted-foreground"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="btn-primary w-full text-center block"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Get started
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
     </nav>
   )
 }

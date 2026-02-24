@@ -197,3 +197,50 @@
 .animate-slow-pulse {
   animation: slowPulse 15s ease-in-out infinite alternate;
 }
+
+/* PWA App Experience Enhancements */
+body {
+  /* Prevent pull-to-refresh and bounce on mobile */
+  overscroll-behavior-y: none;
+  /* Disable text selection everywhere except inputs to feel native */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+/* Mobile Tab Bar */
+.mobile-tab-bar {
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border md:hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Respect iOS home indicator */
+}
+
+.mobile-tab-bar-inner {
+  @apply flex items-center justify-around h-16 px-2;
+}
+
+.mobile-tab {
+  @apply flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground transition-colors;
+}
+
+.mobile-tab-active {
+  @apply text-foreground;
+}
+
+.mobile-tab-label {
+  @apply text-[10px] font-medium;
+}
+
+.mobile-tab-center {
+  @apply flex items-center justify-center w-full h-full -mt-6;
+}
+
+.mobile-tab-center-ring {
+  @apply w-12 h-12 bg-jence-gold text-jence-black rounded-full flex items-center justify-center shadow-lg shadow-jence-gold/20 transform transition-transform active:scale-95;
+}
