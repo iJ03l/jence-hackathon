@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown } from 'lucide-react'
+import { linkifyText } from '../lib/linkify'
 
 
 export default function PostDetail() {
@@ -154,7 +155,7 @@ export default function PostDetail() {
                                 <span className="text-muted-foreground text-xs">•</span>
                                 <span className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <p className="text-foreground text-lg whitespace-pre-wrap mb-4">{post.content.replace(/#[\w]+/gi, '').trim()}</p>
+                            <p className="text-foreground text-lg whitespace-pre-wrap mb-4">{linkifyText(post.content.replace(/#[\w]+/gi, '').trim())}</p>
 
                             {/* Tags */}
                             {post.tags && post.tags.length > 0 && (
@@ -266,7 +267,7 @@ export default function PostDetail() {
                                         <span className="text-muted-foreground text-xs">•</span>
                                         <span className="text-muted-foreground text-xs">{new Date(comment.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">{comment.content}</p>
+                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">{linkifyText(comment.content)}</p>
                                 </div>
                             </div>
                         </div>

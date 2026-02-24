@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Loader2, Hash, MessageCircle, Send, ArrowBigUp, ArrowBigDown, MoreVertical } from 'lucide-react'
 import { DeleteModal } from '../components/DeleteModal'
+import { linkifyText } from '../lib/linkify'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -274,7 +275,8 @@ export default function CommunityPage() {
                                                 <p className="text-foreground/90 whitespace-pre-wrap mb-3 group-hover:text-jence-gold transition-colors">
                                                     {(() => {
                                                         const cleanContent = post.content.replace(/#[\w]+/gi, '').trim();
-                                                        return cleanContent.length > 258 ? `${cleanContent.substring(0, 258)}...` : cleanContent;
+                                                        const truncated = cleanContent.length > 258 ? `${cleanContent.substring(0, 258)}...` : cleanContent;
+                                                        return linkifyText(truncated);
                                                     })()}
                                                 </p>
                                             </Link>

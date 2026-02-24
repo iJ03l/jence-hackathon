@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock } from 'lucide-react'
+import { linkifyText } from '../lib/linkify'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -164,7 +165,7 @@ export default function CreatorPostDetail() {
                             <h1 className="text-2xl font-bold text-foreground mb-4">{post.title}</h1>
 
                             <div className="prose prose-invert max-w-none mb-6">
-                                <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+                                <p className="text-foreground/90 whitespace-pre-wrap">{linkifyText(post.content)}</p>
                             </div>
 
                             {/* Actions */}
@@ -249,7 +250,7 @@ export default function CreatorPostDetail() {
                                         <span className="text-muted-foreground text-xs">•</span>
                                         <span className="text-muted-foreground text-xs">{new Date(comment.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">{comment.content}</p>
+                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">{linkifyText(comment.content)}</p>
                                 </div>
                             </div>
                         </div>

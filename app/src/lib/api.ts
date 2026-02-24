@@ -30,9 +30,9 @@ export const api = {
     getCreators: () => request<any[]>('/creators'),
     getCreator: (id: string) => request<{ creator: any; posts: any[] }>(`/creators/${id}`),
     getCreatorByUsername: (username: string, viewerUserId?: string) =>
-        request<{ creator: any; posts: any[] }>(`/creators/u/${username}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
+        request<{ creator: any; posts: any[]; feedback?: any[] }>(`/creators/u/${username}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
     getCreatorByUserId: (userId: string, viewerUserId?: string) =>
-        request<{ creator: any; posts: any[] }>(`/creators/user/${userId}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
+        request<{ creator: any; posts: any[]; feedback?: any[] }>(`/creators/user/${userId}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
     onboardCreator: (data: any) =>
         request<any>('/creators/onboard', { method: 'POST', body: JSON.stringify(data) }),
     updateCreatorProfile: (id: string, data: any) =>

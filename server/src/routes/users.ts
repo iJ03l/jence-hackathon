@@ -58,7 +58,7 @@ usersRoutes.get('/:id/export', async (c) => {
 
     // Check if user is a creator
     let creatorData = null
-    let creatorPosts = []
+    let creatorPosts: any[] = []
 
     if (userProfile.role === 'creator') {
         const [profile] = await db.select().from(creatorProfile).where(eq(creatorProfile.userId, id))

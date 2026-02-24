@@ -352,9 +352,9 @@ export default function HeroSection() {
           ref={headlineRef}
           className="heading-xl text-foreground mb-6"
         >
-          Know what,
+          Know what
           <br />
-          <span className="text-gradient-gold">insiders know.</span>
+          <span className="text-gradient-gold">They know.</span>
         </h1>
 
         {/* Subheadline */}

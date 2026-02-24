@@ -1,19 +1,119 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- PWA / App-like behavior meta tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Jence" />
-    <meta name="theme-color" content="#000000" />
-    <link rel="manifest" href="/manifest.json" />
-    
-    <title>Jence - Anonymous Expert Analysis</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- PWA / App-like behavior meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Jence" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <title>Jence - Anonymous Expert Analysis</title>
+</head>
+
+<body>
+  <!-- Mobile Splash / Loading Screen -->
+  <div id="splash-screen" style="
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    ">
+    <style>
+      @keyframes splash-shimmer {
+        0% {
+          background-position: -200% center;
+        }
+
+        100% {
+          background-position: 200% center;
+        }
+      }
+
+      @keyframes splash-pulse {
+
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+      #splash-logo {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(90deg, #FFD700 0%, #fff 40%, #FFD700 80%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: splash-shimmer 2s linear infinite;
+      }
+
+      #splash-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #FFD700;
+        margin-top: 24px;
+        animation: splash-pulse 1.2s ease-in-out infinite;
+      }
+
+      #splash-screen.hide {
+        opacity: 0;
+        visibility: hidden;
+      }
+    </style>
+    <div id="splash-logo">Jence</div>
+    <div id="splash-dot"></div>
+  </div>
+
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    (function () {
+      var splash = document.getElementById('splash-screen');
+      if (!splash) return;
+
+      // Only show splash once per session
+      if (sessionStorage.getItem('jence_splash_shown')) {
+        splash.remove();
+        return;
+      }
+      sessionStorage.setItem('jence_splash_shown', '1');
+
+      // Hide splash once React app has rendered
+      var observer = new MutationObserver(function () {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          splash.classList.add('hide');
+          setTimeout(function () { splash.remove(); }, 500);
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true });
+      // Fallback: hide after 5 seconds max
+      setTimeout(function () {
+        if (splash.parentNode) {
+          splash.classList.add('hide');
+          setTimeout(function () { splash.remove(); }, 500);
+        }
+      }, 5000);
+    })();
+  </script>
+</body>
+
 </html>
