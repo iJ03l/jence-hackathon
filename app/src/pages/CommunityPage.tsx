@@ -45,6 +45,17 @@ export default function CommunityPage() {
     const [postToDelete, setPostToDelete] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
     const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+    const [expandedTagsDesktop, setExpandedTagsDesktop] = useState(false)
+    const [expandedTagsMobile, setExpandedTagsMobile] = useState(false)
+
+    // Hashtag suggestion state
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [cursorPosition, setCursorPosition] = useState(0)
+    const [activeHashtagIndex, setActiveHashtagIndex] = useState(-1)
+    const [suggestionQuery, setSuggestionQuery] = useState('')
+
+    // Tag limit alert state
+    const [showTagLimitAlert, setShowTagLimitAlert] = useState(false)
 
     // Load Data
     useEffect(() => {
@@ -69,6 +80,15 @@ export default function CommunityPage() {
 
     const handlePost = async () => {
         if (!user || !newPostContent.trim()) return
+
+        // Validate max 2 tags constraint
+        const tagsInPost = (newPostContent.match(/#[\w]+/gi) || []).map(t => t.toLowerCase())
+        const uniqueTags = new Set(tagsInPost)
+        if (uniqueTags.size > 2) {
+            setShowTagLimitAlert(true)
+            return
+        }
+
         setPosting(true)
         try {
             await api.createCommunityPost({
@@ -81,6 +101,68 @@ export default function CommunityPage() {
             console.error(e)
         } finally {
             setPosting(false)
+        }
+    }
+
+    // Hashtag auto-complete handlers
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value
+        setNewPostContent(value)
+        const pos = e.target.selectionStart
+        setCursorPosition(pos)
+
+        // Only search backwards from cursor up to the first space
+        const textBeforeCursor = value.substring(0, pos)
+        const wordsBeforeCursor = textBeforeCursor.split(/\s+/)
+        const currentWord = wordsBeforeCursor[wordsBeforeCursor.length - 1]
+
+        if (currentWord.startsWith('#') && currentWord.length >= 2) {
+            // Typing a tag
+            setSuggestionQuery(currentWord.substring(1).toLowerCase())
+            setShowSuggestions(true)
+            setActiveHashtagIndex(0)
+        } else {
+            setShowSuggestions(false)
+        }
+    }
+
+    const filteredSuggestions = trendingTags
+        .filter(tag => tag.name.toLowerCase().includes(suggestionQuery))
+        .slice(0, 5)
+
+    const insertSuggestion = (tagName: string) => {
+        const textBeforeCursor = newPostContent.substring(0, cursorPosition)
+        const textAfterCursor = newPostContent.substring(cursorPosition)
+        const wordsBeforeCursor = textBeforeCursor.split(/\s+/)
+
+        // Remove the partial hashtag word being typed
+        wordsBeforeCursor.pop()
+
+        // Construct the new string
+        const prefix = wordsBeforeCursor.join(' ')
+        const separator = prefix.length > 0 ? ' ' : ''
+        const newText = prefix + separator + '#' + tagName + ' ' + textAfterCursor
+
+        setNewPostContent(newText)
+        setShowSuggestions(false)
+
+        // Focus will inevitably shift, so it's a small compromise to jump cursor to end or require manual refocus
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!showSuggestions || filteredSuggestions.length === 0) return
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setActiveHashtagIndex(prev => (prev < filteredSuggestions.length - 1 ? prev + 1 : prev))
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setActiveHashtagIndex(prev => (prev > 0 ? prev - 1 : 0))
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault()
+            insertSuggestion(filteredSuggestions[activeHashtagIndex].name)
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false)
         }
     }
 
@@ -146,7 +228,7 @@ export default function CommunityPage() {
 
                 {/* Main Feed */}
                 <div className="lg:col-span-3 space-y-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                             {activeTag ? (
                                 <>
@@ -164,6 +246,33 @@ export default function CommunityPage() {
                         )}
                     </div>
 
+                    {/* Mobile Trending Topics (Hidden on Desktop) */}
+                    <div className="lg:hidden w-full overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <div className="flex gap-2 w-max">
+                            {(expandedTagsMobile ? trendingTags : trendingTags.slice(0, 10)).map((tag) => (
+                                <Link
+                                    key={`mobile-${tag.id}`}
+                                    to={`/community?tag=${tag.name}`}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all border whitespace-nowrap ${activeTag === tag.name
+                                        ? 'bg-jence-gold text-jence-black border-jence-gold'
+                                        : 'bg-muted/30 border-transparent hover:border-border text-foreground hover:bg-muted/50'
+                                        }`}
+                                >
+                                    <span style={{ color: activeTag === tag.name ? undefined : tag.color }} className="mr-0.5 opacity-80">#</span>
+                                    {tag.name}
+                                </Link>
+                            ))}
+                            {trendingTags.length > 10 && (
+                                <button
+                                    onClick={() => setExpandedTagsMobile(!expandedTagsMobile)}
+                                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-all border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 whitespace-nowrap bg-muted/10"
+                                >
+                                    {expandedTagsMobile ? 'See less' : `+${trendingTags.length - 10} more`}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Create Post */}
                     {user ? (
                         <div className="card-plug p-4">
@@ -177,13 +286,44 @@ export default function CommunityPage() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 space-y-3">
+                                <div className="flex-1 space-y-3 relative">
                                     <textarea
                                         value={newPostContent}
-                                        onChange={(e) => setNewPostContent(e.target.value)}
-                                        placeholder="Start a discussion... use #hashtags to categorize"
+                                        onChange={handleTextChange}
+                                        onKeyDown={handleKeyDown}
+                                        onClick={(e) => setCursorPosition(e.currentTarget.selectionStart)}
+                                        onKeyUp={(e) => setCursorPosition(e.currentTarget.selectionStart)}
+                                        placeholder="Start a discussion... use up to 2 #hashtags"
                                         className="w-full bg-transparent border-none focus:ring-0 text-foreground resize-none h-20 placeholder:text-muted-foreground/50"
                                     />
+
+                                    {/* Auto-Suggest Dropdown */}
+                                    {showSuggestions && filteredSuggestions.length > 0 && (
+                                        <div className="absolute top-16 left-0 w-64 bg-card border border-border shadow-xl rounded-xl overflow-hidden z-20 animate-in slide-in-from-top-2 duration-100">
+                                            <div className="px-3 py-2 border-b border-border/50 bg-muted/20">
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Suggested Tags</span>
+                                            </div>
+                                            <ul className="py-1">
+                                                {filteredSuggestions.map((tag, index) => (
+                                                    <li key={tag.id}>
+                                                        <button
+                                                            onClick={() => insertSuggestion(tag.name)}
+                                                            onMouseEnter={() => setActiveHashtagIndex(index)}
+                                                            className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors ${index === activeHashtagIndex ? 'bg-muted text-foreground' : 'text-foreground/80 hover:bg-muted/50'}`}
+                                                        >
+                                                            <span className="flex items-center gap-1.5 font-medium">
+                                                                <span className="text-jence-gold opacity-70">#</span>
+                                                                {tag.name}
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground bg-background px-1.5 py-0.5 rounded-md">
+                                                                {tag.usageCount}
+                                                            </span>
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                     <div className="flex justify-end pt-2 border-t border-border/50">
                                         <button
                                             onClick={handlePost}
@@ -214,8 +354,8 @@ export default function CommunityPage() {
                     ) : posts.length > 0 ? (
                         <div className="space-y-4">
                             {posts.map((post) => (
-                                <div key={post.id} className="card-plug p-5 hover:border-jence-gold/20 transition-colors">
-                                    <div className="flex gap-4">
+                                <div key={post.id} className="card-plug p-4 sm:p-5 hover:border-jence-gold/20 transition-colors">
+                                    <div className="flex gap-3 sm:gap-4">
                                         {post.author?.isCreator ? (
                                             <Link to={`/${post.author?.username}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
                                                 {post.author?.image ? (
@@ -238,8 +378,8 @@ export default function CommunityPage() {
                                             </div>
                                         )}
                                         <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <div className="flex items-center gap-2">
+                                            <div className="flex items-start sm:items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     {post.author?.isCreator ? (
                                                         <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
                                                             {post.author?.displayName}
@@ -254,9 +394,9 @@ export default function CommunityPage() {
                                                             Creator
                                                         </span>
                                                     )}
-                                                    <span className="text-muted-foreground text-xs">@{post.author?.username}</span>
-                                                    <span className="text-muted-foreground text-xs">•</span>
-                                                    <span className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                                    <span className="text-muted-foreground text-xs truncate max-w-[100px] sm:max-w-none">@{post.author?.username}</span>
+                                                    <span className="text-muted-foreground text-xs hidden sm:inline">•</span>
+                                                    <span className="text-muted-foreground text-xs w-full sm:w-auto">{new Date(post.createdAt).toLocaleDateString()}</span>
                                                 </div>
 
                                                 {/* Only show menu if user owns the post */}
@@ -340,13 +480,13 @@ export default function CommunityPage() {
 
                 {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="card-plug p-5 sticky top-24">
+                    <div className="card-plug p-5 sticky top-24 hidden lg:block">
                         <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                             <Hash className="w-4 h-4 text-jence-gold" />
                             Trending Topics
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                            {trendingTags.map((tag) => (
+                            {(expandedTagsDesktop ? trendingTags : trendingTags.slice(0, 10)).map((tag) => (
                                 <Link
                                     key={tag.id}
                                     to={`/community?tag=${tag.name}`}
@@ -360,6 +500,14 @@ export default function CommunityPage() {
                                     <span className="ml-1.5 text-xs opacity-50">{tag.usageCount}</span>
                                 </Link>
                             ))}
+                            {trendingTags.length > 10 && (
+                                <button
+                                    onClick={() => setExpandedTagsDesktop(!expandedTagsDesktop)}
+                                    className="px-3 py-1.5 rounded-lg text-sm transition-all border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 bg-muted/10"
+                                >
+                                    {expandedTagsDesktop ? 'See less' : `+${trendingTags.length - 10} more`}
+                                </button>
+                            )}
                         </div>
                         {trendingTags.length === 0 && (
                             <p className="text-sm text-muted-foreground">No trending topics yet.</p>
@@ -455,6 +603,38 @@ export default function CommunityPage() {
                             >
                                 Cancel
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tag Limit Alert Modal */}
+            {showTagLimitAlert && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center"
+                    onClick={() => setShowTagLimitAlert(false)}
+                >
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div
+                        className="relative z-10 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+                                <Hash className="text-red-500" size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">Too Many Tags</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Please use a maximum of 2 hashtags per post to keep the feed organized.</p>
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    onClick={() => setShowTagLimitAlert(false)}
+                                    className="btn-primary w-full py-2.5 text-sm font-medium"
+                                >
+                                    Got it
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -101,7 +101,7 @@ creatorsRoutes.get('/:id', async (c) => {
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
         },
-        posts: creatorPosts,
+        posts: creatorPosts.map(p => p.isFree ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,
     })
 })
@@ -200,6 +200,9 @@ creatorsRoutes.get('/u/:username', async (c) => {
         .orderBy(desc(post.isPinned), desc(post.createdAt)) // Ensure pinned post first, then recent
         .limit(20)
 
+    const isOwner = viewerUserId === creator.userId;
+    const canViewPremium = isOwner || isSubscribed;
+
     return c.json({
         creator: {
             ...creator,
@@ -208,7 +211,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
         },
-        posts: creatorPosts,
+        posts: creatorPosts.map(p => (p.isFree || canViewPremium) ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,
     })
 })
@@ -306,6 +309,9 @@ creatorsRoutes.get('/user/:userId', async (c) => {
         .orderBy(desc(post.isPinned), desc(post.createdAt))
         .limit(20)
 
+    const isOwner = viewerUserId === creator.userId;
+    const canViewPremium = isOwner || isSubscribed;
+
     return c.json({
         creator: {
             ...creator,
@@ -314,7 +320,7 @@ creatorsRoutes.get('/user/:userId', async (c) => {
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
         },
-        posts: creatorPosts,
+        posts: creatorPosts.map(p => (p.isFree || canViewPremium) ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,
     })
 })

@@ -171,8 +171,8 @@ export default function CreatorProfilePage() {
             />
             <div className="max-w-3xl mx-auto">
                 {/* Profile Header */}
-                <div className="card-plug p-6 mb-6">
-                    <div className="flex items-start justify-between">
+                <div className="card-plug p-4 sm:p-6 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-jence-gold/30 to-jence-gold/5 flex items-center justify-center text-2xl font-bold text-jence-gold shrink-0">
                                 {creator.image ? (
@@ -212,32 +212,34 @@ export default function CreatorProfilePage() {
                             </div>
                         </div>
 
-                        {user && !subscribed ? (
-                            <button
-                                onClick={handleSubscribe}
-                                disabled={subscribing}
-                                className="btn-primary text-sm disabled:opacity-60 active:scale-[0.97] transition-all"
-                            >
-                                {subscribing ? (
-                                    <>
-                                        <Loader2 size={14} className="animate-spin" />
-                                        {parseFloat(data?.creator?.subscriptionPrice || '0') > 0 ? 'Processing payment...' : 'Subscribing...'}
-                                    </>
-                                ) : (
-                                    parseFloat(data?.creator?.subscriptionPrice || '0') > 0
-                                        ? `Subscribe · $${data?.creator?.subscriptionPrice} USDC`
-                                        : 'Subscribe · Free'
-                                )}
-                            </button>
-                        ) : subscribed ? (
-                            <span className="px-4 py-2 rounded-lg bg-jence-green/10 text-jence-green text-sm font-medium">
-                                ✓ Subscribed
-                            </span>
-                        ) : (
-                            <Link to="/login" className="btn-primary text-sm active:scale-[0.97] transition-all">
-                                Sign in to subscribe
-                            </Link>
-                        )}
+                        <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                            {user && !subscribed ? (
+                                <button
+                                    onClick={handleSubscribe}
+                                    disabled={subscribing}
+                                    className="btn-primary w-full sm:w-auto text-sm disabled:opacity-60 active:scale-[0.97] transition-all"
+                                >
+                                    {subscribing ? (
+                                        <>
+                                            <Loader2 size={14} className="animate-spin inline mr-2" />
+                                            {parseFloat(data?.creator?.subscriptionPrice || '0') > 0 ? 'Processing payment...' : 'Subscribing...'}
+                                        </>
+                                    ) : (
+                                        parseFloat(data?.creator?.subscriptionPrice || '0') > 0
+                                            ? `Subscribe · $${data?.creator?.subscriptionPrice} USDC`
+                                            : 'Subscribe · Free'
+                                    )}
+                                </button>
+                            ) : subscribed ? (
+                                <span className="flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg bg-jence-green/10 text-jence-green text-sm font-medium">
+                                    ✓ Subscribed
+                                </span>
+                            ) : (
+                                <Link to="/login" className="btn-primary w-full sm:w-auto text-center block text-sm active:scale-[0.97] transition-all">
+                                    Sign in to subscribe
+                                </Link>
+                            )}
+                        </div>
                     </div>
 
                     {paymentError && (

@@ -254,8 +254,8 @@ postsRoutes.get('/:id', async (c) => {
     }
 
     if (!canViewFullContent) {
-        // Truncate content so frontend can still show blurred/paywall preview but not the actual content
-        postData.content = postData.excerpt || postData.content.substring(0, 200) + '...'
+        // Completely scrub content to prevent browser-level leaks
+        postData.content = ""
     }
 
     // Get stats
@@ -285,7 +285,8 @@ postsRoutes.get('/:id', async (c) => {
         ...postData,
         likes,
         comments: commentsCount,
-        userVote
+        userVote,
+        hasAccess: canViewFullContent
     })
 })
 
