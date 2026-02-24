@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -223,6 +223,12 @@ export default function CreatorDashboardPage() {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Creator Dashboard</h1>
+                        {user?.username && (
+                            <Link to={`/${user.username}`} className="text-sm text-muted-foreground hover:text-jence-gold transition-colors flex items-center gap-1.5 mt-1">
+                                <ExternalLink size={12} />
+                                View Public Profile
+                            </Link>
+                        )}
                     </div>
                     <button
                         onClick={() => setIsPostModalOpen(true)}
