@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
     Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin
@@ -10,6 +10,7 @@ import { DeleteModal } from '../components/DeleteModal'
 
 export default function CreatorDashboardPage() {
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [creatorId, setCreatorId] = useState<string>('')
@@ -22,25 +23,49 @@ export default function CreatorDashboardPage() {
         totalEarnings: 0
     })
     const [posts, setPosts] = useState<any[]>([])
+    const [feedback, setFeedback] = useState<any[]>([])
     const [isPostModalOpen, setIsPostModalOpen] = useState(false)
     const [activePostMenu, setActivePostMenu] = useState<string | null>(null)
     const [postToDelete, setPostToDelete] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
 
+    // Close post menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (activePostMenu) {
+                setActivePostMenu(null)
+            }
+        }
+
+        document.addEventListener('click', handleClickOutside)
+        return () => {
+            document.removeEventListener('click', handleClickOutside)
+        }
+    }, [activePostMenu])
+
     useEffect(() => {
         if (!user?.id) return
 
         const fetchDashboardData = async () => {
-            if (user.username) {
+            if (user?.id) {
                 try {
                     setError(null)
-                    const profileRes = await api.getCreatorByUsername(user.username)
+                    const profileRes = await api.getCreatorByUserId(user.id).catch(err => {
+                        if (err.message === 'Creator not found') {
+                            return null;
+                        }
+                        throw err;
+                    })
+
                     if (!profileRes?.creator?.id) {
-                        throw new Error('Creator profile not found')
+                        // User is a creator role but has no profile, redirect to onboarding
+                        navigate('/creator-onboarding')
+                        return
                     }
                     const cId = profileRes.creator.id
                     setCreatorId(cId)
                     setVerticalId(profileRes.creator.verticalId)
+                    setFeedback(profileRes.feedback || [])
 
 
                     // 2. Get Stats
@@ -214,13 +239,11 @@ export default function CreatorDashboardPage() {
                         label="Total Subscribers"
                         value={stats.totalSubscribers.toLocaleString()}
                         icon={Users}
-                        trend="+12% this month"
                     />
                     <StatCard
                         label="Total Views"
                         value={stats.totalViews.toLocaleString()}
                         icon={Eye}
-                        trend="+5% this month"
                     />
                     <StatCard
                         label="Total Posts"
@@ -231,7 +254,6 @@ export default function CreatorDashboardPage() {
                         label="Earnings"
                         value={`$${stats.totalEarnings.toLocaleString()}`}
                         icon={DollarSign}
-                        trend="+$0.00 this month"
                     />
                 </div>
 
@@ -288,7 +310,7 @@ export default function CreatorDashboardPage() {
                                                     <MoreVertical size={16} />
                                                 </button>
                                                 {activePostMenu === post.id && (
-                                                    <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
+                                                    <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-20">
                                                         <button
                                                             onClick={(e) => {
                                                                 e.preventDefault();
@@ -336,10 +358,40 @@ export default function CreatorDashboardPage() {
                     {/* Sidebar: Quick Stats/Activity */}
                     <div className="space-y-6">
                         <div className="card-plug p-5">
-                            <h3 className="font-semibold text-foreground mb-4">Recent Subscribers</h3>
-                            <div className="text-sm text-muted-foreground text-center py-4">
-                                No new subscribers yet.
-                            </div>
+                            <h3 className="font-semibold text-foreground mb-4">Recent Feedback</h3>
+                            {feedback.length > 0 ? (
+                                <div className="space-y-4">
+                                    {feedback.map((item) => (
+                                        <div key={item.id} className="flex gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                                            <img
+                                                src={item.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.user.username}`}
+                                                alt={item.user.username}
+                                                className="w-8 h-8 rounded-full bg-muted object-cover flex-shrink-0"
+                                            />
+                                            <div>
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <span className="text-sm font-medium text-foreground">{item.user.username}</span>
+                                                    <span className="text-xs text-muted-foreground">• {new Date(item.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 mb-1.5 text-jence-gold">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={i < item.rating ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={i >= item.rating ? "text-muted-foreground/30" : ""}>
+                                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                        </svg>
+                                                    ))}
+                                                </div>
+                                                {item.feedback && (
+                                                    <p className="text-sm text-foreground/80 italic">"{item.feedback}"</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-muted-foreground py-4">
+                                    No reviews yet.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

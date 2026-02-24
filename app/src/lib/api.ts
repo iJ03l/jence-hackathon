@@ -31,6 +31,8 @@ export const api = {
     getCreator: (id: string) => request<{ creator: any; posts: any[] }>(`/creators/${id}`),
     getCreatorByUsername: (username: string, viewerUserId?: string) =>
         request<{ creator: any; posts: any[] }>(`/creators/u/${username}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
+    getCreatorByUserId: (userId: string, viewerUserId?: string) =>
+        request<{ creator: any; posts: any[] }>(`/creators/user/${userId}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`),
     onboardCreator: (data: any) =>
         request<any>('/creators/onboard', { method: 'POST', body: JSON.stringify(data) }),
     updateCreatorProfile: (id: string, data: any) =>
@@ -101,6 +103,8 @@ export const api = {
     // Users
     updateUser: (id: string, data: any) =>
         request<any>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    exportData: (userId: string) =>
+        request<any>(`/users/${userId}/export`),
 
     // Uploads
     uploadImage: (file: File) => {

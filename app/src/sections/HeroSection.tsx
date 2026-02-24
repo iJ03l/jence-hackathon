@@ -274,12 +274,12 @@ export default function HeroSection() {
         // Flow posts out sequentially in an infinite loop
         gsap.to(mockPostCards, {
           keyframes: [
-            { y: -20, opacity: 1, scale: 1, duration: 0.5 },
-            { y: -100, opacity: 1, scale: 1.05, duration: 1.5 },
-            { y: -150, opacity: 0, scale: 1.1, duration: 0.5 }
+            { y: -20, opacity: 1, scale: 1, duration: 1.0 },
+            { y: -100, opacity: 1, scale: 1.05, duration: 3.0 },
+            { y: -150, opacity: 0, scale: 1.1, duration: 1.0 }
           ],
           stagger: {
-            each: 1.2,
+            each: 2.4,
             repeat: -1,
             repeatDelay: 0.5
           },
@@ -352,9 +352,9 @@ export default function HeroSection() {
           ref={headlineRef}
           className="heading-xl text-foreground mb-6"
         >
-          Expert sector research,
+          Know what,
           <br />
-          <span className="text-gradient-gold">published anonymously.</span>
+          <span className="text-gradient-gold">insiders know.</span>
         </h1>
 
         {/* Subheadline */}

@@ -211,6 +211,111 @@ creatorsRoutes.get('/u/:username', async (c) => {
     })
 })
 
+// GET /api/creators/user/:userId — get creator profile by userId
+creatorsRoutes.get('/user/:userId', async (c) => {
+    const userId = c.req.param('userId')
+    const viewerUserId = c.req.query('viewerUserId')
+
+    const [creator] = await db
+        .select({
+            id: creatorProfile.id,
+            pseudonym: creatorProfile.pseudonym,
+            bio: creatorProfile.bio,
+            kycStatus: creatorProfile.kycStatus,
+            verticalId: creatorProfile.verticalId,
+            verticalName: vertical.name,
+            verticalSlug: vertical.slug,
+            subscriptionPrice: creatorProfile.subscriptionPrice,
+            payoutAddress: creatorProfile.payoutAddress,
+            createdAt: creatorProfile.createdAt,
+            username: user.username,
+            image: user.image,
+            userId: creatorProfile.userId,
+        })
+        .from(creatorProfile)
+        .leftJoin(vertical, eq(creatorProfile.verticalId, vertical.id))
+        .innerJoin(user, eq(creatorProfile.userId, user.id))
+        .where(eq(creatorProfile.userId, userId))
+
+    if (!creator) {
+        return c.json({ error: 'Creator not found' }, 404)
+    }
+
+    // Check if viewer is subscribed
+    let isSubscribed = false
+    if (viewerUserId) {
+        const [sub] = await db
+            .select()
+            .from(subscription)
+            .where(
+                and(
+                    eq(subscription.subscriberUserId, viewerUserId),
+                    eq(subscription.creatorProfileId, creator.id),
+                    eq(subscription.status, 'active')
+                )
+            )
+        if (sub) isSubscribed = true
+    }
+
+    // Get subscriber count
+    const [{ count: subscriberCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(subscription)
+        .where(
+            and(
+                eq(subscription.creatorProfileId, creator.id),
+                eq(subscription.status, 'active')
+            )
+        )
+
+    // Get rating stats
+    const [ratingStats] = await db
+        .select({
+            averageRating: avg(creatorRating.rating),
+            ratingCount: count(creatorRating.id),
+        })
+        .from(creatorRating)
+        .where(eq(creatorRating.creatorProfileId, creator.id))
+
+    // Get feedback list
+    const feedbackList = await db
+        .select({
+            id: creatorRating.id,
+            rating: creatorRating.rating,
+            feedback: creatorRating.feedback,
+            createdAt: creatorRating.createdAt,
+            user: {
+                username: user.username,
+                image: user.image,
+            }
+        })
+        .from(creatorRating)
+        .innerJoin(user, eq(creatorRating.userId, user.id))
+        .where(eq(creatorRating.creatorProfileId, creator.id))
+        .orderBy(desc(creatorRating.createdAt))
+        .limit(10)
+
+    // Get creator's posts
+    const creatorPosts = await db
+        .select()
+        .from(post)
+        .where(eq(post.creatorId, creator.id))
+        .orderBy(desc(post.isPinned), desc(post.createdAt))
+        .limit(20)
+
+    return c.json({
+        creator: {
+            ...creator,
+            subscriberCount,
+            isSubscribed,
+            averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
+            ratingCount: ratingStats?.ratingCount || 0,
+        },
+        posts: creatorPosts,
+        feedback: feedbackList,
+    })
+})
+
 // POST /api/creators/onboard — creator onboarding
 creatorsRoutes.post('/onboard', async (c) => {
     const body = await c.req.json()
@@ -237,9 +342,9 @@ creatorsRoutes.post('/onboard', async (c) => {
 creatorsRoutes.put('/:id', async (c) => {
     const id = c.req.param('id')
     const body = await c.req.json()
-    const { bio, payoutAddress, payoutMethod, subscriptionPrice } = body
+    const { bio, pseudonym, payoutAddress, payoutMethod, subscriptionPrice } = body
 
-    if (!bio && !payoutAddress && !payoutMethod && subscriptionPrice === undefined) {
+    if (!bio && pseudonym === undefined && !payoutAddress && !payoutMethod && subscriptionPrice === undefined) {
         return c.json({ error: 'Nothing to update' }, 400)
     }
 
@@ -247,6 +352,7 @@ creatorsRoutes.put('/:id', async (c) => {
         .update(creatorProfile)
         .set({
             ...(bio && { bio }),
+            ...(pseudonym !== undefined && { pseudonym }),
             ...(payoutAddress && { payoutAddress }),
             ...(payoutMethod && { payoutMethod }),
             ...(subscriptionPrice !== undefined && { subscriptionPrice: String(subscriptionPrice) }),

@@ -98,6 +98,7 @@ export default function CreatorProfilePage() {
                     const { signature } = await signAndSendTransaction({
                         transaction: serializedTx,
                         wallet: embeddedWallet,
+                        options: { sponsor: true },
                     })
                     // Convert signature Uint8Array to base58 string
                     const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'

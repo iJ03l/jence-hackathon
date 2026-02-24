@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Loader2, Hash, MessageCircle, Send, ArrowBigUp, ArrowBigDown, MoreVertical } from 'lucide-react'
@@ -29,6 +29,7 @@ const PostSkeleton = () => (
 
 export default function CommunityPage() {
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const activeTag = searchParams.get('tag')
 
@@ -41,6 +42,7 @@ export default function CommunityPage() {
     const [activePostMenu, setActivePostMenu] = useState<string | null>(null)
     const [postToDelete, setPostToDelete] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [showSignInPrompt, setShowSignInPrompt] = useState(false)
 
     // Load Data
     useEffect(() => {
@@ -82,7 +84,10 @@ export default function CommunityPage() {
 
     const handleVote = async (e: any, post: any, value: number) => {
         e.preventDefault()
-        if (!user) return
+        if (!user) {
+            setShowSignInPrompt(true)
+            return
+        }
 
         const previousVote = post.userVote || 0
         const previousScore = post.likes || 0
@@ -208,21 +213,39 @@ export default function CommunityPage() {
                             {posts.map((post) => (
                                 <div key={post.id} className="card-plug p-5 hover:border-jence-gold/20 transition-colors">
                                     <div className="flex gap-4">
-                                        <Link to={`/${post.author?.username}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
-                                            {post.author?.image ? (
-                                                <img src={post.author.image} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
-                                                    {(post.author?.displayName || '?')[0].toUpperCase()}
-                                                </div>
-                                            )}
-                                        </Link>
+                                        {post.author?.isCreator ? (
+                                            <Link to={`/${post.author?.username}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
+                                                {post.author?.image ? (
+                                                    <img src={post.author.image} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
+                                                        {(post.author?.displayName || '?')[0].toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </Link>
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0">
+                                                {post.author?.image ? (
+                                                    <img src={post.author.image} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
+                                                        {(post.author?.displayName || '?')[0].toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="flex-1">
                                             <div className="flex items-center justify-between mb-1">
                                                 <div className="flex items-center gap-2">
-                                                    <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
-                                                        {post.author?.displayName}
-                                                    </Link>
+                                                    {post.author?.isCreator ? (
+                                                        <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
+                                                            {post.author?.displayName}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="font-semibold text-foreground">
+                                                            {post.author?.displayName}
+                                                        </span>
+                                                    )}
                                                     {post.author?.isCreator && (
                                                         <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                                                             Creator
@@ -235,30 +258,15 @@ export default function CommunityPage() {
 
                                                 {/* Only show menu if user owns the post */}
                                                 {user && user.id === post.userId && (
-                                                    <div className="relative">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                setActivePostMenu(activePostMenu === post.id ? null : post.id)
-                                                            }}
-                                                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                                                        >
-                                                            <MoreVertical size={16} />
-                                                        </button>
-                                                        {activePostMenu === post.id && (
-                                                            <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        setPostToDelete(post.id);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted/50 transition-colors"
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setActivePostMenu(activePostMenu === post.id ? null : post.id)
+                                                        }}
+                                                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                    >
+                                                        <MoreVertical size={16} />
+                                                    </button>
                                                 )}
                                             </div>
 
@@ -359,11 +367,94 @@ export default function CommunityPage() {
                         <p className="text-sm text-muted-foreground mb-4">
                             Keep discussions respectful and on-topic. Use hashtags to help others find your content.
                         </p>
-                        <button className="text-xs text-jence-gold hover:underline">Read full guidelines</button>
+                        <Link to="/guidelines" className="text-xs text-jence-gold hover:underline">Read full guidelines</Link>
                     </div>
                 </div>
 
             </div>
+
+            {/* Sign In Prompt Overlay */}
+            {showSignInPrompt && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center"
+                    onClick={() => setShowSignInPrompt(false)}
+                >
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div
+                        className="relative z-10 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-jence-gold/10 flex items-center justify-center mx-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-jence-gold"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">Sign in to vote</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Join the community to upvote and downvote posts.</p>
+                            </div>
+                            <div className="flex flex-col gap-2 pt-2">
+                                <button
+                                    onClick={() => {
+                                        setShowSignInPrompt(false)
+                                        navigate('/login')
+                                    }}
+                                    className="btn-primary w-full py-2.5 text-sm font-medium"
+                                >
+                                    Sign In
+                                </button>
+                                <button
+                                    onClick={() => setShowSignInPrompt(false)}
+                                    className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Post Actions Overlay */}
+            {activePostMenu && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center"
+                    onClick={() => setActivePostMenu(null)}
+                >
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+                    {/* Action Menu */}
+                    <div
+                        className="relative z-10 w-72 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="px-5 py-4 border-b border-border/50">
+                            <h3 className="text-sm font-semibold text-foreground">Post Actions</h3>
+                        </div>
+                        <div className="p-2">
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setPostToDelete(activePostMenu);
+                                    setActivePostMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-3"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                                Delete Post
+                            </button>
+                        </div>
+                        <div className="p-2 border-t border-border/50">
+                            <button
+                                onClick={() => setActivePostMenu(null)}
+                                className="w-full text-center px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modals */}
             <DeleteModal

@@ -20,9 +20,12 @@ export default function SettingsPage() {
     const [payoutMethod, setPayoutMethod] = useState('crypto')
     const [subscriptionPrice, setSubscriptionPrice] = useState('0')
     const [avatarUrl, setAvatarUrl] = useState('')
+    const [displayName, setDisplayName] = useState('')
+    const [anonymousName, setAnonymousName] = useState('')
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)
+    const [exportingData, setExportingData] = useState(false)
     const [creatorId, setCreatorId] = useState<string | null>(null)
     const [walletCreating, setWalletCreating] = useState(false)
     const [walletError, setWalletError] = useState('')
@@ -50,11 +53,13 @@ export default function SettingsPage() {
     useEffect(() => {
         if (!user) return
         setAvatarUrl(user.image || '')
+        setDisplayName(user.name || '')
 
-        if (user.role === 'creator' && user.username) {
-            api.getCreatorByUsername(user.username)
+        if (user.role === 'creator') {
+            api.getCreatorByUserId(user.id)
                 .then(res => {
                     setCreatorId(res.creator.id)
+                    setAnonymousName(res.creator.pseudonym || '')
                     setPayoutAddress(res.creator.payoutAddress || '')
                     setPayoutMethod(res.creator.payoutMethod || 'crypto')
                     setSubscriptionPrice(res.creator.subscriptionPrice || '0')
@@ -120,7 +125,12 @@ export default function SettingsPage() {
         setSaving(true)
         setSaved(false)
         try {
-            await api.updateUser(user.id, { image: avatarUrl })
+            await api.updateUser(user.id, { image: avatarUrl, name: displayName })
+
+            if (creatorId) {
+                await api.updateCreatorProfile(creatorId, { pseudonym: anonymousName })
+            }
+
             setSaved(true)
             setTimeout(() => setSaved(false), 3000)
         } catch (e) {
@@ -128,6 +138,28 @@ export default function SettingsPage() {
             alert('Failed to save. Please try again.')
         } finally {
             setSaving(false)
+        }
+    }
+
+    const handleExportData = async () => {
+        if (!user?.id) return
+        setExportingData(true)
+        try {
+            const data = await api.exportData(user.id)
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `jence_export_${user.id}.json`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+        } catch (err) {
+            console.error(err)
+            alert('Failed to export data')
+        } finally {
+            setExportingData(false)
         }
     }
 
@@ -243,11 +275,24 @@ export default function SettingsPage() {
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Display name</label>
                                         <input
                                             type="text"
-                                            defaultValue={user?.name || ''}
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
                                             className="input-field"
-                                            disabled // Add name update logic if needed
+                                            placeholder="Your public name"
                                         />
                                     </div>
+                                    {creatorId && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-foreground mb-1.5">Anonymous name (Pseudonym)</label>
+                                            <input
+                                                type="text"
+                                                value={anonymousName}
+                                                onChange={(e) => setAnonymousName(e.target.value)}
+                                                className="input-field"
+                                                placeholder="Used when you post anonymously"
+                                            />
+                                        </div>
+                                    )}
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                                         <input
@@ -404,7 +449,13 @@ export default function SettingsPage() {
                                         <p className="text-xs text-muted-foreground mb-3">
                                             Request a copy of all your data stored on Jence.
                                         </p>
-                                        <button className="btn-secondary text-sm active:scale-[0.97] transition-all">Request data export</button>
+                                        <button
+                                            onClick={handleExportData}
+                                            disabled={exportingData}
+                                            className="btn-secondary text-sm active:scale-[0.97] transition-all disabled:opacity-50"
+                                        >
+                                            {exportingData ? 'Exporting...' : 'Request data export'}
+                                        </button>
                                     </div>
 
                                     {/* Delete account functionally removed per requirements */}

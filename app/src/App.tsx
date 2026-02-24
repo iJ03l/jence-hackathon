@@ -10,6 +10,7 @@ import VerticalPage from './pages/VerticalPage'
 import CreatorProfilePage from './pages/CreatorProfilePage'
 import CreatorOnboardingPage from './pages/CreatorOnboardingPage'
 import CommunityPage from './pages/CommunityPage'
+import CommunityGuidelinesPage from './pages/CommunityGuidelinesPage'
 import PostDetail from './pages/PostDetail'
 import CreatorPostDetail from './pages/CreatorPostDetail'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
@@ -31,6 +32,7 @@ function App() {
           <Route path="/post/:id" element={<CreatorPostDetail />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
+          <Route path="/guidelines" element={<CommunityGuidelinesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/creator-onboarding" element={<CreatorOnboardingPage />} />
           {/* Catch-all for creator profiles (e.g. jence.xyz/username) */}
