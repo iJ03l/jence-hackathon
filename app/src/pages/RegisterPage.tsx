@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Zap, Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
 import { api } from '../lib/api'
@@ -57,9 +57,7 @@ export default function RegisterPage() {
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-10 h-10 rounded-xl bg-jence-gold flex items-center justify-center">
-                        <Zap size={22} className="text-jence-black" />
-                    </div>
+                    <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl" />
                     <span className="font-bold text-xl tracking-tight text-foreground">Jence</span>
                 </Link>
 

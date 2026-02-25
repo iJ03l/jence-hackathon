@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Sun, Moon, Zap, LogOut, Bell, Loader2, X, Menu } from 'lucide-react'
+import { Sun, Moon, LogOut, Bell, Loader2, X, Menu } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -90,9 +90,7 @@ export default function Navigation() {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-jence-gold flex items-center justify-center">
-              <Zap size={18} className="text-jence-black" />
-            </div>
+            <img src="/logo.png" alt="Jence Logo" className="w-8 h-8 object-contain rounded-lg" />
             <span className="font-bold text-lg tracking-tight text-foreground">
               Jence
             </span>
@@ -179,8 +177,8 @@ export default function Navigation() {
                           >
                             <div className="flex gap-3">
                               <div className="shrink-0 mt-0.5">
-                                <div className="w-8 h-8 rounded-full bg-jence-gold/20 flex items-center justify-center text-jence-gold">
-                                  <Zap size={14} />
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+                                  <img src="/logo.png" alt="Jence Notification" className="w-full h-full object-cover" />
                                 </div>
                               </div>
                               <div className="overflow-hidden">

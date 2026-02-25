@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Zap, Lock, ArrowRight, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Lock, ArrowRight, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 
 export default function ResetPasswordPage() {
     const navigate = useNavigate()
@@ -62,9 +62,7 @@ export default function ResetPasswordPage() {
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-10 h-10 rounded-xl bg-jence-gold flex items-center justify-center">
-                        <Zap size={22} className="text-jence-black" />
-                    </div>
+                    <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl" />
                     <span className="font-bold text-xl tracking-tight text-foreground">Jence</span>
                 </Link>
 

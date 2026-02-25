@@ -5,11 +5,11 @@ import { ArrowRight, Shield, Wallet, Clock, Lock } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const mockPosts = [
-  { id: 'm1', title: 'NFL Week 12: Sharp money fading favorites', time: '1m ago', author: 'VegasInsider', vertical: 'Sports Betting' },
-  { id: 'm2', title: 'USD/JPY correlation with Treasury yields breaking', time: '15m ago', author: 'FXMacro', vertical: 'Forex' },
-  { id: 'm3', title: 'On-chain accumulation patterns for tier-1 altcoins', time: '1h ago', author: 'ChainIntel', vertical: 'Crypto' },
-  { id: 'm4', title: 'Tracking dev activity spikes in low-cap memecoins', time: '3h ago', author: 'DegenWatch', vertical: 'Memecoins' },
-  { id: 'm5', title: 'Election odds decoupling from polling data', time: '5h ago', author: 'PolyPredicts', vertical: 'Prediction Market' },
+  { id: 'm1', title: 'NFL Week 12: Bet ticket inside — fading Chiefs -7.5 vs Raiders', time: '1m ago', author: 'SportyPlug_NG', vertical: 'Sports Betting' },
+  { id: 'm2', title: 'USD/JPY long entry: 148.20 SL 147.60 TP 149.80 — move dey form', time: '15m ago', author: 'AboFX_Pro', vertical: 'Forex' },
+  { id: 'm3', title: 'Just loaded more ARB and OP at these levels — accumulation zone still open', time: '1h ago', author: 'ChainEye_NG', vertical: 'Crypto' },
+  { id: 'm4', title: 'Bought PEPE2.0 and SLERF small small — dev activity spiked, risk small but upside big', time: '3h ago', author: 'DegenAbuja', vertical: 'Memecoins' },
+  { id: 'm5', title: 'Polymarket showing Trump 61% — Bayse and Manifold both lower, gap dey for arb', time: '5h ago', author: 'NaijOdds', vertical: 'Prediction Market' }
 ]
 
 export default function HeroSection() {

@@ -15,11 +15,16 @@ export default function CTAFooter() {
 
           {/* Brand & Tagline */}
           <div className="space-y-4 max-w-sm">
-            <Link to="/" className="inline-block transition-opacity hover:opacity-80">
+            <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80 w-fit">
+              <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl" />
               <span className="font-bold text-3xl tracking-tighter text-foreground lowercase">jence</span>
             </Link>
             <p className="text-sm text-muted-foreground/70 leading-relaxed font-mono">
               The premier knowledge platform.
+              <br />
+              <span className="mt-2 block opacity-75">
+                &copy; {new Date().getFullYear()} Jence. All rights reserved.
+              </span>
             </p>
           </div>
 
@@ -31,8 +36,15 @@ export default function CTAFooter() {
               <Link to="/privacy" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
             </div>
 
-            {/* Social (TikTok Only) */}
-            <div className="flex items-center gap-2">
+            {/* Socials */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <a href="https://x.com/tryjence" target="_blank" rel="noopener noreferrer"
+                className="group flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card hover:bg-muted hover:border-jence-gold/30 transition-all shadow-sm">
+                <svg className="w-4 h-4 text-foreground group-hover:text-jence-gold transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span className="text-sm font-semibold text-foreground group-hover:text-jence-gold transition-colors">@tryjence</span>
+              </a>
               <a href="https://tiktok.com/@tryjence" target="_blank" rel="noopener noreferrer"
                 className="group flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card hover:bg-muted hover:border-jence-gold/30 transition-all shadow-sm">
                 <svg className="w-4 h-4 text-foreground group-hover:text-jence-gold transition-colors" viewBox="0 0 24 24" fill="currentColor">

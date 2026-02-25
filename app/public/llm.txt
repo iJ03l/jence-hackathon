@@ -1,0 +1,14 @@
+# Jence
+
+Jence is a platform for anonymous expert analysis from verified industry experts. Users can subscribe to premium insights on crypto, finance, tech, and more.
+
+## Core Pages
+- [Home](https://jence.xyz/)
+- [Explore](https://jence.xyz/explore)
+- [Community](https://jence.xyz/community)
+- [Login](https://jence.xyz/login)
+- [Register](https://jence.xyz/register)
+
+## Legal
+- [Terms](https://jence.xyz/terms)
+- [Privacy Policy](https://jence.xyz/privacy)
