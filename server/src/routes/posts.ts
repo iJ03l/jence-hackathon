@@ -3,12 +3,21 @@ import { db } from '../db/index.js'
 import { post, creatorProfile, subscription, postVote, postComment, user, vertical, strike, notification } from '../db/schema.js'
 import { eq, inArray, desc, sql, and, count, sum } from 'drizzle-orm'
 import { notifySubscribersOfNewPost } from '../services/notify.js'
+import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
+import { requireAuth, optionalAuth } from '../middleware/auth.js'
 
-const postsRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
+
+const postsRoutes = new Hono<{ Variables: Variables }>()
 
 // GET /api/posts — feed (latest posts, optionally filtered by subscriber's subscriptions)
-postsRoutes.get('/', async (c) => {
-    const userId = c.req.query('userId')
+postsRoutes.get('/', optionalAuth, async (c) => {
+    const userFromSession = c.get('user')
+    const userId = userFromSession?.id || c.req.query('userId')
 
     if (userId) {
         // Get subscribed creator IDs
@@ -62,13 +71,28 @@ postsRoutes.get('/', async (c) => {
     return c.json(latestPosts)
 })
 
-// POST /api/posts — create a new post (creator only)
-postsRoutes.post('/', async (c) => {
-    const body = await c.req.json()
-    const { title, content, excerpt, creatorId, verticalId, isFree } = body
+const createPostSchema = z.object({
+    title: z.string().min(1),
+    content: z.string().min(1),
+    excerpt: z.string().optional(),
+    creatorId: z.string().uuid(),
+    verticalId: z.string().uuid(),
+    isFree: z.boolean().optional(),
+})
 
-    if (!title || !content || !creatorId || !verticalId) {
-        return c.json({ error: 'Missing required fields' }, 400)
+// POST /api/posts — create a new post (creator only)
+postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (c) => {
+    const userFromSession = c.get('user')
+    const { title, content, excerpt, creatorId, verticalId, isFree } = c.req.valid('json')
+
+    // Verify user owns the creator profile
+    const creatorUser = await db.query.creatorProfile.findFirst({
+        where: eq(creatorProfile.id, creatorId),
+        columns: { userId: true }
+    })
+
+    if (creatorUser?.userId !== userFromSession.id) {
+        return c.json({ error: 'Forbidden' }, 403)
     }
 
     const [newPost] = await db.insert(post).values({
@@ -93,14 +117,25 @@ postsRoutes.post('/', async (c) => {
 })
 
 // DELETE /api/posts/:id — delete a post (creator only)
-postsRoutes.delete('/:id', async (c) => {
+postsRoutes.delete('/:id', requireAuth, async (c) => {
     const id = c.req.param('id')
+    const userFromSession = c.get('user')
 
     const postRecord = await db.query.post.findFirst({
         where: eq(post.id, id)
     })
 
     if (!postRecord) return c.json({ error: 'Post not found' }, 404)
+
+    const creatorQuery = await db.select({ userId: creatorProfile.userId })
+        .from(creatorProfile)
+        .where(eq(creatorProfile.id, postRecord.creatorId))
+
+    const creatorUserId = creatorQuery[0]?.userId
+
+    if (creatorUserId !== userFromSession.id && userFromSession.role !== 'admin') {
+        return c.json({ error: 'Forbidden' }, 403)
+    }
 
     // Perform cascading deletes manually to avoid foreign key errors
     await db.transaction(async (tx) => {
@@ -115,18 +150,23 @@ postsRoutes.delete('/:id', async (c) => {
 })
 
 // GET /api/posts/my — creator's own posts with stats
-postsRoutes.get('/my', async (c) => {
+postsRoutes.get('/my', requireAuth, async (c) => {
     const creatorProfileId = c.req.query('creatorProfileId')
+    const userFromSession = c.get('user')
+
     if (!creatorProfileId) {
         return c.json({ error: 'creatorProfileId required' }, 400)
     }
 
-    // Get the user ID for this creator owner
     const creatorUser = await db.query.creatorProfile.findFirst({
         where: eq(creatorProfile.id, creatorProfileId),
         columns: { userId: true }
     })
     const currentUserId = creatorUser?.userId
+
+    if (currentUserId !== userFromSession.id) {
+        return c.json({ error: 'Forbidden' }, 403)
+    }
 
     const myPosts = await Promise.all((await db
         .select({
@@ -197,9 +237,10 @@ postsRoutes.get('/stats', async (c) => {
 })
 
 // GET /api/posts/:id — get a single post with stats
-postsRoutes.get('/:id', async (c) => {
+postsRoutes.get('/:id', optionalAuth, async (c) => {
     const id = c.req.param('id')
-    const userId = c.req.query('userId')
+    const userFromSession = c.get('user')
+    const userId = userFromSession?.id || c.req.query('userId')
 
     const [postData] = await db
         .select({
@@ -293,17 +334,41 @@ postsRoutes.get('/:id', async (c) => {
 
 
 // POST /api/posts/:id/comments
-postsRoutes.post('/:id/comments', async (c) => {
+postsRoutes.post('/:id/comments', requireAuth, zValidator('json', z.object({
+    content: z.string().min(1),
+})), async (c) => {
     const id = c.req.param('id')
-    const { userId, content } = await c.req.json()
-
-    if (!userId || !content) return c.json({ error: 'Missing fields' }, 400)
+    const { content } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     const [comment] = await db.insert(postComment).values({
         postId: id,
         userId,
         content
     }).returning()
+
+    // Notify analysis creator
+    const postRecord = await db.query.post.findFirst({
+        where: eq(post.id, id)
+    })
+
+    if (postRecord) {
+        const creator = await db.query.creatorProfile.findFirst({
+            where: eq(creatorProfile.id, postRecord.creatorId),
+            columns: { userId: true }
+        })
+
+        if (creator && creator.userId !== userId) {
+            await db.insert(notification).values({
+                userId: creator.userId,
+                type: 'post_reply',
+                title: 'New Comment',
+                body: `@${userFromSession.username || userFromSession.name} commented on your analysis.`,
+                postId: id
+            })
+        }
+    }
 
     return c.json(comment)
 })
@@ -346,11 +411,13 @@ postsRoutes.get('/:id/comments', async (c) => {
 })
 
 // POST /api/posts/:id/vote
-postsRoutes.post('/:id/vote', async (c) => {
+postsRoutes.post('/:id/vote', requireAuth, zValidator('json', z.object({
+    value: z.number().int().min(-1).max(1)
+})), async (c) => {
     const id = c.req.param('id')
-    const { userId, value } = await c.req.json() // 1, -1, or 0 (remove vote)
-
-    if (!userId || value === undefined || value === null) return c.json({ error: 'Missing fields' }, 400)
+    const { value } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     if (value === 0) {
         // Remove vote
@@ -373,11 +440,22 @@ postsRoutes.post('/:id/vote', async (c) => {
 })
 
 // POST /api/posts/:id/pin — pin a post to the top of the creator's profile
-postsRoutes.post('/:id/pin', async (c) => {
+postsRoutes.post('/:id/pin', requireAuth, zValidator('json', z.object({
+    creatorId: z.string().uuid(),
+    isPinned: z.boolean()
+})), async (c) => {
     const id = c.req.param('id')
-    const { creatorId, isPinned } = await c.req.json()
+    const { creatorId, isPinned } = c.req.valid('json')
+    const userFromSession = c.get('user')
 
-    if (!creatorId) return c.json({ error: 'creatorId is required' }, 400)
+    const creatorUser = await db.query.creatorProfile.findFirst({
+        where: eq(creatorProfile.id, creatorId),
+        columns: { userId: true }
+    })
+
+    if (creatorUser?.userId !== userFromSession.id) {
+        return c.json({ error: 'Forbidden' }, 403)
+    }
 
     try {
         await db.transaction(async (tx) => {

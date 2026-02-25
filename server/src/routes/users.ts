@@ -2,16 +2,36 @@ import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { user, subscription, post, creatorProfile } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
+import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
+import { requireAuth } from '../middleware/auth.js'
 
-const usersRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
+
+const usersRoutes = new Hono<{ Variables: Variables }>()
 
 // PUT /api/users/:id — update user profile (e.g. image)
-usersRoutes.put('/:id', async (c) => {
+usersRoutes.put('/:id', requireAuth, zValidator('json', z.object({
+    image: z.string().url().optional(),
+    name: z.string().min(1).optional(),
+    role: z.enum(['subscriber', 'creator', 'admin']).optional()
+})), async (c) => {
     const id = c.req.param('id')
-    const body = await c.req.json()
-    const { image, name, role } = body
+    const { image, name, role } = c.req.valid('json')
+    const sessionUser = c.get('user')
 
-    if (image === undefined && name === undefined && role === undefined) {
+    // Only admins or the user themselves can update their profile
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+        return c.json({ error: 'Forbidden' }, 403)
+    }
+
+    // Only admins can change roles
+    const safeRole = sessionUser.role === 'admin' ? role : undefined
+
+    if (image === undefined && name === undefined && safeRole === undefined) {
         return c.json({ error: 'Nothing to update' }, 400)
     }
 
@@ -20,7 +40,7 @@ usersRoutes.put('/:id', async (c) => {
         .set({
             ...(image !== undefined && { image }),
             ...(name !== undefined && { name }),
-            ...(role !== undefined && { role }),
+            ...(safeRole !== undefined && { role: safeRole }),
             updatedAt: new Date(),
         })
         .where(eq(user.id, id))
@@ -34,17 +54,23 @@ usersRoutes.put('/:id', async (c) => {
 })
 
 // POST /api/users/check-email — check if email exists
-usersRoutes.post('/check-email', async (c) => {
-    const { email } = await c.req.json()
-    if (!email) return c.json({ error: 'Email required' }, 400)
+usersRoutes.post('/check-email', zValidator('json', z.object({
+    email: z.string().email()
+})), async (c) => {
+    const { email } = c.req.valid('json')
 
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1)
     return c.json({ exists: !!found })
 })
 
 // GET /api/users/:id/export — export user data
-usersRoutes.get('/:id/export', async (c) => {
+usersRoutes.get('/:id/export', requireAuth, async (c) => {
     const id = c.req.param('id')
+    const sessionUser = c.get('user')
+
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+        return c.json({ error: 'Forbidden' }, 403)
+    }
 
     // Fetch user profile
     const [userProfile] = await db.select().from(user).where(eq(user.id, id))
@@ -77,6 +103,40 @@ usersRoutes.get('/:id/export', async (c) => {
     }
 
     return c.json(exportData)
+})
+
+// PUT /api/users/:id/ban — toggle ban status (admins only)
+usersRoutes.put('/:id/ban', requireAuth, zValidator('json', z.object({
+    isBanned: z.boolean()
+})), async (c) => {
+    const id = c.req.param('id')
+    const { isBanned } = c.req.valid('json')
+    const sessionUser = c.get('user')
+
+    if (sessionUser.role !== 'admin') {
+        return c.json({ error: 'Forbidden. Admins only.' }, 403)
+    }
+
+    const [updatedUser] = await db
+        .update(user)
+        .set({
+            isBanned,
+            updatedAt: new Date(),
+        })
+        .where(eq(user.id, id))
+        .returning()
+
+    if (!updatedUser) {
+        return c.json({ error: 'User not found' }, 404)
+    }
+
+    // Also update creator profile if they have one
+    const [creator] = await db.select().from(creatorProfile).where(eq(creatorProfile.userId, id))
+    if (creator) {
+        await db.update(creatorProfile).set({ isBanned }).where(eq(creatorProfile.id, creator.id))
+    }
+
+    return c.json(updatedUser)
 })
 
 export default usersRoutes

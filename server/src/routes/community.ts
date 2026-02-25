@@ -1,9 +1,17 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { communityPost, tag, communityPostTag, user, communityPostLike, communityPostComment, creatorProfile } from '../db/schema.js'
+import { communityPost, tag, communityPostTag, user, communityPostLike, communityPostComment, creatorProfile, notification } from '../db/schema.js'
 import { eq, desc, sql, and, inArray, count, sum } from 'drizzle-orm'
+import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
+import { requireAuth, optionalAuth } from '../middleware/auth.js'
 
-const communityRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
+
+const communityRoutes = new Hono<{ Variables: Variables }>()
 
 // Helper to get formatted post data
 const getPostData = async (post: any, currentUserId?: string) => {
@@ -69,9 +77,10 @@ const getPostData = async (post: any, currentUserId?: string) => {
 }
 
 // GET /api/community/posts
-communityRoutes.get('/posts', async (c) => {
+communityRoutes.get('/posts', optionalAuth, async (c) => {
     const tagFilter = c.req.query('tag')
-    const currentUserId = c.req.query('userId')
+    const userFromSession = c.get('user')
+    const currentUserId = userFromSession?.id || c.req.query('userId')
 
     let posts
     if (tagFilter) {
@@ -109,9 +118,10 @@ communityRoutes.get('/posts', async (c) => {
 })
 
 // GET /api/community/posts/:id
-communityRoutes.get('/posts/:id', async (c) => {
+communityRoutes.get('/posts/:id', optionalAuth, async (c) => {
     const id = c.req.param('id')
-    const currentUserId = c.req.query('userId')
+    const userFromSession = c.get('user')
+    const currentUserId = userFromSession?.id || c.req.query('userId')
 
     const post = await db.query.communityPost.findFirst({
         where: eq(communityPost.id, id)
@@ -124,11 +134,10 @@ communityRoutes.get('/posts/:id', async (c) => {
 })
 
 // DELETE /api/community/posts/:id
-communityRoutes.delete('/posts/:id', async (c) => {
+communityRoutes.delete('/posts/:id', requireAuth, async (c) => {
     const id = c.req.param('id')
-    const userId = c.req.query('userId')
-
-    if (!userId) return c.json({ error: 'Missing userId' }, 400)
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     const post = await db.query.communityPost.findFirst({
         where: eq(communityPost.id, id)
@@ -149,11 +158,13 @@ communityRoutes.delete('/posts/:id', async (c) => {
 })
 
 // POST /api/community/posts/:id/vote
-communityRoutes.post('/posts/:id/vote', async (c) => {
+communityRoutes.post('/posts/:id/vote', requireAuth, zValidator('json', z.object({
+    value: z.number().int().min(-1).max(1)
+})), async (c) => {
     const id = c.req.param('id')
-    const { userId, value } = await c.req.json() // 1 or -1
-
-    if (!userId || !value) return c.json({ error: 'Missing userId or value' }, 400)
+    const { value } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     try {
         await db.insert(communityPostLike).values({
@@ -173,11 +184,10 @@ communityRoutes.post('/posts/:id/vote', async (c) => {
 })
 
 // DELETE /api/community/posts/:id/like
-communityRoutes.delete('/posts/:id/like', async (c) => {
+communityRoutes.delete('/posts/:id/like', requireAuth, async (c) => {
     const id = c.req.param('id')
-    const userId = c.req.query('userId')
-
-    if (!userId) return c.json({ error: 'Missing userId' }, 400)
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     await db.delete(communityPostLike)
         .where(and(
@@ -226,17 +236,34 @@ communityRoutes.get('/posts/:id/comments', async (c) => {
 })
 
 // POST /api/community/posts/:id/comments
-communityRoutes.post('/posts/:id/comments', async (c) => {
+communityRoutes.post('/posts/:id/comments', requireAuth, zValidator('json', z.object({
+    content: z.string().min(1)
+})), async (c) => {
     const id = c.req.param('id')
-    const { userId, content } = await c.req.json()
-
-    if (!userId || !content) return c.json({ error: 'Missing fields' }, 400)
+    const { content } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     const [comment] = await db.insert(communityPostComment).values({
         postId: id,
         userId,
         content
     }).returning()
+
+    // Notify post owner
+    const postOwner = await db.query.communityPost.findFirst({
+        where: eq(communityPost.id, id),
+        columns: { userId: true }
+    })
+
+    if (postOwner && postOwner.userId !== userId) {
+        await db.insert(notification).values({
+            userId: postOwner.userId,
+            type: 'community_reply',
+            title: 'New Reply',
+            body: `@${userFromSession.username || userFromSession.name} replied to your community post.`,
+        })
+    }
 
     return c.json(comment)
 })
@@ -251,11 +278,12 @@ communityRoutes.get('/tags', async (c) => {
     return c.json(tags)
 })
 
-communityRoutes.post('/posts', async (c) => {
-    const body = await c.req.json()
-    const { content, userId } = body
-
-    if (!content || !userId) return c.json({ error: 'Missing content or user' }, 400)
+communityRoutes.post('/posts', requireAuth, zValidator('json', z.object({
+    content: z.string().min(1)
+})), async (c) => {
+    const { content } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const userId = userFromSession.id
 
     const [newPost] = await db.insert(communityPost).values({
         content,

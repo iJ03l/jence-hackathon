@@ -1,15 +1,26 @@
 import { Hono } from 'hono'
 import { sanityClient } from '../lib/sanity.js'
+import { requireAuth } from '../middleware/auth.js'
 
-const uploadRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
 
-uploadRoutes.post('/', async (c) => {
+const uploadRoutes = new Hono<{ Variables: Variables }>()
+
+uploadRoutes.post('/', requireAuth, async (c) => {
     try {
         const body = await c.req.parseBody()
         const file = body['file'] as File
 
         if (!file) {
             return c.json({ error: 'No file provided' }, 400)
+        }
+
+        // 5MB limit
+        if (file.size > 5 * 1024 * 1024) {
+            return c.json({ error: 'File size exceeds 5MB limit' }, 400)
         }
 
         // Validate basic image types if necessary

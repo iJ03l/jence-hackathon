@@ -2,13 +2,19 @@ import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { notification, post, vertical } from '../db/schema.js'
 import { eq, desc, and } from 'drizzle-orm'
+import { requireAuth } from '../middleware/auth.js'
 
-const notificationsRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
+
+const notificationsRoutes = new Hono<{ Variables: Variables }>()
 
 // GET /api/notifications?userId=xxx — get user's notifications
-notificationsRoutes.get('/', async (c) => {
-    const userId = c.req.query('userId')
-    if (!userId) return c.json({ error: 'userId is required' }, 400)
+notificationsRoutes.get('/', requireAuth, async (c) => {
+    const sessionUser = c.get('user')
+    const userId = sessionUser.id
 
     const items = await db
         .select({
@@ -34,9 +40,9 @@ notificationsRoutes.get('/', async (c) => {
 })
 
 // GET /api/notifications/unread-count?userId=xxx
-notificationsRoutes.get('/unread-count', async (c) => {
-    const userId = c.req.query('userId')
-    if (!userId) return c.json({ error: 'userId is required' }, 400)
+notificationsRoutes.get('/unread-count', requireAuth, async (c) => {
+    const sessionUser = c.get('user')
+    const userId = sessionUser.id
 
     const items = await db
         .select()
@@ -47,9 +53,9 @@ notificationsRoutes.get('/unread-count', async (c) => {
 })
 
 // POST /api/notifications/mark-read — mark all as read
-notificationsRoutes.post('/mark-read', async (c) => {
-    const { userId } = await c.req.json()
-    if (!userId) return c.json({ error: 'userId is required' }, 400)
+notificationsRoutes.post('/mark-read', requireAuth, async (c) => {
+    const sessionUser = c.get('user')
+    const userId = sessionUser.id
 
     await db
         .update(notification)

@@ -63,6 +63,11 @@ export const auth = betterAuth({
                 defaultValue: 'subscriber',
                 input: true,
             },
+            isBanned: {
+                type: 'boolean',
+                required: false,
+                defaultValue: false,
+            },
             username: {
                 type: 'string',
                 required: true,

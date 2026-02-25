@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -417,9 +417,9 @@ export default function CreatorDashboardPage() {
                     <div className="bg-background border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200">
                         <button
                             onClick={() => setIsPostModalOpen(false)}
-                            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                            className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
                         >
-                            <MoreVertical className="rotate-90" /> {/* Should be X icon, using MoreVertical rotated for now or import X */}
+                            <X size={20} />
                         </button>
 
                         <CreatePostForm

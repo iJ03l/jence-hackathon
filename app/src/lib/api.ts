@@ -109,6 +109,8 @@ export const api = {
         request<any>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     exportData: (userId: string) =>
         request<any>(`/users/${userId}/export`),
+    toggleUserBan: (userId: string, isBanned: boolean) =>
+        request<any>(`/users/${userId}/ban`, { method: 'PUT', body: JSON.stringify({ isBanned }) }),
 
     // Uploads
     uploadImage: (file: File) => {

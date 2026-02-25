@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { secureHeaders } from 'hono/secure-headers'
 import { serve } from '@hono/node-server'
 import { setGlobalDispatcher, Agent } from 'undici'
 
@@ -29,6 +30,7 @@ import { startSubscriptionCron } from './cron/subscriptions.js'
 const app = new Hono()
 
 // Middleware
+app.use('*', secureHeaders())
 app.use('*', logger())
 app.use('*', cors({
     origin: (origin) => {

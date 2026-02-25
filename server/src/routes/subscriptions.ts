@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { subscription, creatorProfile, wallet } from '../db/schema.js'
+import { subscription, creatorProfile, wallet, notification } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 import { decryptWallet } from '../lib/kms.js'
 import { getRpcConnection, signWithRelayer, getRelayerKeypair } from '../lib/relayer.js'
@@ -10,21 +10,28 @@ import {
     createAssociatedTokenAccountInstruction,
     createTransferInstruction,
 } from '@solana/spl-token'
+import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
+import { requireAuth } from '../middleware/auth.js'
 
 const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
 const USDC_DECIMALS = 6
 const CREATOR_SHARE_PERCENT = parseInt(process.env.VITE_CREATOR_PAYOUT_PERCENT || '80', 10)
 
-const subscriptionsRoutes = new Hono()
+type Variables = {
+    user: any
+    authSession: any
+}
+
+const subscriptionsRoutes = new Hono<{ Variables: Variables }>()
 
 // POST /api/subscriptions — subscribe to a creator
-subscriptionsRoutes.post('/', async (c) => {
-    const body = await c.req.json()
-    const { subscriberUserId, creatorProfileId } = body
-
-    if (!subscriberUserId || !creatorProfileId) {
-        return c.json({ error: 'Missing required fields' }, 400)
-    }
+subscriptionsRoutes.post('/', requireAuth, zValidator('json', z.object({
+    creatorProfileId: z.string().uuid()
+})), async (c) => {
+    const { creatorProfileId } = c.req.valid('json')
+    const userFromSession = c.get('user')
+    const subscriberUserId = userFromSession.id
 
     // Check if already subscribed
     const [existing] = await db
@@ -150,22 +157,31 @@ subscriptionsRoutes.post('/', async (c) => {
         status: 'active'
     }).returning()
 
+    // Add Notification for creator
+    await db.insert(notification).values({
+        userId: creator.userId,
+        type: 'new_subscription',
+        title: 'New Subscriber!',
+        body: `@${userFromSession.username || userFromSession.name} just subscribed to your content.`,
+    })
+
     console.log(`[SUB] ✅ Subscription ${sub.id} created | Next billing: ${nextDate.toISOString()} | TX: ${txSignature || 'N/A (free)'}`)
 
     return c.json(sub, 201)
 })
 
 // DELETE /api/subscriptions/:id — unsubscribe
-subscriptionsRoutes.delete('/:id', async (c) => {
+subscriptionsRoutes.delete('/:id', requireAuth, async (c) => {
     const id = c.req.param('id')
+    const userFromSession = c.get('user')
 
     const [deleted] = await db
         .delete(subscription)
-        .where(eq(subscription.id, id))
+        .where(and(eq(subscription.id, id), eq(subscription.subscriberUserId, userFromSession.id)))
         .returning()
 
     if (!deleted) {
-        return c.json({ error: 'Subscription not found' }, 404)
+        return c.json({ error: 'Subscription not found or unauthorized' }, 404)
     }
 
     return c.json({ success: true })

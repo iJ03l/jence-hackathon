@@ -19,8 +19,7 @@ export default function CreatorProfilePage() {
     const [feedbackText, setFeedbackText] = useState('')
     const [submittingRating, setSubmittingRating] = useState(false)
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
-
-
+    const [togglingBan, setTogglingBan] = useState(false)
 
     useEffect(() => {
         if (!username) return
@@ -114,6 +113,29 @@ export default function CreatorProfilePage() {
         }
     }
 
+    const handleToggleBan = async () => {
+        if (!user || user.role !== 'admin' || !data?.creator?.userId) return
+        if (!confirm(`Are you sure you want to ${data.creator.isBanned ? 'unban' : 'ban'} this user?`)) return
+
+        setTogglingBan(true)
+        try {
+            await api.toggleUserBan(data.creator.userId, !data.creator.isBanned)
+            // Local optimistic update
+            setData({
+                ...data,
+                creator: {
+                    ...data.creator,
+                    isBanned: !data.creator.isBanned
+                }
+            })
+        } catch (err: any) {
+            console.error('Failed to toggle ban:', err)
+            alert(err.message || 'Failed to toggle ban status.')
+        } finally {
+            setTogglingBan(false)
+        }
+    }
+
     if (loading) {
         return (
             <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 animate-pulse">
@@ -191,6 +213,11 @@ export default function CreatorProfilePage() {
                                         {creator.verticalName}
                                     </Link>
                                 )}
+                                {creator.isBanned && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                        BANNED
+                                    </span>
+                                )}
                                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                                     <span className="flex items-center gap-1">
                                         <Star size={12} className={creator.averageRating > 0 ? "text-jence-gold fill-jence-gold" : ""} />
@@ -212,7 +239,19 @@ export default function CreatorProfilePage() {
                             </div>
                         </div>
 
-                        <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                        <div className="w-full sm:w-auto mt-4 sm:mt-0 flex flex-col sm:flex-row gap-2">
+                            {user?.role === 'admin' && (
+                                <button
+                                    onClick={handleToggleBan}
+                                    disabled={togglingBan}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${creator.isBanned
+                                            ? 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                            : 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20'
+                                        }`}
+                                >
+                                    {togglingBan ? 'Processing...' : (creator.isBanned ? 'Unban Account' : 'Ban Account')}
+                                </button>
+                            )}
                             {user && !subscribed ? (
                                 <button
                                     onClick={handleSubscribe}
