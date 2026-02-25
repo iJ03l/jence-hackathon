@@ -429,7 +429,6 @@ export default function AboutPage() {
                 </div>
             </main>
 
-            <CTAFooter />
         </div>
     )
 }
