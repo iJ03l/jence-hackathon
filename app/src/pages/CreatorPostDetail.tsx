@@ -216,7 +216,26 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                     <MessageCircle size={18} />
                                     <span>{comments.length}</span>
                                 </div>
-                                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto">
+                                <button
+                                    onClick={async () => {
+                                        const url = `${window.location.origin}/post/${post.id}`
+                                        if (navigator.share) {
+                                            try {
+                                                await navigator.share({
+                                                    title: post.title,
+                                                    text: 'Check out this analysis on Jence!',
+                                                    url
+                                                })
+                                            } catch (e) {
+                                                console.error('Error sharing', e)
+                                            }
+                                        } else {
+                                            navigator.clipboard.writeText(url)
+                                            alert('Link copied to clipboard!')
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto"
+                                >
                                     <Share2 size={18} />
                                 </button>
                             </div>
