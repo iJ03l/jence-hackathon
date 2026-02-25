@@ -1,6 +1,5 @@
 import SEO from '../components/SEO'
 import Navigation from '../sections/Navigation'
-import CTAFooter from '../sections/CTAFooter'
 import { Shield, Zap, TrendingUp, Lock, Users, ChevronDown, Check, X, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 
@@ -187,7 +186,7 @@ export default function AboutPage() {
                     <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="inline-flex items-center gap-2 bg-jence-gold/10 border border-jence-gold/20 rounded-full px-4 py-2 text-sm font-medium text-jence-gold mb-6">
                             <span className="w-2 h-2 rounded-full bg-jence-gold animate-pulse" />
-                            Africa's first anonymous expert analysis platform
+                            Africa's first expert analysis platform
                         </div>
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-6 text-foreground">
                             Tired of searching how to make money and getting the same recycled advice?
