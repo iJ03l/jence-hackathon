@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check } from 'lucide-react'
 import { linkifyText } from '../lib/linkify'
 
 // Skeleton Component
@@ -35,6 +35,7 @@ export default function CreatorPostDetail() {
     const [loading, setLoading] = useState(true)
     const [newComment, setNewComment] = useState('')
     const [submittingComment, setSubmittingComment] = useState(false)
+    const [isCopied, setIsCopied] = useState(false)
 
     useEffect(() => {
         if (id) loadData(id)
@@ -132,12 +133,12 @@ export default function CreatorPostDetail() {
                 </button>
 
                 {/* Main Post */}
-                <div className="card-plug p-6 mb-8">
-                    <div className="flex gap-4">
-                        <Link to={`/${post.creatorUsername || '#'}`} className="w-12 h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
+                <div className="card-plug p-4 sm:p-6 mb-8">
+                    <div className="flex gap-3 sm:gap-4">
+                        <Link to={`/${post.creatorUsername || '#'}`} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
                             {post.creatorPseudonym?.[0]}
                         </Link>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Link to={`/${post.creatorUsername || '#'}`} className="font-semibold text-foreground hover:underline">
                                     {post.creatorPseudonym}
@@ -166,11 +167,11 @@ export default function CreatorPostDetail() {
 
                             <div className="prose prose-invert max-w-none mb-6 relative">
                                 {post.isFree || post.hasAccess ? (
-                                    <p className="text-foreground/90 whitespace-pre-wrap">{linkifyText(post.content)}</p>
+                                    <p className="text-foreground/90 whitespace-pre-wrap break-words">{linkifyText(post.content)}</p>
                                 ) : (
                                     <>
                                         {/* Dummy blurred text to indicate content length without leaking actual analysis */}
-                                        <p className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50">
+                                        <p className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words">
                                             {linkifyText(post.excerpt || `This is a premium analysis piece prepared exclusively for subscribers. The analysis contains in-depth data, actionable insights, and key market trends.
                                             
 To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription supports the creator and gives you access to their complete library of premium insights.`)}
@@ -231,12 +232,13 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                             }
                                         } else {
                                             navigator.clipboard.writeText(url)
-                                            alert('Link copied to clipboard!')
+                                            setIsCopied(true)
+                                            setTimeout(() => setIsCopied(false), 2000)
                                         }
                                     }}
-                                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto"
+                                    className={`flex items-center gap-2 text-sm transition-colors ml-auto ${isCopied ? 'text-jence-green' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
-                                    <Share2 size={18} />
+                                    {isCopied ? <Check size={18} /> : <Share2 size={18} />}
                                 </button>
                             </div>
                         </div>
@@ -280,8 +282,8 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                 <Link to={`/${comment.user?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-xs text-muted-foreground">
                                     {(comment.user?.displayName || '?')[0].toUpperCase()}
                                 </Link>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <Link to={`/${comment.user?.username}`} className="font-semibold text-sm text-foreground hover:underline">
                                             {comment.user?.displayName}
                                         </Link>
@@ -290,11 +292,11 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                                 Creator
                                             </span>
                                         )}
-                                        <span className="text-muted-foreground text-xs">@{comment.user?.username}</span>
+                                        <span className="text-muted-foreground text-xs truncate">@{comment.user?.username}</span>
                                         <span className="text-muted-foreground text-xs">•</span>
                                         <span className="text-muted-foreground text-xs">{new Date(comment.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">{linkifyText(comment.content)}</p>
+                                    <p className="text-foreground/90 text-sm whitespace-pre-wrap break-words">{linkifyText(comment.content)}</p>
                                 </div>
                             </div>
                         </div>
