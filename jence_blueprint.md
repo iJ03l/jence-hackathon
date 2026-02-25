@@ -40,7 +40,7 @@ That does not change. What changes is how that activity is framed, governed, and
 
 Jence is a subscription-based platform where independent analysts, researchers, and sector specialists share expert commentary, research, and professional opinion — anonymously. Subscribers pay monthly to access creator-published content organized by sector.
 
-The platform spans every major layer of Nigerian economic and professional life: banking and finance, government and policy, sports and recreation, digital assets, real estate, professional careers, open markets, the creator economy, agriculture, and energy.
+The platform spans every major layer of Nigerian economic and professional life: banking and finance, government and policy, sports and recreation, digital assets, real estate, professional careers, open markets, the creator economy, agriculture, and energy. It also features a free, public **Community Hub** for broad sector discussion and audience onboarding.
 
 ## What Jence Is and Is Not
 
@@ -48,6 +48,7 @@ The platform spans every major layer of Nigerian economic and professional life:
 - ✓ A paid research and insights platform
 - ✓ A knowledge-sharing subscription hub
 - ✓ A sector-based expert commentary network
+- ✓ A public Community discussion forum for sector updates (non-political)
 - ✓ A professional analysis ecosystem
 - ✓ A creator monetization infrastructure
 - ✓ Anonymous — for subscribers and publicly for creators
@@ -164,6 +165,13 @@ This vertical requires the most careful moderation given national security impli
 
 **What is removed:** Content implying access to NNPC confidential operations, pipeline security information, or sensitive infrastructure data — flagged and removed immediately.
 
+## 11. The Community Hub (Free Tier)
+
+Unlike the 10 premium verticals, the Community Hub functions as a free, public discussion forum (similar to Reddit).
+- **Purpose:** Audience building, user onboarding, and open knowledge sharing.
+- **Content:** General sector updates, trend discussions, and macro observations.
+- **Restriction:** **Strictly no political content.** The Community Hub is for business, finance, sports, tech, and cultural trends only. Political analysis remains strictly walled within the premium, heavily moderated Government & Policy vertical.
+
 ---
 
 # Section 4 — Creator Framework & Accountability Structure
@@ -256,7 +264,7 @@ Jence collects sensitive data: creator KYC documents, subscriber pseudonymous id
 > **Jence's legal position:** "We are a content subscription platform that accepts cryptocurrency as a payment method, processed via third-party payment infrastructure. We do not hold user funds, operate a wallet service, or facilitate currency exchange."
 
 **To maintain this position:**
-- Use a third-party processor: Breet, NOWPayments, or Coinbase Commerce
+- Use Solana-based embedded wallets for seamless Web3 onboarding (USDC settlement)
 - Do not hold subscriber funds beyond the time required to process and split payments
 - Auto-distribute creator revenue on a daily or weekly cycle
 - Do not market the platform using language that implies financial services or currency exchange
@@ -360,12 +368,28 @@ If Jence reaches meaningful revenue — ₦10M+ monthly — consider an offshore
 | 0 | Weeks 1–4 | CAC registration. Lawyer engaged. Creator Agreement drafted. KYC system designed. Domain secured. Seed creators identified. |
 | 1 | Months 1–3 | MVP live. Legal documents published. KYC onboarding for first creators. 10+ creators across 5 verticals. First 100 paying subscribers. Third-party crypto payment live. |
 | 2 | Months 3–6 | 50+ creators. 1,000+ subscribers. NDPA compliance documented. Revenue validates offshore incorporation decision. Moderation system moves from manual to semi-automated. |
-| 3 | Months 6–12 | 200+ creators across all 10 verticals. Offshore entity established if warranted. AML policy formalised. Mobile PWA live. Featured placement revenue stream active. |
-| 4 | Year 2+ | Native app. AI content recommendations. Creator live sessions. Diaspora market expansion (UK, Canada, US Nigerian communities). Formal investor round if growth justifies. |
+| 3 | Months 6–12 | 200+ creators across all 10 verticals. Offshore entity established if warranted. AML policy formalised. Mobile PWA native experience enhanced. Featured placement revenue stream active. |
+| 4 | Year 2+ | Native app deployment. AI content recommendations. Creator live sessions. Diaspora market expansion (UK, Canada, US Nigerian communities). Formal investor round if growth justifies. |
 
 ---
 
 > **Jence is not a more cautious version of the original idea. It is a more durable one. The business model is intact. The revenue is intact. The anonymity is intact. What is no longer intact is the legal exposure.**
+
+---
+
+# Section 9 — Product Implementation Status (As of Feb 2026)
+
+The platform is actively being built and refined to support this blueprint. Key implementations structurally align with the scale and safety required:
+
+## The Community Hub
+The Community section has been established to function similarly to Reddit — designed for all types of updates **excluding political content**. 
+- **Purpose:** Serve as a high-value onboarding space for new audiences and users.
+- **Value Exchange:** Provides a dedicated space for experts to give free value, building trust and funneling users towards their premium, sector-specific subscriptions. 
+
+## Technical & Identity Implementations
+- **Progressive Web App (PWA):** Native app-like experience active across mobile devices (standalone display, optimized navigation, homescreen icons).
+- **Branding & SEO:** Unified platform branding (custom logos, refined UI) and discoverability foundations (`sitemap.xml`, `llm.txt`) deployed.
+- **Authentication:** Integrated and unified authentication (including Google OAuth and standard email) linked seamlessly with embedded crypto wallets (Solana) for frictionless onboarding.
 
 ---
 

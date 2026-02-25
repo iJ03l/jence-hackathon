@@ -7,6 +7,7 @@ interface SEOProps {
     url?: string
     type?: 'website' | 'article' | 'profile'
     noIndex?: boolean
+    children?: React.ReactNode
 }
 
 const SITE_NAME = 'Jence'
@@ -21,6 +22,7 @@ export default function SEO({
     url,
     type = 'website',
     noIndex = false,
+    children,
 }: SEOProps) {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Anonymous Expert Analysis`
     const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL
@@ -45,6 +47,7 @@ export default function SEO({
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
             <meta name="twitter:image" content={image} />
+            {children}
         </Helmet>
     )
 }

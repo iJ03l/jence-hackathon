@@ -18,6 +18,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
+import AboutPage from './pages/AboutPage'
 import './App.css'
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
           <Route path="/guidelines" element={<CommunityGuidelinesPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/creator-onboarding" element={<CreatorOnboardingPage />} />
           {/* Catch-all for creator profiles (e.g. jence.xyz/username) */}
