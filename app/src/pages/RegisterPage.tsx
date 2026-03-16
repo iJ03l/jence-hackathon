@@ -53,27 +53,21 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen flex w-full relative bg-background">
+        <div className="h-screen flex w-full relative bg-background overflow-hidden">
             {/* Left/Background Panel */}
-            <div className="absolute inset-0 md:relative md:flex-1 w-full h-full z-0 overflow-hidden border-r border-border/50">
+            <div className="absolute inset-0 md:relative md:flex-1 md:w-1/2 h-full z-0 overflow-hidden border-r border-border/10">
                 <AuthInteractiveBg />
             </div>
 
             {/* Right/Foreground Panel */}
-            <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 z-10 relative md:bg-background/50 md:backdrop-blur-none">
-                <div className="w-full max-w-md">
-                    {/* Logo flex order reversed for mobile / hidden handled differently if needed, keeping simple */}
-                    <Link to="/" className="flex items-center justify-center gap-2 mb-8 md:mb-12 group">
-                        <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl group-hover:scale-105 transition-transform" />
-                        <span className="font-bold text-2xl tracking-tight text-foreground">Jence</span>
-                    </Link>
-
-                    {/* Card */}
-                    <div className="card-plug p-8 bg-background/80 backdrop-blur-lg border-border/50 shadow-2xl">
-                        <h1 className="text-2xl font-bold text-foreground text-center mb-2">Create account</h1>
-                    <p className="text-sm text-muted-foreground text-center mb-6">
-                        Join the robotics and hardware engineering publication
-                    </p>
+            <div className="flex-1 md:w-1/2 flex flex-col items-center px-6 py-12 z-10 relative bg-transparent md:bg-background md:shadow-[-20px_0_40px_-10px_rgba(0,0,0,0.5)] overflow-y-auto mt-12 md:mt-0">
+                <div className="w-full max-w-[360px] my-auto">
+                    {/* Content */}
+                    <div className="w-full">
+                        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3 text-center md:text-left">Create account</h1>
+                        <p className="text-sm md:text-base text-muted-foreground mb-8 text-center md:text-left">
+                            Join the robotics and hardware engineering publication
+                        </p>
 
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
@@ -92,7 +86,7 @@ export default function RegisterPage() {
                                     : 'text-muted-foreground hover:text-foreground scale-95'
                                     }`}
                             >
-                                Subscriber
+                                Reader
                             </button>
                             <button
                                 type="button"
@@ -102,13 +96,13 @@ export default function RegisterPage() {
                                     : 'text-muted-foreground hover:text-foreground scale-95'
                                     }`}
                             >
-                                Creator
+                                Author
                             </button>
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
                             {role === 'subscriber'
                                 ? 'Read technical articles, issues, and labs'
-                                : 'Publish credited engineering work and build subscribers'}
+                                : 'Publish credited engineering work and build your audience'}
                         </p>
                     </div>
 
@@ -202,7 +196,7 @@ export default function RegisterPage() {
                                 </>
                             ) : (
                                 <>
-                                    Create {role} account
+                                    Create {role === 'subscriber' ? 'reader' : 'author'} account
                                     <ArrowRight size={18} />
                                 </>
                             )}
@@ -262,17 +256,17 @@ export default function RegisterPage() {
                         )}
                     </button>
 
-                        <p className="text-sm text-muted-foreground text-center mt-6">
+                        <p className="text-sm text-muted-foreground text-center mt-8">
                             Already have an account?{' '}
-                            <Link to="/login" className="text-jence-gold hover:underline font-medium">Sign in</Link>
+                            <Link to="/login" className="text-foreground font-semibold hover:text-jence-gold transition-colors">Sign in</Link>
                         </p>
                     </div>
 
-                    <p className="text-xs text-muted-foreground text-center mt-6 flex items-center justify-center gap-2">
-                        <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                    <div className="mt-12 flex items-center justify-center md:justify-start gap-4 text-xs text-muted-foreground">
+                        <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
                         <span>·</span>
                         <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -12,6 +12,10 @@ creatorsRoutes.get('/', async (c) => {
             id: creatorProfile.id,
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
+            affiliation: creatorProfile.affiliation,
+            credentials: creatorProfile.credentials,
+            location: creatorProfile.location,
+            website: creatorProfile.website,
             kycStatus: creatorProfile.kycStatus,
             verticalName: vertical.name,
             verticalSlug: vertical.slug,
@@ -33,6 +37,10 @@ creatorsRoutes.get('/:id', async (c) => {
             id: creatorProfile.id,
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
+            affiliation: creatorProfile.affiliation,
+            credentials: creatorProfile.credentials,
+            location: creatorProfile.location,
+            website: creatorProfile.website,
             kycStatus: creatorProfile.kycStatus,
             verticalId: creatorProfile.verticalId,
             verticalName: vertical.name,
@@ -116,6 +124,10 @@ creatorsRoutes.get('/u/:username', async (c) => {
             id: creatorProfile.id,
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
+            affiliation: creatorProfile.affiliation,
+            credentials: creatorProfile.credentials,
+            location: creatorProfile.location,
+            website: creatorProfile.website,
             kycStatus: creatorProfile.kycStatus,
             verticalId: creatorProfile.verticalId,
             verticalName: vertical.name,
@@ -226,6 +238,10 @@ creatorsRoutes.get('/user/:userId', async (c) => {
             id: creatorProfile.id,
             pseudonym: creatorProfile.pseudonym,
             bio: creatorProfile.bio,
+            affiliation: creatorProfile.affiliation,
+            credentials: creatorProfile.credentials,
+            location: creatorProfile.location,
+            website: creatorProfile.website,
             kycStatus: creatorProfile.kycStatus,
             verticalId: creatorProfile.verticalId,
             verticalName: vertical.name,
@@ -328,7 +344,17 @@ creatorsRoutes.get('/user/:userId', async (c) => {
 // POST /api/creators/onboard — creator onboarding
 creatorsRoutes.post('/onboard', async (c) => {
     const body = await c.req.json()
-    const { userId, pseudonym, verticalId, kycDocumentType, selfCertificationSigned } = body
+    const {
+        userId,
+        pseudonym,
+        verticalId,
+        kycDocumentType,
+        selfCertificationSigned,
+        affiliation,
+        credentials,
+        location,
+        website
+    } = body
 
     if (!userId || !pseudonym || !verticalId || !selfCertificationSigned) {
         return c.json({ error: 'Missing required fields' }, 400)
@@ -337,6 +363,10 @@ creatorsRoutes.post('/onboard', async (c) => {
     const [profile] = await db.insert(creatorProfile).values({
         userId,
         pseudonym,
+        affiliation,
+        credentials,
+        location,
+        website,
         verticalId,
         kycDocumentType,
         selfCertificationSigned,
@@ -351,19 +381,45 @@ creatorsRoutes.post('/onboard', async (c) => {
 creatorsRoutes.put('/:id', async (c) => {
     const id = c.req.param('id')
     const body = await c.req.json()
-    const { bio, pseudonym, payoutAddress, payoutMethod, subscriptionPrice } = body
+    const {
+        bio,
+        pseudonym,
+        affiliation,
+        credentials,
+        location,
+        website,
+        payoutAddress,
+        payoutMethod,
+        subscriptionPrice
+    } = body
 
-    if (!bio && pseudonym === undefined && !payoutAddress && !payoutMethod && subscriptionPrice === undefined) {
+    const hasUpdates = (
+        bio !== undefined ||
+        pseudonym !== undefined ||
+        affiliation !== undefined ||
+        credentials !== undefined ||
+        location !== undefined ||
+        website !== undefined ||
+        payoutAddress !== undefined ||
+        payoutMethod !== undefined ||
+        subscriptionPrice !== undefined
+    )
+
+    if (!hasUpdates) {
         return c.json({ error: 'Nothing to update' }, 400)
     }
 
     const [updatedCreator] = await db
         .update(creatorProfile)
         .set({
-            ...(bio && { bio }),
+            ...(bio !== undefined && { bio }),
             ...(pseudonym !== undefined && { pseudonym }),
-            ...(payoutAddress && { payoutAddress }),
-            ...(payoutMethod && { payoutMethod }),
+            ...(affiliation !== undefined && { affiliation }),
+            ...(credentials !== undefined && { credentials }),
+            ...(location !== undefined && { location }),
+            ...(website !== undefined && { website }),
+            ...(payoutAddress !== undefined && { payoutAddress }),
+            ...(payoutMethod !== undefined && { payoutMethod }),
             ...(subscriptionPrice !== undefined && { subscriptionPrice: String(subscriptionPrice) }),
             updatedAt: new Date(),
         })

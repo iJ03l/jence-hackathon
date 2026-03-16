@@ -5,112 +5,32 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   Cpu, Bot, Shield, Settings, Plane,
-  Activity, Eye, BatteryCharging, Wrench, FlaskConical
+  Activity, Eye, BatteryCharging, Wrench, FlaskConical,
+  FileText, Loader2
 } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export const verticals = [
-  {
-    id: 1,
-    slug: 'embedded-firmware',
-    name: 'Embedded & Firmware',
-    description: 'RTOS, bring-up, interfaces, and performance',
-    icon: Cpu,
-    color: '#2563EB',
-    creators: 42,
-  },
-  {
-    id: 2,
-    slug: 'robotics-software',
-    name: 'Robotics Software',
-    description: 'ROS2, autonomy stacks, tooling, and simulation',
-    icon: Bot,
-    color: '#16A34A',
-    creators: 28,
-  },
-  {
-    id: 3,
-    slug: 'hardware-security',
-    name: 'Hardware Security',
-    description: 'Defensive research and responsible disclosure',
-    icon: Shield,
-    color: '#F59E0B',
-    creators: 67,
-  },
-  {
-    id: 4,
-    slug: 'industrial-ot-robotics',
-    name: 'Industrial / OT Robotics',
-    description: 'Automation, safety systems, deployment lessons',
-    icon: Settings,
-    color: '#0EA5E9',
-    creators: 31,
-  },
-  {
-    id: 5,
-    slug: 'drones-mobile-systems',
-    name: 'Drones & Mobile Systems',
-    description: 'Navigation, planning, and field operations',
-    icon: Plane,
-    color: '#6366F1',
-    creators: 45,
-  },
-  {
-    id: 6,
-    slug: 'humanoids-actuation',
-    name: 'Humanoids & Actuation',
-    description: 'Actuators, control loops, and safety limits',
-    icon: Activity,
-    color: '#EF4444',
-    creators: 38,
-  },
-  {
-    id: 7,
-    slug: 'sensors-perception',
-    name: 'Sensors & Perception',
-    description: 'Calibration, perception, and benchmarks',
-    icon: Eye,
-    color: '#22C55E',
-    creators: 52,
-  },
-  {
-    id: 8,
-    slug: 'power-thermal',
-    name: 'Power / Batteries / Thermal',
-    description: 'BMS, power delivery, thermal design',
-    icon: BatteryCharging,
-    color: '#F97316',
-    creators: 25,
-  },
-  {
-    id: 9,
-    slug: 'mechanical-manufacturing',
-    name: 'Mechanical / Manufacturing / DFM',
-    description: 'Materials, tolerances, production lessons',
-    icon: Wrench,
-    color: '#14B8A6',
-    creators: 19,
-  },
-  {
-    id: 10,
-    slug: 'research-benchmarks',
-    name: 'Research & Benchmarks',
-    description: 'Reproducible experiments and datasets',
-    icon: FlaskConical,
-    color: '#A855F7',
-    creators: 23,
-  },
-]
+const iconMap: Record<string, any> = {
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
+}
 
 export default function Verticals() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  
+  const [verticals, setVerticals] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [dbStats, setDbStats] = useState<any>(null)
 
   useEffect(() => {
-    api.getGlobalStats().then(setDbStats).catch(console.error)
+    // Fetch stats and verticals in parallel
+    Promise.all([
+      api.getGlobalStats().then(setDbStats),
+      api.getVerticals().then(setVerticals)
+    ]).catch(console.error).finally(() => setLoading(false))
   }, [])
 
   useLayoutEffect(() => {
@@ -129,27 +49,30 @@ export default function Verticals() {
         }
       )
 
-      const cards = gridRef.current?.querySelectorAll('.vertical-card')
-      if (cards) {
-        gsap.fromTo(cards,
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            stagger: 0.1,
-            scrollTrigger: {
-              trigger: gridRef.current,
-              start: 'top 85%',
-              end: 'top 50%',
-              scrub: true,
-            }
+      // We need to wait for rendering to setup the animation for the cards
+      setTimeout(() => {
+          const cards = gridRef.current?.querySelectorAll('.vertical-card')
+          if (cards && cards.length > 0) {
+            gsap.fromTo(cards,
+              { y: 40, opacity: 0 },
+              {
+                y: 0,
+                opacity: 1,
+                stagger: 0.1,
+                scrollTrigger: {
+                  trigger: gridRef.current,
+                  start: 'top 85%',
+                  end: 'top 50%',
+                  scrub: true,
+                }
+              }
+            )
           }
-        )
-      }
+      }, 300)
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [verticals.length])
 
   return (
     <section
@@ -175,10 +98,14 @@ export default function Verticals() {
         {/* Verticals Grid */}
         <div
           ref={gridRef}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 min-h-[300px]"
         >
-          {verticals.map((vertical) => {
-            const Icon = vertical.icon
+          {loading ? (
+             <div className="col-span-full flex justify-center py-12">
+                 <Loader2 className="animate-spin text-jence-gold" size={32} />
+             </div>
+          ) : verticals.map((vertical) => {
+            const Icon = iconMap[vertical.iconName] || FileText
             return (
               <Link
                 key={vertical.id}

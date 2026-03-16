@@ -69,9 +69,13 @@ export const creatorProfile = pgTable('creator_profile', {
     userId: text('user_id').notNull().references(() => user.id).unique(),
     pseudonym: text('pseudonym').notNull().unique(),
     bio: text('bio'),
+    affiliation: text('affiliation'),
+    credentials: text('credentials'),
+    location: text('location'),
+    website: text('website'),
     verticalId: uuid('vertical_id').references(() => vertical.id),
-    kycStatus: text('kyc_status').notNull().default('pending'), // 'pending' | 'verified' | 'rejected'
-    kycDocumentType: text('kyc_document_type'), // 'NIN' | 'BVN' | 'Passport'
+    kycStatus: text('kyc_status').notNull().default('pending'), // 'pending' | 'verified' | 'rejected' (credential verification status)
+    kycDocumentType: text('kyc_document_type'), // 'NIN' | 'BVN' | 'Passport' (optional, if verification uses docs)
     kycDocumentHash: text('kyc_document_hash'), // encrypted reference, never the actual document
     selfCertificationSigned: boolean('self_certification_signed').notNull().default(false),
     selfCertificationDate: timestamp('self_certification_date'),
@@ -89,6 +93,8 @@ export const post = pgTable('post', {
     title: text('title').notNull(),
     content: text('content').notNull(),
     excerpt: text('excerpt'),
+    disclosure: text('disclosure'),
+    imageUrl: text('image_url'),
     creatorId: uuid('creator_id').notNull().references(() => creatorProfile.id),
     verticalId: uuid('vertical_id').notNull().references(() => vertical.id),
     isPublished: boolean('is_published').notNull().default(true),
@@ -217,6 +223,23 @@ export const wallet = pgTable('wallet', {
     encryptedPrivateKey: text('encrypted_private_key').notNull(), // The AES-256-GCM encrypted seed/secret
     iv: text('iv').notNull(), // Initialization Vector for decryption
     authTag: text('auth_tag').notNull(), // Authentication Tag to ensure data integrity
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ===== Launch Notes =====
+
+export const launchNote = pgTable('launch_note', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id), // who submitted
+    name: text('name').notNull(),       // product name
+    company: text('company').notNull(), // company name
+    summary: text('summary').notNull(), // product summary
+    tags: text('tags').notNull().default('[]'), // JSON array of tag strings
+    disclosure: text('disclosure'),      // conflict-of-interest disclosure
+    status: text('status').notNull().default('pending'), // 'pending' | 'approved' | 'rejected'
+    reviewedBy: text('reviewed_by').references(() => user.id), // admin who reviewed
+    reviewNote: text('review_note'),    // admin note on rejection/approval
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

@@ -2,42 +2,58 @@ import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
-import { verticals } from '../sections/Verticals'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import {
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
+    FileText, Loader2
+} from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
+const iconMap: Record<string, any> = {
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
+}
+
 export default function ExplorePage() {
+    const [verticals, setVerticals] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
     const [dbStats, setDbStats] = useState<any>(null)
     const gridRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        api.getGlobalStats().then(setDbStats).catch(console.error)
+        Promise.all([
+            api.getGlobalStats().then(setDbStats),
+            api.getVerticals().then(setVerticals)
+        ]).catch(console.error).finally(() => setLoading(false))
     }, [])
 
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
-            const cards = gridRef.current?.querySelectorAll('.vertical-card')
-            if (cards) {
-                gsap.fromTo(cards,
-                    { y: 40, opacity: 0 },
-                    {
-                        y: 0,
-                        opacity: 1,
-                        stagger: 0.05,
-                        scrollTrigger: {
-                            trigger: gridRef.current,
-                            start: 'top 90%',
-                            end: 'top 50%',
-                            scrub: true,
+            setTimeout(() => {
+                const cards = gridRef.current?.querySelectorAll('.vertical-card')
+                if (cards && cards.length > 0) {
+                    gsap.fromTo(cards,
+                        { y: 40, opacity: 0 },
+                        {
+                            y: 0,
+                            opacity: 1,
+                            stagger: 0.05,
+                            scrollTrigger: {
+                                trigger: gridRef.current,
+                                start: 'top 90%',
+                                end: 'top 50%',
+                                scrub: true,
+                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
+            }, 300)
         }, gridRef)
         return () => ctx.revert()
-    }, [])
+    }, [verticals.length])
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
@@ -58,10 +74,14 @@ export default function ExplorePage() {
                 {/* Verticals Grid */}
                 <div
                     ref={gridRef}
-                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 min-h-[300px]"
                 >
-                    {verticals.map((vertical) => {
-                        const Icon = vertical.icon
+                    {loading ? (
+                         <div className="col-span-full flex justify-center py-12">
+                             <Loader2 className="animate-spin text-jence-gold" size={32} />
+                         </div>
+                    ) : verticals.map((vertical) => {
+                        const Icon = iconMap[vertical.iconName] || FileText
                         return (
                             <Link
                                 key={vertical.id}

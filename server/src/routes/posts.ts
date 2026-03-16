@@ -57,13 +57,17 @@ postsRoutes.get('/', optionalAuth, async (c) => {
             id: post.id,
             title: post.title,
             excerpt: post.excerpt,
+            imageUrl: post.imageUrl,
             isFree: post.isFree,
             createdAt: post.createdAt,
             creatorPseudonym: creatorProfile.pseudonym,
             creatorId: creatorProfile.id,
+            verticalName: vertical.name,
+            verticalSlug: vertical.slug,
         })
         .from(post)
         .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
+        .leftJoin(vertical, eq(post.verticalId, vertical.id))
         .where(eq(post.isPublished, true))
         .orderBy(desc(post.createdAt))
         .limit(50)
@@ -75,6 +79,8 @@ const createPostSchema = z.object({
     title: z.string().min(1),
     content: z.string().min(1),
     excerpt: z.string().optional(),
+    disclosure: z.string().optional(),
+    imageUrl: z.string().url().optional(),
     creatorId: z.string().uuid(),
     verticalId: z.string().uuid(),
     isFree: z.boolean().optional(),
@@ -83,7 +89,7 @@ const createPostSchema = z.object({
 // POST /api/posts — create a new post (creator only)
 postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (c) => {
     const userFromSession = c.get('user')
-    const { title, content, excerpt, creatorId, verticalId, isFree } = c.req.valid('json')
+    const { title, content, excerpt, disclosure, imageUrl, creatorId, verticalId, isFree } = c.req.valid('json')
 
     // Verify user owns the creator profile
     const creatorUser = await db.query.creatorProfile.findFirst({
@@ -99,6 +105,8 @@ postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (
         title,
         content,
         excerpt: excerpt || content.substring(0, 200),
+        disclosure: disclosure?.trim() || null,
+        imageUrl: imageUrl || null,
         creatorId,
         verticalId,
         isFree: isFree ?? false,
@@ -248,6 +256,8 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
             title: post.title,
             content: post.content, // Full content for detail view
             excerpt: post.excerpt,
+            disclosure: post.disclosure,
+            imageUrl: post.imageUrl,
             isFree: post.isFree,
             createdAt: post.createdAt,
             creatorId: post.creatorId,

@@ -25,6 +25,7 @@ import communityRoutes from './routes/community.js'
 import uploadRoutes from './routes/upload.js'
 import walletRoutes from './routes/wallet.js'
 import statsRoutes from './routes/stats.js'
+import launchRoutes from './routes/launches.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
 
 const app = new Hono()
@@ -55,7 +56,7 @@ app.get('/', (c) => {
     return c.json({
         name: 'Jence API',
         version: '1.0.0',
-        description: 'Expert sector research platform — anonymous and crypto-settled',
+        description: 'Robotics and hardware engineering publication API',
     })
 })
 
@@ -71,6 +72,7 @@ app.route('/api/community', communityRoutes)
 app.route('/api/upload', uploadRoutes)
 app.route('/api/wallet', walletRoutes)
 app.route('/api/stats', statsRoutes)
+app.route('/api/launches', launchRoutes)
 
 // Start server
 const port = parseInt(process.env.PORT || '8080', 10)
