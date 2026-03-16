@@ -4,7 +4,7 @@ import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react
 import { useAuth } from '../context/AuthContext'
 import { authClient } from '../lib/auth-client'
 import { api } from '../lib/api'
-
+import AuthInteractiveBg from '../components/AuthInteractiveBg'
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -53,17 +53,24 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-                    <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl" />
-                    <span className="font-bold text-xl tracking-tight text-foreground">Jence</span>
-                </Link>
+        <div className="min-h-screen flex w-full relative bg-background">
+            {/* Left/Background Panel */}
+            <div className="absolute inset-0 md:relative md:flex-1 w-full h-full z-0 overflow-hidden border-r border-border/50">
+                <AuthInteractiveBg />
+            </div>
 
-                {/* Card */}
-                <div className="card-plug p-8">
-                    <h1 className="text-2xl font-bold text-foreground text-center mb-2">Create account</h1>
+            {/* Right/Foreground Panel */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 z-10 relative md:bg-background/50 md:backdrop-blur-none">
+                <div className="w-full max-w-md">
+                    {/* Logo flex order reversed for mobile / hidden handled differently if needed, keeping simple */}
+                    <Link to="/" className="flex items-center justify-center gap-2 mb-8 md:mb-12 group">
+                        <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-xl group-hover:scale-105 transition-transform" />
+                        <span className="font-bold text-2xl tracking-tight text-foreground">Jence</span>
+                    </Link>
+
+                    {/* Card */}
+                    <div className="card-plug p-8 bg-background/80 backdrop-blur-lg border-border/50 shadow-2xl">
+                        <h1 className="text-2xl font-bold text-foreground text-center mb-2">Create account</h1>
                     <p className="text-sm text-muted-foreground text-center mb-6">
                         Join the robotics and hardware engineering publication
                     </p>
@@ -255,18 +262,18 @@ export default function RegisterPage() {
                         )}
                     </button>
 
-                    <p className="text-sm text-muted-foreground text-center mt-6">
-                        Already have an account?{' '}
-                        <Link to="/login" className="text-jence-gold hover:underline">Sign in</Link>
+                        <p className="text-sm text-muted-foreground text-center mt-6">
+                            Already have an account?{' '}
+                            <Link to="/login" className="text-jence-gold hover:underline font-medium">Sign in</Link>
+                        </p>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground text-center mt-6 flex items-center justify-center gap-2">
+                        <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                        <span>·</span>
+                        <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
                     </p>
                 </div>
-
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                    By creating an account, you agree to our{' '}
-                    <Link to="/terms" className="text-jence-gold hover:underline">Terms</Link>
-                    {' and '}
-                    <Link to="/privacy" className="text-jence-gold hover:underline">Privacy Policy</Link>.
-                </p>
             </div>
         </div>
     )
