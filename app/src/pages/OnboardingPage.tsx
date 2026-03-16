@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
-import { useTheme } from '../context/ThemeContext'
 import {
   Cpu, Bot, Shield, Settings, Plane,
   Activity, Eye, BatteryCharging, Wrench, FlaskConical,
-  ArrowRight, ArrowLeft, Sparkles, BookOpen, PenLine, Check, X
+  ArrowRight, ArrowLeft, Sparkles, BookOpen, PenLine, Check
 } from 'lucide-react'
 
 /* ─── vertical data ─── */
@@ -63,7 +62,6 @@ const TOTAL_STEPS = 5
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const { theme } = useTheme()
   const [step, setStep] = useState(0)
   const [selectedVerticals, setSelectedVerticals] = useState<string[]>([])
   const [role, setRole] = useState<'reader' | 'creator' | null>(null)

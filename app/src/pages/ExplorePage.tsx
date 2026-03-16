@@ -7,7 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
     Cpu, Bot, Shield, Settings, Plane,
     Activity, Eye, BatteryCharging, Wrench, FlaskConical,
-    FileText, Loader2, ArrowRight, BookOpen, Users
+    FileText, Loader2, ArrowRight, BookOpen
 } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)

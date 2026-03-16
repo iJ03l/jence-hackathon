@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BookOpen, Users, Rocket, Clock, TrendingUp, Star, ChevronRight } from 'lucide-react'
+import { ArrowRight, BookOpen, Users, Rocket, Clock, Star } from 'lucide-react'
 import { api } from '../lib/api'
 import ContentHero from '../sections/ContentHero'
 import Verticals from '../sections/Verticals'

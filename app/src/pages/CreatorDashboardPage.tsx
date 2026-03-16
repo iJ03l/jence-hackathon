@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X, Image as ImageIcon, Upload
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X, Upload
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
