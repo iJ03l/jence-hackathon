@@ -1,7 +1,7 @@
 import { useRef, useLayoutEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Shield, Bitcoin, Heart } from 'lucide-react'
+import { Shield, FileCheck, AlertTriangle } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -11,19 +11,19 @@ interface CommunityProps {
 
 const values = [
   {
-    title: 'Anonymous by design',
-    description: 'No real names required.',
+    title: 'Credited authors',
+    description: 'Real names and verified credentials.',
     icon: Shield,
   },
   {
-    title: 'Crypto-native',
-    description: 'Pay and earn in crypto.',
-    icon: Bitcoin,
+    title: 'Disclosure-first',
+    description: 'Conflict-of-interest on every article.',
+    icon: FileCheck,
   },
   {
-    title: 'Creator-first revenue',
-    description: 'Majority goes to creators.',
-    icon: Heart,
+    title: 'Safety policy',
+    description: 'Mitigations required for risky topics.',
+    icon: AlertTriangle,
   },
 ]
 
@@ -147,7 +147,7 @@ export default function Community({ className = '' }: CommunityProps) {
               ref={bodyRef}
               className="text-jence-gray text-base lg:text-lg max-w-lg mb-8"
             >
-              Jence is a subscription network for independent analysts. Creators earn the majority of revenue. Subscribers stay anonymous. We don't sell data. We don't track identities.
+              Jence is a subscription publication for robotics and hardware engineers. Authors are credited, disclosures are required, and we do not sell user data.
             </p>
 
             <div ref={ctaRef}>

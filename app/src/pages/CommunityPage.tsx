@@ -223,7 +223,7 @@ export default function CommunityPage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 bg-background min-h-screen">
-            <SEO title="Community" url="/community" description="Join the Jence community — discuss market trends, share insights, and connect with expert analysts and fellow subscribers." />
+            <SEO title="Community" url="/community" description="Join the Jence community for robotics and hardware Q&A, field notes, and discussion." />
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
                 {/* Main Feed */}
@@ -236,7 +236,7 @@ export default function CommunityPage() {
                                     <span className="text-xl text-muted-foreground font-normal">posts</span>
                                 </>
                             ) : (
-                                'Community Discussion'
+                                'Community Q&A'
                             )}
                         </h1>
                         {activeTag && (
@@ -517,7 +517,7 @@ export default function CommunityPage() {
                     <div className="p-5 rounded-xl bg-gradient-to-br from-jence-gold/10 to-transparent border border-jence-gold/20">
                         <h3 className="font-semibold text-foreground mb-2">Community Guidelines</h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Keep discussions respectful and on-topic. Use hashtags to help others find your content.
+                            Keep questions technical and safe. Share methods, data, and limitations where possible.
                         </p>
                         <Link to="/guidelines" className="text-xs text-jence-gold hover:underline">Read full guidelines</Link>
                     </div>

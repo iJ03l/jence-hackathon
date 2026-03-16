@@ -10,33 +10,35 @@ export default function ByTheNumbers() {
   const statsRef = useRef<HTMLDivElement>(null)
 
   const [stats, setStats] = useState({
-    paidOut: 5000,
-    subscribers: 112,
-    creators: 70
+    issues: 12,
+    articles: 850,
+    authors: 70,
+    verticals: 10
   })
 
   useEffect(() => {
     api.getGlobalStats().then(data => {
       setStats({
-        paidOut: 5000 + (data.totalPaidOut || 0),
-        subscribers: 112 + (data.totalSubscribers || 0),
-        creators: 70 + (data.totalCreators || 0)
+        issues: 12,
+        articles: 850 + (data.totalPosts || 0),
+        authors: 70 + (data.totalCreators || 0),
+        verticals: 10
       })
     }).catch(console.error)
   }, [])
 
   const displayStats = [
     {
-      value: `$${(stats.paidOut / 1000).toFixed(0)}k+`,
-      label: 'paid out to creators',
+      value: `${stats.articles}+`,
+      label: 'articles published',
     },
     {
-      value: `${stats.subscribers}+`,
-      label: 'active subscribers',
+      value: `${stats.authors}+`,
+      label: 'credited authors',
     },
     {
-      value: `${stats.creators}+`,
-      label: 'creators sharing alpha',
+      value: `${stats.verticals}`,
+      label: 'engineering verticals',
     },
   ]
 

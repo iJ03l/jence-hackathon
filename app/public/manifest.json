@@ -1,7 +1,7 @@
 {
     "name": "Jence",
     "short_name": "Jence",
-    "description": "Anonymous Expert Analysis Platform",
+    "description": "Robotics and hardware engineering publication with verified authors",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#000000",

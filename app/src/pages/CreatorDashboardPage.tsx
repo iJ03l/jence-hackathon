@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X, Image as ImageIcon, Upload
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
@@ -442,12 +442,54 @@ export default function CreatorDashboardPage() {
 function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
+    const [disclosure, setDisclosure] = useState('')
+    const [imageUrl, setImageUrl] = useState('')
     const [isFree, setIsFree] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [uploadingImage, setUploadingImage] = useState(false)
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file')
+            return
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size must be less than 5MB')
+            return
+        }
+
+        setUploadingImage(true)
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+                method: 'POST',
+                body: formData
+            })
+
+            if (!response.ok) throw new Error('Upload failed')
+
+            const data = await response.json()
+            setImageUrl(data.url)
+        } catch (err: any) {
+            console.error('Image upload failed:', err)
+            alert('Failed to upload image. Please try again.')
+        } finally {
+            setUploadingImage(false)
+        }
+    }
 
     const handleSubmit = async () => {
         if (!title || !content) {
             alert('Please fill in all fields')
+            return
+        }
+        if (!disclosure.trim()) {
+            alert('Please add a conflict-of-interest disclosure.')
             return
         }
         if (!creatorId || !verticalId) {
@@ -460,6 +502,8 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
             await api.createPost({
                 title,
                 content,
+                disclosure,
+                imageUrl: imageUrl || undefined,
                 creatorId,
                 verticalId,
                 isFree,
@@ -476,7 +520,7 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
 
     return (
         <div>
-            <h2 className="text-xl font-bold text-foreground mb-6">New Analysis</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">New Article</h2>
 
             <div className="space-y-4">
                 <div>
@@ -486,8 +530,56 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         className="input-field"
-                        placeholder="e.g. Market Outlook for Q3"
+                        placeholder="e.g. Thermal limits in compact actuators"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Cover Image (Optional)</label>
+                    {imageUrl ? (
+                        <div className="relative rounded-xl overflow-hidden border border-border group bg-muted w-full h-48 sm:h-64">
+                            <img src={imageUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button
+                                    onClick={() => setImageUrl('')}
+                                    className="p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2 text-sm font-medium"
+                                >
+                                    <X size={16} />
+                                    Remove Image
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <input
+                                type="file"
+                                id="cover-upload"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                disabled={uploadingImage}
+                                className="sr-only"
+                            />
+                            <label
+                                htmlFor="cover-upload"
+                                className={`flex flex-col items-center justify-center w-full h-32 sm:h-48 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-jence-gold/50 hover:bg-muted/30 transition-colors ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    {uploadingImage ? (
+                                        <>
+                                            <Loader2 size={32} className="text-jence-gold mb-3 animate-spin" />
+                                            <p className="text-sm font-medium text-foreground">Uploading...</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload size={32} className="text-muted-foreground mb-3 group-hover:text-jence-gold transition-colors" />
+                                            <p className="mb-1 text-sm text-foreground font-medium">Click to upload cover image</p>
+                                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB</p>
+                                        </>
+                                    )}
+                                </div>
+                            </label>
+                        </div>
+                    )}
                 </div>
 
                 <div>
@@ -496,8 +588,21 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         className="input-field min-h-[200px]"
-                        placeholder="Write your analysis here..."
+                        placeholder="Write your article here..."
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Conflict of interest disclosure</label>
+                    <textarea
+                        value={disclosure}
+                        onChange={(e) => setDisclosure(e.target.value)}
+                        className="input-field min-h-[120px]"
+                        placeholder="List any sponsor ties, vendor relationships, or state 'No conflicts declared.'"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Disclosures are required on every article and shown publicly.
+                    </p>
                 </div>
 
                 <label className="flex items-center gap-3 p-3 rounded-xl border border-border cursor-pointer hover:bg-muted/30">
@@ -517,7 +622,7 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
                     <button onClick={onClose} className="btn-secondary">Cancel</button>
                     <button
                         onClick={handleSubmit}
-                        disabled={loading || !title || !content}
+                        disabled={loading || !title || !content || !disclosure.trim()}
                         className="btn-primary disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="animate-spin" /> : 'Publish'}

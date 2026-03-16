@@ -11,7 +11,7 @@ interface SEOProps {
 }
 
 const SITE_NAME = 'Jence'
-const DEFAULT_DESCRIPTION = 'Access anonymous expert analysis from verified industry insiders. Subscribe to premium insights on crypto, finance, tech, and more on Jence.'
+const DEFAULT_DESCRIPTION = 'Jence is a robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure.'
 const DEFAULT_IMAGE = 'https://jence.xyz/og-image.png'
 const BASE_URL = 'https://jence.xyz'
 
@@ -24,7 +24,7 @@ export default function SEO({
     noIndex = false,
     children,
 }: SEOProps) {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Anonymous Expert Analysis`
+    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Robotics and Hardware Engineering`
     const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL
 
     return (

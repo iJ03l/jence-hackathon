@@ -65,7 +65,7 @@ export default function RegisterPage() {
                 <div className="card-plug p-8">
                     <h1 className="text-2xl font-bold text-foreground text-center mb-2">Create account</h1>
                     <p className="text-sm text-muted-foreground text-center mb-6">
-                        Join the premier expert analysis platform
+                        Join the robotics and hardware engineering publication
                     </p>
 
                     {error && (
@@ -100,8 +100,8 @@ export default function RegisterPage() {
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
                             {role === 'subscriber'
-                                ? 'Read and unlock expert analysis'
-                                : 'Publish your research and monetize your audience'}
+                                ? 'Read technical articles, issues, and labs'
+                                : 'Publish credited engineering work and build subscribers'}
                         </p>
                     </div>
 

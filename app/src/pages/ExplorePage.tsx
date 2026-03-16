@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
     ArrowRight, FileText
 } from 'lucide-react'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
 }
 
 export default function ExplorePage() {
@@ -26,17 +26,17 @@ export default function ExplorePage() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
-            <SEO title="Explore" url="/explore" description="Browse expert analysis by vertical — crypto, finance, real estate, sports, and more. Find the anonymous insider insights that matter to you." />
+            <SEO title="Explore" url="/explore" description="Browse robotics and hardware sections, from firmware and autonomy to sensors, power, and manufacturing." />
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
                     <span className="label-mono mb-2 block">Explore</span>
                     <h1 className="heading-lg text-foreground mb-4">
-                        Browse by <span className="text-gradient-gold">vertical</span>
+                        Browse by <span className="text-gradient-gold">section</span>
                     </h1>
                     <p className="body-lg max-w-2xl mx-auto">
-                        Independent analysts across every major sector of global economic and professional life.
-                        Find the expert commentary that matters to you.
+                        Engineer-led reporting across embedded systems, robotics software, sensors, power, and more.
+                        Find the technical depth that matters to your work.
                     </p>
                 </div>
 

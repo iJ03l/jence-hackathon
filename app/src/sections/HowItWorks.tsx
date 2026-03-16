@@ -8,20 +8,20 @@ gsap.registerPlugin(ScrollTrigger)
 const steps = [
   {
     number: '01',
-    title: 'Create anonymous account',
-    description: 'No real names. No email required. Just a username and password.',
+    title: 'Create a real-name profile',
+    description: 'Publish under your real name with optional photo and affiliation.',
     icon: UserPlus,
   },
   {
     number: '02',
-    title: 'Find expert creators',
-    description: 'Browse by category. See ratings, reviews, and preview content.',
+    title: 'Verify credentials',
+    description: 'Connect LinkedIn, GitHub, or ORCID for editorial verification.',
     icon: Search,
   },
   {
     number: '03',
-    title: 'Access exclusive alpha',
-    description: 'Pay with crypto. Unlock locked posts. Cancel anytime.',
+    title: 'Read deep technical work',
+    description: 'Access issues, labs, and rolling articles with clear disclosures.',
     icon: Unlock,
   },
 ]
@@ -86,7 +86,7 @@ export default function HowItWorks() {
             Get started in <span className="text-jence-gold">3 steps</span>
           </h2>
           <p className="body-md max-w-lg mx-auto">
-            No real names. No bank accounts. Pay with crypto. Stay anonymous.
+            Real names. Verified credentials. Disclosure-first publishing.
           </p>
         </div>
 

@@ -32,7 +32,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-background">
-            <SEO title="Sign In" url="/login" description="Sign in to your Jence account to access premium expert analysis and subscriptions." />
+            <SEO title="Sign In" url="/login" description="Sign in to your Jence account to access premium articles and subscriptions." />
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <Link to="/" className="flex items-center justify-center gap-2 mb-8">

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
     AlertTriangle, Clock, FileText
 } from 'lucide-react'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
 }
 
 export default function VerticalPage() {
@@ -66,9 +66,9 @@ export default function VerticalPage() {
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <SEO
-                title={`${vertical.name} — Expert Analysis`}
+                title={`${vertical.name} — Engineering Notes`}
                 url={`/verticals/${slug}`}
-                description={vertical.description || `Browse expert analysis in ${vertical.name}. Anonymous insider insights from verified industry experts on Jence.`}
+                description={vertical.description || `Browse engineering articles in ${vertical.name}. Credited, peer-facing technical work on Jence.`}
             />
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
@@ -139,9 +139,9 @@ export default function VerticalPage() {
                         <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
                             <FileText size={28} className="text-muted-foreground" />
                         </div>
-                        <h3 className="font-semibold text-foreground mb-2">No posts yet</h3>
+                        <h3 className="font-semibold text-foreground mb-2">No articles yet</h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Be the first to publish expert analysis in this vertical.
+                            Be the first to publish an article in this section.
                         </p>
                     </div>
                 )}

@@ -1,15 +1,15 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
-import { ArrowRight, Shield, Wallet, Clock, Lock } from 'lucide-react'
+import { ArrowRight, Shield, FileCheck, Clock, Lock } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const mockPosts = [
-  { id: 'm1', title: 'NFL Week 12: Bet ticket inside — fading Chiefs -7.5 vs Raiders', time: '1m ago', author: 'SportyPlug_NG', vertical: 'Sports Betting' },
-  { id: 'm2', title: 'USD/JPY long entry: 148.20 SL 147.60 TP 149.80 — move dey form', time: '15m ago', author: 'AboFX_Pro', vertical: 'Forex' },
-  { id: 'm3', title: 'Just loaded more ARB and OP at these levels — accumulation zone still open', time: '1h ago', author: 'ChainEye_NG', vertical: 'Crypto' },
-  { id: 'm4', title: 'Bought PEPE2.0 and SLERF small small — dev activity spiked, risk small but upside big', time: '3h ago', author: 'DegenAbuja', vertical: 'Memecoins' },
-  { id: 'm5', title: 'Polymarket showing Trump 61% — Bayse and Manifold both lower, gap dey for arb', time: '5h ago', author: 'NaijOdds', vertical: 'Prediction Market' }
+  { id: 'm1', title: 'ROS2 nav stack tuning for constrained compute: profiling notes and traces', time: '2m ago', author: 'Ada Okoye', vertical: 'Robotics Software' },
+  { id: 'm2', title: 'Power budget audit for an 8-DoF arm: measurements, limits, and fixes', time: '18m ago', author: 'Kenji Liu', vertical: 'Power / Thermal' },
+  { id: 'm3', title: 'Sensor fusion benchmark: lidar + IMU drift under vibration', time: '1h ago', author: 'Maya Patel', vertical: 'Sensors & Perception' },
+  { id: 'm4', title: 'DFM teardown: fastener strategy that cut assembly time by 22%', time: '3h ago', author: 'Luis Herrera', vertical: 'Mechanical / DFM' },
+  { id: 'm5', title: 'Hardware security note: secure boot pitfalls in low-cost MCUs', time: '5h ago', author: 'Rina Cho', vertical: 'Hardware Security' }
 ]
 
 export default function HeroSection() {
@@ -362,8 +362,8 @@ export default function HeroSection() {
           ref={subheadlineRef}
           className="body-lg max-w-2xl mx-auto mb-10"
         >
-          Subscribe to independent analysts sharing expert commentary, research, and professional
-          opinion across banking, markets, policy, and more. Anonymous and crypto-settled.
+          Subscribe to credited engineers sharing deep technical articles, research, and field notes
+          across firmware, autonomy, sensors, power, and manufacturing. Real names, verified credentials, and disclosure-first publishing.
         </p>
 
         {/* CTAs */}
@@ -373,7 +373,7 @@ export default function HeroSection() {
             <ArrowRight size={18} />
           </Link>
           <Link to="/explore" className="btn-secondary w-full sm:w-auto active:scale-[0.97] transition-all">
-            Explore verticals
+            Explore sections
           </Link>
         </div>
 
@@ -384,11 +384,11 @@ export default function HeroSection() {
         >
           <div className="feature-item flex items-center gap-2">
             <Shield size={16} className="text-jence-green" />
-            <span>Anonymous by design</span>
+            <span>Credited authors</span>
           </div>
           <div className="feature-item flex items-center gap-2">
-            <Wallet size={16} className="text-jence-gold" />
-            <span>Crypto payments only</span>
+            <FileCheck size={16} className="text-jence-gold" />
+            <span>Disclosure-first publishing</span>
           </div>
         </div>
       </div>

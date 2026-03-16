@@ -117,16 +117,16 @@ export default function CreatorSpotlight({ className = '' }: CreatorSpotlightPro
             </span>
 
             <h2 className="heading-2 font-semibold text-jence-white mb-4">
-              Government & Policy
+              Hardware Security
             </h2>
 
             <p className="text-jence-gray text-base lg:text-lg max-w-md mb-8">
-              Weekly briefs on procurement patterns, legislative signals, and sector commentary—published anonymously by a policy researcher.
+              Defensive research on secure boot, supply chain risks, and product hardening with responsible disclosure.
             </p>
 
             {/* Features */}
             <div className="space-y-3 mb-8">
-              {['Weekly analysis', 'Procurement alerts', 'Legislative tracking'].map((feature) => (
+              {['Responsible disclosure', 'Mitigation-first writeups', 'Reproducible tests'].map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-jence-green/20 flex items-center justify-center">
                     <Check size={12} className="text-jence-green" />
@@ -142,7 +142,7 @@ export default function CreatorSpotlight({ className = '' }: CreatorSpotlightPro
                 Subscribe
               </button>
               <p className="text-xs text-jence-gray/60">
-                Cancel anytime. Billed monthly in crypto.
+                Cancel anytime. New issues every month.
               </p>
             </div>
           </div>

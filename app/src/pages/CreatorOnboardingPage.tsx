@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
     CheckCircle2, FileText, ArrowRight, ArrowLeft, Loader2
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 const iconMap: Record<string, any> = {
-    Landmark, Shield, Trophy, Bitcoin, Building2,
-    Briefcase, Store, Palette, Wheat, Fuel,
+    Cpu, Bot, Shield, Settings, Plane,
+    Activity, Eye, BatteryCharging, Wrench, FlaskConical,
 }
 
 const SELF_CERT_CLAUSES = [
-    'I confirm that my content constitutes personal opinion, independent analysis, or commentary only.',
-    'I will not present opinions as guaranteed outcomes or factual predictions.',
-    'I will use clear disclaimer language as required by Jence platform policies.',
-    'I understand that violation of content policies may result in strikes, suspension, or account termination.',
+    'I will publish under my real name and keep my credentials accurate.',
+    'I will include a conflict-of-interest disclosure on every article.',
+    'I will follow safety policy and avoid harmful step-by-step instructions.',
+    'I will follow responsible disclosure timelines for security research.',
+    'I will not publish weaponization or export-controlled content.',
 ]
 
 export default function CreatorOnboardingPage() {
@@ -27,6 +28,10 @@ export default function CreatorOnboardingPage() {
     const [step, setStep] = useState(1)
     const [verticals, setVerticals] = useState<any[]>([])
     const [pseudonym, setPseudonym] = useState('')
+    const [affiliation, setAffiliation] = useState('')
+    const [credentials, setCredentials] = useState('')
+    const [location, setLocation] = useState('')
+    const [website, setWebsite] = useState('')
     const [selectedVertical, setSelectedVertical] = useState('')
 
     const [certChecks, setCertChecks] = useState<boolean[]>(new Array(SELF_CERT_CLAUSES.length).fill(false))
@@ -62,6 +67,10 @@ export default function CreatorOnboardingPage() {
             await api.onboardCreator({
                 userId: user.id,
                 pseudonym,
+                affiliation,
+                credentials,
+                location,
+                website,
                 verticalId: selectedVertical,
                 selfCertificationSigned: true,
             })
@@ -92,25 +101,72 @@ export default function CreatorOnboardingPage() {
                 {/* Step 1: Profile */}
                 {step === 1 && (
                     <div className="card-plug p-8">
-                        <h1 className="text-2xl font-bold text-foreground mb-2">Create your creator profile</h1>
+                        <h1 className="text-2xl font-bold text-foreground mb-2">Create your author profile</h1>
                         <p className="text-muted-foreground mb-6">
-                            Choose a pseudonym and select your vertical. Your real identity stays private.
+                            Publish under your real name. Add verification links and optional affiliation for credential checks.
                         </p>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Pseudonym</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Author name (public byline)</label>
                                 <input
                                     type="text"
                                     value={pseudonym}
                                     onChange={(e) => setPseudonym(e.target.value)}
                                     className="input-field"
-                                    placeholder="Your anonymous creator name"
+                                    placeholder="Ada Lovelace"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Pseudonyms are allowed only with editorial approval for safety reasons.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Affiliation (optional)</label>
+                                <input
+                                    type="text"
+                                    value={affiliation}
+                                    onChange={(e) => setAffiliation(e.target.value)}
+                                    className="input-field"
+                                    placeholder="Company, lab, or university"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-3">Select vertical</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Verification links (optional)</label>
+                                <input
+                                    type="text"
+                                    value={credentials}
+                                    onChange={(e) => setCredentials(e.target.value)}
+                                    className="input-field"
+                                    placeholder="LinkedIn, GitHub, ORCID (comma-separated)"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Location (optional)</label>
+                                <input
+                                    type="text"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    className="input-field"
+                                    placeholder="City, Country"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Website (optional)</label>
+                                <input
+                                    type="text"
+                                    value={website}
+                                    onChange={(e) => setWebsite(e.target.value)}
+                                    className="input-field"
+                                    placeholder="https://your-site.com"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-3">Select section</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {verticals.map((v) => {
                                         const Icon = iconMap[v.iconName] || FileText

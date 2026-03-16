@@ -124,6 +124,8 @@ export default function CreatorPostDetail() {
         )
     }
 
+    const disclosureText = post.disclosure?.trim() || 'No conflicts of interest were declared for this article.'
+
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
             <div className="max-w-3xl mx-auto">
@@ -165,6 +167,11 @@ export default function CreatorPostDetail() {
 
                             <h1 className="text-2xl font-bold text-foreground mb-4">{post.title}</h1>
 
+                            <div className="mb-6 p-4 rounded-xl border border-border bg-muted/30">
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Conflict of interest</p>
+                                <p className="text-sm text-muted-foreground">{disclosureText}</p>
+                            </div>
+
                             <div className="prose prose-invert max-w-none mb-6 relative">
                                 {post.isFree || post.hasAccess ? (
                                     <p className="text-foreground/90 whitespace-pre-wrap break-words">{linkifyText(post.content)}</p>
@@ -172,7 +179,7 @@ export default function CreatorPostDetail() {
                                     <>
                                         {/* Dummy blurred text to indicate content length without leaking actual analysis */}
                                         <p className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words">
-                                            {linkifyText(post.excerpt || `This is a premium analysis piece prepared exclusively for subscribers. The analysis contains in-depth data, actionable insights, and key market trends.
+                                            {linkifyText(post.excerpt || `This is a premium article prepared exclusively for subscribers. The article contains in-depth data, actionable insights, and field-tested takeaways.
                                             
 To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription supports the creator and gives you access to their complete library of premium insights.`)}
                                         </p>
@@ -181,7 +188,7 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                                 <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-foreground mb-1">Premium Analysis</h3>
+                                                <h3 className="text-lg font-bold text-foreground mb-1">Premium Article</h3>
                                                 <p className="text-sm text-muted-foreground mb-4">
                                                     Subscribe to <strong>{post.creatorPseudonym}</strong> to unlock this full post.
                                                 </p>
@@ -224,7 +231,7 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                             try {
                                                 await navigator.share({
                                                     title: post.title,
-                                                    text: 'Check out this analysis on Jence!',
+                                                    text: 'Check out this article on Jence!',
                                                     url
                                                 })
                                             } catch (e) {

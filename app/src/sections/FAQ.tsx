@@ -4,27 +4,27 @@ import { ChevronDown } from 'lucide-react'
 const faqs = [
   {
     q: 'What is Jence?',
-    a: 'Jence is an anonymous expert analysis platform where creators publish independent sector research across global markets — finance, energy, real estate, tech, agriculture, and more.',
+    a: 'Jence is a robotics and hardware engineering publication featuring credited authors, verified credentials, and disclosure-first reporting.',
   },
   {
-    q: 'How do creators stay anonymous?',
-    a: 'Creators publish under pseudonyms. Real identities are never shared publicly. Only the creator controls their identity on the platform.',
+    q: 'What kind of content does Jence publish?',
+    a: 'Deep technical articles, hardware teardowns, field notes, reproducible lab experiments, startup launch coverage, and market intelligence across 10 engineering verticals.',
   },
   {
-    q: 'Is the content financial or legal advice?',
-    a: 'No. All content on Jence is personal opinion and independent analysis. Creators self-certify that their content is commentary, not professional advice. Each vertical carries a specific disclaimer.',
+    q: 'Do authors use real names?',
+    a: 'Yes. Authors publish under real names with optional photo, location, and affiliation, plus verified credentials.',
   },
   {
-    q: 'How do subscriptions work?',
-    a: 'Subscribe to individual creators to access their premium analysis. Payments are settled via cryptocurrency — no personal banking details needed. Free posts are always available.',
+    q: 'How do disclosures work?',
+    a: 'Every article includes a conflict-of-interest box covering sponsorships, vendor ties, and personal stakes.',
   },
   {
-    q: 'What happens if a creator violates content policies?',
-    a: 'Jence has a 3-strike moderation system. Violations result in warnings, suspension, or permanent termination depending on severity. All strikes are transparent and auditable.',
+    q: 'What is the safety policy?',
+    a: 'We do not publish dangerous step-by-step instructions or weaponization content. Authors must include mitigations and safety notes.',
   },
   {
-    q: 'Is my data safe?',
-    a: 'Yes. Jence is compliant with the General Data Protection Regulation (GDPR) and global privacy standards. You can request data export or full deletion at any time from your settings page.',
+    q: 'How is the community moderated?',
+    a: 'The community forum is moderated for technical accuracy, safety, and respect. Questions should cite methods and avoid unsafe instructions. Read our full community guidelines for details.',
   },
 ]
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin } from 'lucide-react'
+import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
@@ -42,8 +42,8 @@ export default function CreatorProfilePage() {
         setPaymentError('')
 
         try {
-            // Note: The backend POST /api/subscriptions route now handles 
-            // the actual USDC transaction using the user's managed wallet.
+            // Note: The backend POST /api/subscriptions route now handles
+            // the payment transaction using the user's managed wallet.
             await api.subscribe(user.id, data.creator.id)
             setSubscribed(true)
         } catch (err: any) {
@@ -181,14 +181,23 @@ export default function CreatorProfilePage() {
     }
 
     const { creator, posts } = data
+    const credentialLinks = (creator.credentials || '')
+        .split(/[\n,]/)
+        .map((entry: string) => entry.trim())
+        .filter(Boolean)
+    const subscriptionPrice = parseFloat(creator.subscriptionPrice || '0')
+    const normalizeUrl = (value: string) => {
+        const trimmed = value.trim()
+        return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+    }
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <SEO
-                title={`${creator.pseudonym || creator.user?.name || username} — Expert Analysis`}
-                description={`Subscribe to ${creator.pseudonym || username}'s premium analysis on Jence. ${creator.bio || 'Anonymous expert insights from a verified industry insider.'}`}
+                title={`${creator.pseudonym || username} — Robotics & Hardware Author`}
+                description={`Subscribe to ${creator.pseudonym || username}'s engineering articles on Jence. ${creator.bio || 'Credited technical writing, disclosures, and lab-grade rigor.'}`}
                 url={`/${username}`}
-                image={creator.user?.image || undefined}
+                image={creator.image || undefined}
                 type="profile"
             />
             <div className="max-w-3xl mx-auto">
@@ -204,7 +213,15 @@ export default function CreatorProfilePage() {
                                 )}
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-foreground">{creator.pseudonym}</h1>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h1 className="text-xl font-bold text-foreground">{creator.pseudonym}</h1>
+                                    {creator.kycStatus === 'verified' && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs font-medium">
+                                            <ShieldCheck size={12} />
+                                            Verified
+                                        </span>
+                                    )}
+                                </div>
                                 {creator.verticalName && (
                                     <Link
                                         to={`/verticals/${creator.verticalSlug}`}
@@ -217,6 +234,41 @@ export default function CreatorProfilePage() {
                                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                                         BANNED
                                     </span>
+                                )}
+                                {(creator.affiliation || creator.location || creator.website) && (
+                                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
+                                        {creator.affiliation && (
+                                            <span>Affiliation: {creator.affiliation}</span>
+                                        )}
+                                        {creator.location && (
+                                            <span>Location: {creator.location}</span>
+                                        )}
+                                        {creator.website && (
+                                            <a
+                                                href={normalizeUrl(creator.website)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-jence-gold hover:underline"
+                                            >
+                                                Website
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+                                {credentialLinks.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {credentialLinks.map((link: string) => (
+                                            <a
+                                                key={link}
+                                                href={normalizeUrl(link)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-xs px-2.5 py-1 rounded-full bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                                            >
+                                                {link.replace(/^https?:\/\//, '')}
+                                            </a>
+                                        ))}
+                                    </div>
                                 )}
                                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                                     <span className="flex items-center gap-1">
@@ -261,11 +313,11 @@ export default function CreatorProfilePage() {
                                     {subscribing ? (
                                         <>
                                             <Loader2 size={14} className="animate-spin inline mr-2" />
-                                            {parseFloat(data?.creator?.subscriptionPrice || '0') > 0 ? 'Processing payment...' : 'Subscribing...'}
+                                            {subscriptionPrice > 0 ? 'Processing payment...' : 'Subscribing...'}
                                         </>
                                     ) : (
-                                        parseFloat(data?.creator?.subscriptionPrice || '0') > 0
-                                            ? `Subscribe · $${data?.creator?.subscriptionPrice} USDC`
+                                        subscriptionPrice > 0
+                                            ? `Subscribe · $${subscriptionPrice}/mo`
                                             : 'Subscribe · Free'
                                     )}
                                 </button>
@@ -296,7 +348,7 @@ export default function CreatorProfilePage() {
 
 
                 {/* Posts */}
-                <h2 className="font-semibold text-foreground mb-4">Published Analysis</h2>
+                <h2 className="font-semibold text-foreground mb-4">Published Articles</h2>
 
                 {posts.length > 0 ? (
                     <div className="space-y-4">
@@ -470,7 +522,7 @@ export default function CreatorProfilePage() {
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-medium text-foreground">{review.user?.name || review.user?.username || 'Anonymous'}</p>
+                                                            <p className="text-xs font-medium text-foreground">{review.user?.name || review.user?.username || 'Reader'}</p>
                                                             <p className="text-[10px] text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
                                                         </div>
                                                     </div>
@@ -503,8 +555,8 @@ export default function CreatorProfilePage() {
                     <div className="flex items-start gap-2">
                         <AlertTriangle size={14} className="text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-xs text-muted-foreground">
-                            Content is for informational purposes only. Jence does not verify the accuracy of creator content.
-                            Past analysis does not guarantee future outcomes.
+                            Content is for informational purposes only. Jence requires disclosures and safety notes but does not guarantee accuracy.
+                            Follow posted mitigations and responsible disclosure guidance where applicable.
                         </p>
                     </div>
                 </div>

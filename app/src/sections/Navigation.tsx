@@ -77,6 +77,7 @@ export default function Navigation() {
 
   const navLinks = [
     { label: 'Explore', href: '/explore' },
+    { label: 'Launch Notes', href: '/launches' },
     { label: 'Community', href: '/community' },
     ...(isLoggedIn ? [{ label: 'Settings', href: '/settings' }] : []),
   ]

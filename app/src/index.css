@@ -37,11 +37,12 @@
     --jence-medium-gray: #2D2D2D;
     --jence-soft-gray: #6B6B6B;
     --jence-red: #FF4757;
-    --jence-crypto: #7928CA;
-    --jence-betting: #00D68F;
-    --jence-creator: #FF6B35;
-    --jence-remote: #3B82F6;
-    --jence-hustle: #FFD700;
+    --jence-embedded: #2563EB;
+    --jence-robotics: #16A34A;
+    --jence-security: #F59E0B;
+    --jence-power: #F97316;
+    --jence-mechanical: #14B8A6;
+    --jence-perception: #A855F7;
   }
 
   .dark {
@@ -123,24 +124,28 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   }
 
-  .category-crypto {
-    @apply text-[#7928CA] bg-[#7928CA]/10;
+  .category-embedded {
+    @apply text-[#2563EB] bg-[#2563EB]/10;
   }
 
-  .category-betting {
-    @apply text-[#00D68F] bg-[#00D68F]/10;
+  .category-robotics {
+    @apply text-[#16A34A] bg-[#16A34A]/10;
   }
 
-  .category-creator {
-    @apply text-[#FF6B35] bg-[#FF6B35]/10;
+  .category-security {
+    @apply text-[#F59E0B] bg-[#F59E0B]/10;
   }
 
-  .category-remote {
-    @apply text-[#3B82F6] bg-[#3B82F6]/10;
+  .category-power {
+    @apply text-[#F97316] bg-[#F97316]/10;
   }
 
-  .category-hustle {
-    @apply text-[#FFD700] bg-[#FFD700]/10;
+  .category-mechanical {
+    @apply text-[#14B8A6] bg-[#14B8A6]/10;
+  }
+
+  .category-perception {
+    @apply text-[#A855F7] bg-[#A855F7]/10;
   }
 }
 

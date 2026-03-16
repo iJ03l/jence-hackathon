@@ -127,4 +127,22 @@ export const api = {
             return res.json()
         })
     },
+
+    // Launches
+    getLaunches: (status?: string) =>
+        request<any[]>(`/launches${status ? `?status=${status}` : ''}`),
+    getMyLaunches: () =>
+        request<any[]>('/launches/my'),
+    submitLaunch: (data: { name: string; company: string; summary: string; tags?: string[]; disclosure?: string }) =>
+        request<any>('/launches', { method: 'POST', body: JSON.stringify(data) }),
+    reviewLaunch: (id: string, status: 'approved' | 'rejected', reviewNote?: string) =>
+        request<any>(`/launches/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, reviewNote }) }),
+    deleteLaunch: (id: string) =>
+        request<any>(`/launches/${id}`, { method: 'DELETE' }),
+
+    // Landing page helpers
+    getLatestPosts: () =>
+        request<any[]>('/posts'),
+    getTopCreators: () =>
+        request<any[]>('/creators'),
 }

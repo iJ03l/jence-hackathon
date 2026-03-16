@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
@@ -13,13 +13,22 @@ import CommunityPage from './pages/CommunityPage'
 import CommunityGuidelinesPage from './pages/CommunityGuidelinesPage'
 import PostDetail from './pages/PostDetail'
 import CreatorPostDetail from './pages/CreatorPostDetail'
+import LaunchNotesPage from './pages/LaunchNotesPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import AboutPage from './pages/AboutPage'
+import OnboardingPage from './pages/OnboardingPage'
 import './App.css'
+
+/** Redirect first-time visitors to /welcome */
+function HomeRedirect() {
+  const isOnboarded = localStorage.getItem('jence_onboarded')
+  if (!isOnboarded) return <Navigate to="/welcome" replace />
+  return <LandingPage />
+}
 
 function App() {
   return (
@@ -27,7 +36,7 @@ function App() {
       <Routes>
         {/* Public pages with Layout (Nav + Footer) */}
         <Route element={<Layout />}>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<HomeRedirect />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/verticals/:slug" element={<VerticalPage />} />
           <Route path="/verticals/:slug" element={<VerticalPage />} />
@@ -36,6 +45,7 @@ function App() {
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/guidelines" element={<CommunityGuidelinesPage />} />
+          <Route path="/launches" element={<LaunchNotesPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/about" element={<AboutPage />} />
@@ -50,6 +60,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/welcome" element={<OnboardingPage />} />
       </Routes>
     </ThemeProvider>
   )

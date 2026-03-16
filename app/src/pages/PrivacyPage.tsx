@@ -24,9 +24,11 @@ export default function PrivacyPage() {
                             <h3 className="text-sm font-semibold text-foreground mt-4 mb-2">2.1 Information You Provide</h3>
                             <ul className="list-disc list-inside space-y-2 ml-2">
                                 <li><strong>Account Data:</strong> Name, email address, and password when you register.</li>
-                                <li><strong>Profile Data:</strong> Display name, pseudonym, avatar, and bio.</li>
-                                <li><strong>Content:</strong> Posts, analyses, comments, and ratings you create.</li>
-                                <li><strong>Payment Data:</strong> Subscription preferences and payout settings. We do not store credit card details — payments are processed on‑chain.</li>
+                                <li><strong>Profile Data:</strong> Real name byline, avatar (optional), affiliation (optional), and bio.</li>
+                                <li><strong>Credentials:</strong> Optional links to LinkedIn, GitHub, or ORCID for verification.</li>
+                                <li><strong>Content:</strong> Articles, labs, comments, and ratings you create.</li>
+                                <li><strong>Disclosures:</strong> Conflict-of-interest disclosures associated with content.</li>
+                                <li><strong>Payment Data:</strong> Subscription preferences and payout settings.</li>
                             </ul>
 
                             <h3 className="text-sm font-semibold text-foreground mt-4 mb-2">2.2 Automatically Collected</h3>
@@ -38,7 +40,7 @@ export default function PrivacyPage() {
 
                             <h3 className="text-sm font-semibold text-foreground mt-4 mb-2">2.3 Blockchain Data</h3>
                             <p>
-                                When you transact on the Platform, transaction data (wallet addresses, amounts, timestamps) is recorded on the Solana blockchain. This data is public and immutable by nature of blockchain technology.
+                                If you use embedded wallet features, transaction data (wallet addresses, amounts, timestamps) may be recorded on a public blockchain. This data is public and immutable by nature of blockchain technology.
                             </p>
                         </section>
 
@@ -68,9 +70,9 @@ export default function PrivacyPage() {
                         <section>
                             <h2 className="text-lg font-semibold text-foreground mb-3">5. Wallet &amp; Key Security</h2>
                             <ul className="list-disc list-inside space-y-2 ml-2">
-                                <li>Your Solana wallet private key is encrypted using AES-256-GCM and stored securely on our servers.</li>
-                                <li>Only you can decrypt and export your private key via the Settings page.</li>
-                                <li>We cannot recover your private key if you lose access after exporting it.</li>
+                                <li>Embedded wallet private keys (if enabled) are encrypted using AES-256-GCM and stored securely.</li>
+                                <li>Only you can decrypt and export your private key via Settings.</li>
+                                <li>We cannot recover private keys if you lose access after exporting them.</li>
                                 <li>We recommend storing exported keys in a secure password manager.</li>
                             </ul>
                         </section>

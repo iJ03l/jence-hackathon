@@ -4,8 +4,8 @@ import { api } from '../lib/api'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
-  Landmark, Shield, Trophy, Bitcoin, Building2,
-  Briefcase, Store, Palette, Wheat, Fuel
+  Cpu, Bot, Shield, Settings, Plane,
+  Activity, Eye, BatteryCharging, Wrench, FlaskConical
 } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -13,93 +13,93 @@ gsap.registerPlugin(ScrollTrigger)
 const verticals = [
   {
     id: 1,
-    slug: 'financial-banking',
-    name: 'Financial & Banking',
-    description: 'Sector trend analysis, regulatory outlook',
-    icon: Landmark,
-    color: '#7928CA',
+    slug: 'embedded-firmware',
+    name: 'Embedded & Firmware',
+    description: 'RTOS, bring-up, interfaces, and performance',
+    icon: Cpu,
+    color: '#2563EB',
     creators: 42,
   },
   {
     id: 2,
-    slug: 'government-policy',
-    name: 'Government & Policy',
-    description: 'Policy trajectory, sector research',
-    icon: Shield,
-    color: '#3B82F6',
+    slug: 'robotics-software',
+    name: 'Robotics Software',
+    description: 'ROS2, autonomy stacks, tooling, and simulation',
+    icon: Bot,
+    color: '#16A34A',
     creators: 28,
   },
   {
     id: 3,
-    slug: 'sports-recreational',
-    name: 'Sports & Recreational',
-    description: 'Statistical analysis, form analysis',
-    icon: Trophy,
-    color: '#00D68F',
+    slug: 'hardware-security',
+    name: 'Hardware Security',
+    description: 'Defensive research and responsible disclosure',
+    icon: Shield,
+    color: '#F59E0B',
     creators: 67,
   },
   {
     id: 4,
-    slug: 'digital-assets-web3',
-    name: 'Digital Assets & Web3',
-    description: 'Blockchain research, on-chain data',
-    icon: Bitcoin,
-    color: '#F59E0B',
-    creators: 89,
-  },
-  {
-    id: 5,
-    slug: 'real-estate-property',
-    name: 'Real Estate',
-    description: 'Area analysis, market data',
-    icon: Building2,
-    color: '#EC4899',
+    slug: 'industrial-ot-robotics',
+    name: 'Industrial / OT Robotics',
+    description: 'Automation, safety systems, deployment lessons',
+    icon: Settings,
+    color: '#0EA5E9',
     creators: 31,
   },
   {
-    id: 6,
-    slug: 'professional-career',
-    name: 'Career',
-    description: 'Hiring trends, salary data',
-    icon: Briefcase,
-    color: '#8B5CF6',
+    id: 5,
+    slug: 'drones-mobile-systems',
+    name: 'Drones & Mobile Systems',
+    description: 'Navigation, planning, and field operations',
+    icon: Plane,
+    color: '#6366F1',
     creators: 45,
   },
   {
-    id: 7,
-    slug: 'open-market-trade',
-    name: 'Open Market',
-    description: 'Supply chain, logistics',
-    icon: Store,
+    id: 6,
+    slug: 'humanoids-actuation',
+    name: 'Humanoids & Actuation',
+    description: 'Actuators, control loops, and safety limits',
+    icon: Activity,
     color: '#EF4444',
     creators: 38,
   },
   {
-    id: 8,
-    slug: 'creator-economy',
-    name: 'Creator Economy',
-    description: 'Monetization, content trends',
-    icon: Palette,
-    color: '#FF6B35',
+    id: 7,
+    slug: 'sensors-perception',
+    name: 'Sensors & Perception',
+    description: 'Calibration, perception, and benchmarks',
+    icon: Eye,
+    color: '#22C55E',
     creators: 52,
   },
   {
-    id: 9,
-    slug: 'agriculture-food',
-    name: 'Agriculture',
-    description: 'Commodity trends, harvest intel',
-    icon: Wheat,
-    color: '#22C55E',
+    id: 8,
+    slug: 'power-thermal',
+    name: 'Power / Batteries / Thermal',
+    description: 'BMS, power delivery, thermal design',
+    icon: BatteryCharging,
+    color: '#F97316',
     creators: 25,
   },
   {
-    id: 10,
-    slug: 'oil-gas-energy',
-    name: 'Oil, Gas & Energy',
-    description: 'Energy markets, fuel pricing',
-    icon: Fuel,
-    color: '#06B6D4',
+    id: 9,
+    slug: 'mechanical-manufacturing',
+    name: 'Mechanical / Manufacturing / DFM',
+    description: 'Materials, tolerances, production lessons',
+    icon: Wrench,
+    color: '#14B8A6',
     creators: 19,
+  },
+  {
+    id: 10,
+    slug: 'research-benchmarks',
+    name: 'Research & Benchmarks',
+    description: 'Reproducible experiments and datasets',
+    icon: FlaskConical,
+    color: '#A855F7',
+    creators: 23,
   },
 ]
 
@@ -165,10 +165,10 @@ export default function Verticals() {
             ref={titleRef}
             className="heading-md text-foreground mb-4"
           >
-            Browse by <span className="text-jence-gold">vertical</span>
+            Browse by <span className="text-jence-gold">section</span>
           </h2>
           <p className="body-md max-w-lg mx-auto">
-            Independent analysts across every major sector of global economic and professional life.
+            Engineering-first coverage across the full robotics and hardware stack.
           </p>
         </div>
 

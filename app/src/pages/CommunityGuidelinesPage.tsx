@@ -1,4 +1,4 @@
-import { Shield, Users, Hash, MessageCircle } from 'lucide-react'
+import { Shield, Users, AlertTriangle, FileCheck } from 'lucide-react'
 
 export default function CommunityGuidelinesPage() {
     return (
@@ -10,63 +10,59 @@ export default function CommunityGuidelinesPage() {
                     </div>
                     <h1 className="text-4xl font-bold text-foreground">Community Guidelines</h1>
                     <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                        Welcome to the Jence community. We strive to maintain a professional, respectful, and high-quality environment for analysis and discussion.
+                        Jence is a robotics and hardware engineering community. Keep discussions precise, safe,
+                        and grounded in evidence.
                     </p>
                 </div>
 
                 <div className="space-y-6 mt-12">
                     <div className="card-plug p-6 md:p-8 space-y-8">
 
-                        {/* Section 1 */}
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                                 <Users className="w-5 h-5 text-jence-gold" />
-                                1. Respectful Discourse
+                                1. Professional Discourse
                             </h2>
                             <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                <li>Treat all members with respect. Debate the ideas, not the person.</li>
-                                <li>Harassment, hate speech, threats, and personal attacks are strictly prohibited and will result in immediate bans.</li>
-                                <li>Maintain a professional tone appropriate for deep market analysis and research.</li>
+                                <li>Debate ideas, not people. Respect authors and peers.</li>
+                                <li>No harassment, hate speech, threats, or personal attacks.</li>
+                                <li>Be specific: share methods, measurements, and limitations.</li>
                             </ul>
                         </div>
 
-                        {/* Section 2 */}
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                <MessageCircle className="w-5 h-5 text-jence-gold" />
-                                2. High-Quality Content
+                                <AlertTriangle className="w-5 h-5 text-jence-gold" />
+                                2. Safety and Non-Weaponization
                             </h2>
                             <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                <li>Discussions should be relevant to markets, crypto, banking, policy, or related economic fields.</li>
-                                <li>Avoid low-effort posts, spam, or repetitive content.</li>
-                                <li>Do not post misleading information. Clearly distinguish between factual news, personal analysis, and speculation.</li>
-                                <li>Do not solicit financial advice or present your opinions as guaranteed financial advice.</li>
+                                <li>No step-by-step instructions that enable harm.</li>
+                                <li>No weaponization, export-controlled content, or bypassing safety interlocks.</li>
+                                <li>Include mitigations and safe operating limits where applicable.</li>
                             </ul>
                         </div>
 
-                        {/* Section 3 */}
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                <Hash className="w-5 h-5 text-jence-gold" />
-                                3. Organization and Tags
+                                <FileCheck className="w-5 h-5 text-jence-gold" />
+                                3. Responsible Disclosure
                             </h2>
                             <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                <li>Use relevant <span className="text-jence-gold">#hashtags</span> to categorize your posts accurately.</li>
-                                <li>Do not abuse or spam trending hashtags if your content is unrelated to the topic.</li>
-                                <li>Keep discussions focused and on-topic within specific threads and verticals.</li>
+                                <li>Security research must follow responsible disclosure timelines.</li>
+                                <li>No exploit release details for unpatched vulnerabilities.</li>
+                                <li>Disclose methodology and reproduction steps only when safe and coordinated.</li>
                             </ul>
                         </div>
 
-                        {/* Section 4 */}
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                                 <Shield className="w-5 h-5 text-jence-gold" />
-                                4. Self-Promotion & Spam
+                                4. Disclosure and Conflicts
                             </h2>
                             <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                <li>Overt self-promotion, shilling of specific low-cap tokens, and referral links are not allowed in the main community feed.</li>
-                                <li>Creators are encouraged to share excerpts of their analysis, but should avoid spamming the feed simply to drive traffic to paywalled content.</li>
-                                <li>Malicious links, phishing attempts, or scams will result in a permanent ban and potential reporting to relevant authorities.</li>
+                                <li>Always disclose sponsorships, vendor ties, or personal stakes.</li>
+                                <li>Reviews and teardowns must include funding and sample provenance.</li>
+                                <li>Misleading disclosure is grounds for removal.</li>
                             </ul>
                         </div>
 
@@ -74,7 +70,8 @@ export default function CommunityGuidelinesPage() {
 
                     <div className="flex flex-col items-center justify-center pt-8 border-t border-border/50">
                         <p className="text-sm text-muted-foreground mb-4 text-center">
-                            By participating in the Jence Community, you agree to abide by these guidelines. We reserve the right to remove content and suspend accounts that violate these rules.
+                            By participating, you agree to abide by these guidelines. We reserve the right to remove
+                            content and suspend accounts that violate these rules.
                         </p>
                         <p className="text-xs text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
                     </div>

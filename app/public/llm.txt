@@ -1,10 +1,11 @@
 # Jence
 
-Jence is a platform for anonymous expert analysis from verified industry experts. Users can subscribe to premium insights on crypto, finance, tech, and more.
+Jence is a global robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure. Readers subscribe to deep technical articles, teardowns, security research, and lab-grade benchmarks.
 
 ## Core Pages
 - [Home](https://jence.xyz/)
 - [Explore](https://jence.xyz/explore)
+- [Launch Notes](https://jence.xyz/launches)
 - [Community](https://jence.xyz/community)
 - [Login](https://jence.xyz/login)
 - [Register](https://jence.xyz/register)
@@ -13,3 +14,4 @@ Jence is a platform for anonymous expert analysis from verified industry experts
 - [About Jence](https://jence.xyz/about)
 - [Terms](https://jence.xyz/terms)
 - [Privacy Policy](https://jence.xyz/privacy)
+- [Community Guidelines](https://jence.xyz/guidelines)

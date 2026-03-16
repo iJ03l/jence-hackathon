@@ -17,6 +17,15 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://jence.xyz/launches</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://jence.xyz/guidelines</loc>
+    <priority>0.4</priority>
+  </url>
+  <url>
     <loc>https://jence.xyz/login</loc>
     <priority>0.5</priority>
   </url>

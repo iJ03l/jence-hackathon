@@ -12,24 +12,24 @@ interface FeaturedCreatorsProps {
 const creators = [
   {
     id: 1,
-    category: 'Banking & Finance',
-    description: 'FX, rates, and sector commentary',
+    category: 'Embedded & Firmware',
+    description: 'RTOS bring-up and performance tuning',
     image: '/creator_portrait_1.jpg',
-    handle: '@fxobserver',
+    handle: 'Dr. Mira Chen',
   },
   {
     id: 2,
-    category: 'Government & Policy',
-    description: 'Procurement & legislative briefs',
+    category: 'Sensors & Perception',
+    description: 'Calibration pipelines and benchmark design',
     image: '/creator_portrait_2.jpg',
-    handle: '@policybrief',
+    handle: 'Ivan Moreno',
   },
   {
     id: 3,
-    category: 'Digital Assets',
-    description: 'On-chain research & market context',
+    category: 'Mechanical / DFM',
+    description: 'Manufacturing notes and teardown lessons',
     image: '/creator_portrait_3.jpg',
-    handle: '@chainwatch',
+    handle: 'Priya Nandakumar',
   },
 ]
 
@@ -91,7 +91,7 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
           className="flex items-center justify-between mb-12"
         >
           <h2 className="heading-2 font-semibold text-jence-white">
-            Featured creators
+            Featured authors
           </h2>
           <a
             href="#"

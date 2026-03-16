@@ -19,7 +19,11 @@ export default function SettingsPage() {
     const [subscriptionPrice, setSubscriptionPrice] = useState('0')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [displayName, setDisplayName] = useState('')
-    const [anonymousName, setAnonymousName] = useState('')
+    const [byline, setByline] = useState('')
+    const [affiliation, setAffiliation] = useState('')
+    const [credentials, setCredentials] = useState('')
+    const [location, setLocation] = useState('')
+    const [website, setWebsite] = useState('')
 
     const [uploadingImage, setUploadingImage] = useState(false)
     const [exportingData, setExportingData] = useState(false)
@@ -48,7 +52,11 @@ export default function SettingsPage() {
             api.getCreatorByUserId(user.id)
                 .then(res => {
                     setCreatorId(res.creator.id)
-                    setAnonymousName(res.creator.pseudonym || '')
+                    setByline(res.creator.pseudonym || '')
+                    setAffiliation(res.creator.affiliation || '')
+                    setCredentials(res.creator.credentials || '')
+                    setLocation(res.creator.location || '')
+                    setWebsite(res.creator.website || '')
                     setPayoutAddress(res.creator.payoutAddress || '')
                     setPayoutMethod(res.creator.payoutMethod || 'crypto')
                     setSubscriptionPrice(res.creator.subscriptionPrice || '0')
@@ -121,7 +129,13 @@ export default function SettingsPage() {
         try {
             await api.updateUser(user.id, { image: avatarUrl, name: displayName })
             if (creatorId) {
-                await api.updateCreatorProfile(creatorId, { pseudonym: anonymousName })
+                await api.updateCreatorProfile(creatorId, {
+                    pseudonym: byline,
+                    affiliation,
+                    credentials,
+                    location,
+                    website,
+                })
             }
             setAutoSaveStatus('saved')
             setTimeout(() => setAutoSaveStatus('idle'), 2000)
@@ -130,14 +144,14 @@ export default function SettingsPage() {
             setAutoSaveStatus('error')
             setTimeout(() => setAutoSaveStatus('idle'), 3000)
         }
-    }, [user?.id, avatarUrl, displayName, anonymousName, creatorId])
+    }, [user?.id, avatarUrl, displayName, byline, affiliation, credentials, location, website, creatorId])
 
     useEffect(() => {
         if (!initialLoadDone.current) return
         if (profileSaveTimer.current) clearTimeout(profileSaveTimer.current)
         profileSaveTimer.current = setTimeout(() => autoSaveProfile(), 800)
         return () => { if (profileSaveTimer.current) clearTimeout(profileSaveTimer.current) }
-    }, [displayName, anonymousName, avatarUrl, autoSaveProfile])
+    }, [displayName, byline, affiliation, credentials, location, website, avatarUrl, autoSaveProfile])
 
     // Debounced auto-save for payout/subscription fields
     const autoSavePayout = useCallback(async () => {
@@ -315,26 +329,71 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Display name</label>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Account name</label>
                                         <input
                                             type="text"
                                             value={displayName}
                                             onChange={(e) => setDisplayName(e.target.value)}
                                             className="input-field"
-                                            placeholder="Your public name"
+                                            placeholder="Your name"
                                         />
                                     </div>
                                     {creatorId && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-foreground mb-1.5">Anonymous name (Pseudonym)</label>
-                                            <input
-                                                type="text"
-                                                value={anonymousName}
-                                                onChange={(e) => setAnonymousName(e.target.value)}
-                                                className="input-field"
-                                                placeholder="Used when you post anonymously"
-                                            />
-                                        </div>
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Author byline (public)</label>
+                                                <input
+                                                    type="text"
+                                                    value={byline}
+                                                    onChange={(e) => setByline(e.target.value)}
+                                                    className="input-field"
+                                                    placeholder="Your published byline"
+                                                />
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Real-name bylines are required. Pseudonyms need editorial approval.
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Affiliation (optional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={affiliation}
+                                                    onChange={(e) => setAffiliation(e.target.value)}
+                                                    className="input-field"
+                                                    placeholder="Company, lab, or university"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Verification links (optional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={credentials}
+                                                    onChange={(e) => setCredentials(e.target.value)}
+                                                    className="input-field"
+                                                    placeholder="LinkedIn, GitHub, ORCID (comma-separated)"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Location (optional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={location}
+                                                    onChange={(e) => setLocation(e.target.value)}
+                                                    className="input-field"
+                                                    placeholder="City, Country"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Website (optional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={website}
+                                                    onChange={(e) => setWebsite(e.target.value)}
+                                                    className="input-field"
+                                                    placeholder="https://your-site.com"
+                                                />
+                                            </div>
+                                        </>
                                     )}
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
@@ -368,7 +427,7 @@ export default function SettingsPage() {
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Subscription & Earnings</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Configure how much subscribers pay each month to access your premium analysis. Payments are processed in USDC on Solana and sent directly to your wallet.
+                                    Configure how much subscribers pay each month to access your premium work. Payments are processed via Jence's payout provider and sent to your payout wallet.
                                 </p>
 
                                 <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
@@ -380,7 +439,7 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Subscription Price (USDC)</label>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Subscription Price (USD)</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                             <input
@@ -398,7 +457,7 @@ export default function SettingsPage() {
                                         </p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Solana Wallet Address</label>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Payout wallet address</label>
                                         <div className="flex gap-2 items-center">
                                             <input
                                                 type="text"
@@ -436,7 +495,7 @@ export default function SettingsPage() {
                                             {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            This is your natively provisioned secure Solana wallet. Earnings are sent directly here. You can fund this wallet with SOL/USDC or export the private key to use with Phantom, Solflare, or other Solana wallets. Your current wallet balance can be seen on the wallet you export it to.
+                                            This is your natively provisioned secure wallet. Earnings are sent directly here. You can export the key to use with a compatible wallet and manage your balance there.
                                         </p>
 
 
@@ -505,11 +564,11 @@ export default function SettingsPage() {
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Subscription Management</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Manage your creator subscriptions. Payments are processed using your embedded Solana wallet.
+                                    Manage your creator subscriptions. Payments are processed using your saved payment wallet.
                                 </p>
 
                                 <div className="mb-6 p-4 rounded-xl border border-border bg-muted/20">
-                                    <h3 className="text-sm font-medium text-foreground mb-2">Your Solana Wallet</h3>
+                                    <h3 className="text-sm font-medium text-foreground mb-2">Your payment wallet</h3>
                                     <div className="flex items-center gap-2 mb-2">
                                         <input
                                             type="text"
@@ -547,7 +606,7 @@ export default function SettingsPage() {
                                         {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                     </div>
                                     <p className="text-xs text-muted-foreground mb-3">
-                                        Fund this wallet with USDC to pay for subscriptions. You can export it to Phantom or other Solana wallets and check your balance there.
+                                        Fund this wallet to pay for subscriptions. You can export it to a compatible wallet and check your balance there.
                                     </p>
 
                                 </div>

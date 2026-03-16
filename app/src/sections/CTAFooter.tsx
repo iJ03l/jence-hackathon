@@ -20,7 +20,7 @@ export default function CTAFooter() {
               <span className="font-bold text-3xl tracking-tighter text-foreground lowercase">jence</span>
             </Link>
             <p className="text-sm text-muted-foreground/70 leading-relaxed font-mono">
-              The premier knowledge platform.
+              Robotics and hardware engineering publication.
               <br />
               <span className="mt-2 block opacity-75">
                 &copy; {new Date().getFullYear()} Jence. All rights reserved.
@@ -60,4 +60,3 @@ export default function CTAFooter() {
     </footer>
   )
 }
-

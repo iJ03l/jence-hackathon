@@ -147,7 +147,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-2xl font-bold text-foreground">Your Feed</h1>
                         <Link to="/explore" className="text-sm text-jence-gold hover:underline">
-                            Explore verticals →
+                            Explore sections →
                         </Link>
                     </div>
 
@@ -202,11 +202,11 @@ export default function DashboardPage() {
                             </div>
                             <h3 className="font-semibold text-foreground mb-2">Your feed is empty</h3>
                             <p className="text-sm text-muted-foreground mb-4">
-                                Subscribe to creators to start seeing their expert analysis here.
+                                Subscribe to authors to start seeing their latest articles here.
                             </p>
                             <Link to="/explore" className="btn-primary inline-flex active:scale-[0.97] transition-all">
                                 <Users size={16} />
-                                Explore verticals
+                                Explore sections
                             </Link>
                         </div>
                     )}

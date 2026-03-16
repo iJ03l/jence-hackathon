@@ -1,66 +1,29 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { MessageSquare, ThumbsUp, Share2, ArrowRight, Flame, Pin } from 'lucide-react'
+import { MessageSquare, ThumbsUp, ArrowRight, Pin, Flame, Loader2 } from 'lucide-react'
+import { api } from '../lib/api'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const threads = [
-  {
-    id: 1,
-    title: "What's everyone's take on the new CBN circular?",
-    author: '@naija_crypto',
-    category: 'Crypto',
-    categoryColor: 'crypto',
-    time: '3 hours ago',
-    comments: 45,
-    likes: 89,
-    shares: 12,
-    hot: true,
-  },
-  {
-    id: 2,
-    title: 'Weekend betting thread - Share your slips',
-    author: '@betting_edge',
-    category: 'Betting',
-    categoryColor: 'betting',
-    time: '1 hour ago',
-    comments: 234,
-    likes: 156,
-    shares: 45,
-    hot: true,
-  },
-  {
-    id: 3,
-    title: 'Just got my first Upwork payment. Here\'s what I did',
-    author: '@remote_hunter',
-    category: 'Remote Work',
-    categoryColor: 'remote',
-    time: '5 hours ago',
-    comments: 78,
-    likes: 234,
-    shares: 67,
-    hot: false,
-  },
-  {
-    id: 4,
-    title: '[INCOME PROOF] Made $500 this month from importation',
-    author: '@anon_hustler',
-    category: 'Hustle',
-    categoryColor: 'hustle',
-    time: '8 hours ago',
-    comments: 156,
-    likes: 445,
-    shares: 89,
-    hot: true,
-  },
-]
 
 export default function ForumPreview() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  
+  const [posts, setPosts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.getCommunityPosts()
+      .then(data => {
+          // just grab top 4 recent posts
+          setPosts(data.slice(0, 4))
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -78,27 +41,30 @@ export default function ForumPreview() {
         }
       )
 
-      const items = listRef.current?.querySelectorAll('.thread-card')
-      if (items) {
-        gsap.fromTo(items,
-          { x: -30, opacity: 0 },
-          {
-            x: 0,
-            opacity: 1,
-            stagger: 0.1,
-            scrollTrigger: {
-              trigger: listRef.current,
-              start: 'top 85%',
-              end: 'top 50%',
-              scrub: true,
+      // We need to wait for rendering to setup the animation for the cards
+      setTimeout(() => {
+        const items = listRef.current?.querySelectorAll('.thread-card')
+        if (items && items.length > 0) {
+          gsap.fromTo(items,
+            { x: -30, opacity: 0 },
+            {
+              x: 0,
+              opacity: 1,
+              stagger: 0.1,
+              scrollTrigger: {
+                trigger: listRef.current,
+                start: 'top 85%',
+                end: 'top 50%',
+                scrub: true,
+              }
             }
-          }
-        )
-      }
+          )
+        }
+      }, 300)
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [posts.length]) // re-run once posts are loaded
 
   return (
     <section
@@ -134,68 +100,79 @@ export default function ForumPreview() {
         <div className="flex items-center gap-3 p-4 rounded-xl bg-jence-gold/5 border border-jence-gold/20 mb-4">
           <Pin size={16} className="text-jence-gold" />
           <span className="text-sm text-muted-foreground">
-            <span className="text-foreground font-medium">Community Rules:</span> Read before posting. No doxxing. No scams. Proof or it didn't happen.
+            <span className="text-foreground font-medium">Community Rules:</span> Be precise, cite methods, and avoid unsafe instructions.
           </span>
         </div>
 
         {/* Thread List */}
-        <div ref={listRef} className="space-y-3">
-          {threads.map((thread) => (
-            <div
-              key={thread.id}
-              className="thread-card cursor-pointer"
+        <div ref={listRef} className="space-y-3 min-h-[300px]">
+          {loading ? (
+            <div className="flex justify-center py-12">
+               <Loader2 className="animate-spin text-jence-gold" size={32} />
+            </div>
+          ) : posts.length === 0 ? (
+             <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
+               No discussions yet.
+             </div>
+          ) : posts.map((post) => (
+            <Link
+              key={post.id}
+              to={`/community/post/${post.id}`}
+              className="thread-card block card-plug p-4 hover:border-jence-gold/30 transition-colors cursor-pointer group"
             >
               <div className="flex items-start gap-4">
-                {/* Category Icon */}
-                <div className={`hidden sm:flex w-10 h-10 rounded-lg category-${thread.categoryColor} items-center justify-center shrink-0`}>
-                  <span className="text-xs font-bold">{thread.category.charAt(0)}</span>
-                </div>
-
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    {thread.hot && (
-                      <Flame size={14} className="text-jence-red" />
+                  <div className="flex items-center gap-2 mb-2">
+                    {post.likes > 5 && (
+                      <Flame size={14} className="text-jence-red flex-shrink-0" />
                     )}
-                    <h3 className="font-medium text-foreground truncate group-hover:text-jence-gold transition-colors">
-                      {thread.title}
+                    <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-jence-gold transition-colors">
+                      {post.content}
                     </h3>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
-                    <span className="font-mono">{thread.author}</span>
-                    <span>•</span>
-                    <span className={`badge category-${thread.categoryColor}`}>
-                      {thread.category}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground mb-3">
+                    <span className="font-medium text-foreground/80 flex items-center gap-1.5">
+                       {post.author?.image && (
+                           <img src={post.author.image} alt="Avatar" className="w-4 h-4 rounded-full object-cover" />
+                       )}
+                       {post.author?.displayName || 'Unknown'}
                     </span>
                     <span>•</span>
-                    <span>{thread.time}</span>
+                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                   </div>
 
+                  {post.tags && post.tags.length > 0 && (
+                      <div className="flex items-center gap-2 mb-3">
+                          {post.tags.map((t: any, idx: number) => (
+                              <span key={idx} className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm bg-muted text-muted-foreground">
+                                  #{t.name}
+                              </span>
+                          ))}
+                      </div>
+                  )}
+
                   {/* Engagement */}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MessageSquare size={12} />
-                      {thread.comments}
+                  <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <MessageSquare size={14} className="group-hover:text-foreground transition-colors" />
+                      {post.comments || 0}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <ThumbsUp size={12} />
-                      {thread.likes}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Share2 size={12} />
-                      {thread.shares}
+                    <span className="flex items-center gap-1.5">
+                      <ThumbsUp size={14} className="group-hover:text-jence-gold transition-colors" />
+                      {post.likes || 0}
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
         {/* View All */}
-        <div className="mt-6 text-center">
-          <Link to="/community" className="btn-outline inline-flex items-center gap-2">
+        <div className="mt-8 text-center">
+          <Link to="/community" className="btn-primary inline-flex items-center gap-2 shadow-lg shadow-jence-gold/10">
             View all discussions
             <ArrowRight size={16} />
           </Link>
