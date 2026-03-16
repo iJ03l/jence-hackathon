@@ -10,7 +10,7 @@ import {
 
 gsap.registerPlugin(ScrollTrigger)
 
-const verticals = [
+export const verticals = [
   {
     id: 1,
     slug: 'embedded-firmware',
