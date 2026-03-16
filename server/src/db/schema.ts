@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, unique } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, unique, jsonb } from 'drizzle-orm/pg-core'
 
 // ===== Better Auth Tables =====
 
@@ -61,6 +61,7 @@ export const vertical = pgTable('vertical', {
     disclaimer: text('disclaimer').notNull(),
     iconName: text('icon_name').notNull(),
     color: text('color').notNull(),
+    tags: jsonb('tags').$type<string[]>().notNull().default([]),
     createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
