@@ -412,7 +412,7 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-border">
+                                <div className="mt-4 pt-4 border-t border-border">
                                     <button
                                         onClick={handleSignOut}
                                         className="text-sm text-red-400 hover:text-red-300 transition-colors active:scale-[0.97]"
