@@ -1,4 +1,4 @@
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api`
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api`
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -122,7 +122,7 @@ export const api = {
         formData.append('file', file)
 
         // Use standard fetch instead of request wrapper since we need to send FormData without Content-Type: application/json
-        return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+        return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/upload`, {
             method: 'POST',
             body: formData,
             credentials: 'include',

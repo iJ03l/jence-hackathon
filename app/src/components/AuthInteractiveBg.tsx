@@ -37,15 +37,15 @@ export default function AuthInteractiveBg() {
     }, [])
 
     return (
-        <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-[#050505] flex flex-col justify-between p-8 md:p-12">
+        <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-muted/20 dark:bg-[#050505] flex flex-col justify-between p-8 md:p-12 transition-colors">
             {/* Grid Pattern */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px] transition-colors" />
             
             {/* Top Logo Section */}
             <div className="relative z-20 flex justify-start">
                 <Link to="/" className="flex items-center gap-3 group">
                     <img src="/logo.png" alt="Jence Logo" className="w-10 h-10 object-contain rounded-lg group-hover:scale-105 transition-transform" />
-                    <span className="font-bold text-2xl tracking-tight text-white">Jence</span>
+                    <span className="font-bold text-2xl tracking-tight text-foreground dark:text-white transition-colors">Jence</span>
                 </Link>
             </div>
             
@@ -71,7 +71,7 @@ export default function AuthInteractiveBg() {
                     <circle className="pulse-node" cx="500" cy="250" r="4" fill="currentColor" />
                     
                     {/* CPU / Microcontroller Component */}
-                    <rect className="floating-2d" x="220" y="170" width="80" height="80" rx="4" stroke="currentColor" strokeWidth="2" fill="#050505" />
+                    <rect className="floating-2d fill-muted dark:fill-[#050505] transition-colors" x="220" y="170" width="80" height="80" rx="4" stroke="currentColor" strokeWidth="2" />
                     {/* Inner detail */}
                     <rect className="floating-2d" x="240" y="190" width="40" height="40" rx="2" stroke="currentColor" strokeWidth="1" />
                     
@@ -98,11 +98,11 @@ export default function AuthInteractiveBg() {
             
             {/* Text Overlay for Desktop */}
             <div className="relative z-20 hidden lg:block">
-                <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+                <h2 className="text-3xl lg:text-4xl font-bold text-foreground dark:text-white mb-4 leading-tight transition-colors">
                     Join the vanguard of <br />
                     <span className="text-jence-gold">hardware engineering</span>.
                 </h2>
-                <p className="text-white/60 text-sm lg:text-base max-w-md">
+                <p className="text-muted-foreground dark:text-white/60 text-sm lg:text-base max-w-md transition-colors">
                     Connect with top creators, read deep-dive technical articles, and stay ahead in the world of robotics, embedded systems, and manufacturing.
                 </p>
             </div>

@@ -13,7 +13,7 @@ interface AuthContextType {
     user: User | null
     walletAddress: string | null
     loading: boolean
-    signIn: (email: string, password: string) => Promise<{ error?: string }>
+    signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error?: string }>
     signUp: (username: string, email: string, password: string, role: string) => Promise<{ error?: string }>
     signOut: () => Promise<void>
     refreshSession: () => Promise<void>
@@ -96,13 +96,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshSession()
     }, [refreshSession])
 
-    const signIn = async (email: string, password: string) => {
+    const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
         try {
             const res = await fetch(`${API_URL}/api/auth/sign-in/email`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, rememberMe }),
             })
             const data = await res.json()
             if (!res.ok) {
