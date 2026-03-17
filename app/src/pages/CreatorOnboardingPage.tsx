@@ -4,13 +4,6 @@ import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
-const SELF_CERT_CLAUSES = [
-    'I will publish under my real name and keep my credentials accurate.',
-    'I will include a conflict-of-interest disclosure on every article.',
-    'I will follow safety policy and avoid harmful step-by-step instructions.',
-    'I will follow responsible disclosure timelines for security research.',
-    'I will not publish weaponization or export-controlled content.',
-]
 
 export default function CreatorOnboardingPage() {
     const { user, loading: authLoading } = useAuth()
@@ -63,6 +56,7 @@ export default function CreatorOnboardingPage() {
 
     if (authLoading) return null
 
+    return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="max-w-2xl mx-auto">
                 {!isSubmitted ? (
