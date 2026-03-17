@@ -71,7 +71,7 @@ export const auth = betterAuth({
             },
             username: {
                 type: 'string',
-                required: true,
+                required: false,
                 input: true,
             },
         },
