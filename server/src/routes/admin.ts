@@ -58,7 +58,7 @@ adminRoutes.get('/metrics', async (c) => {
         })
         .from(post)
         .leftJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
-        .orderBy(desc(sql`likes`))
+        .orderBy(desc(sql`(SELECT COALESCE(SUM(value), 0) FROM ${postVote} WHERE ${postVote.postId} = ${post.id})`))
         .limit(10)
 
         // Mocking total page views as we don't track metrics table yet
