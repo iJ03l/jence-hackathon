@@ -22,6 +22,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
     getGlobalStats: () => request<any>('/stats/global'),
 
+    // Users
+    saveOnboardingData: (data: { role?: string, verticals?: string[] }) => 
+        request<any>('/users/onboarding', { method: 'POST', body: JSON.stringify(data) }),
+
     // Verticals
     getVerticals: () => request<any[]>('/verticals'),
     getVertical: (slug: string) => request<{ vertical: any; posts: any[] }>(`/verticals/${slug}`),

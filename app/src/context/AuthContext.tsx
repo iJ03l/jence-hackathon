@@ -36,11 +36,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 credentials: 'include',
             })
             if (res.ok) {
-                const data = await res.json()
-                const fetchedUser = data?.user || null
-                setUser(fetchedUser)
+                let data = await res.json()
+                let fetchedUser = data?.user || null
 
                 if (fetchedUser) {
+                    try {
+                        const storedVerticals = localStorage.getItem('jence_verticals')
+                        const storedRole = localStorage.getItem('intendedRole') || localStorage.getItem('jence_role')
+                        
+                        if (storedVerticals || storedRole) {
+                            const { api } = await import('../lib/api')
+                            await api.saveOnboardingData({
+                                role: storedRole || undefined,
+                                verticals: storedVerticals ? JSON.parse(storedVerticals) : undefined
+                            })
+                            localStorage.removeItem('jence_verticals')
+                            localStorage.removeItem('jence_role')
+                            localStorage.removeItem('intendedRole')
+                            localStorage.removeItem('jence_onboarded')
+                            
+                            // Re-fetch to get updated role/data
+                            const newRes = await fetch(`${API_URL}/api/auth/get-session`, { credentials: 'include' })
+                            if (newRes.ok) {
+                                data = await newRes.json()
+                                fetchedUser = data?.user || null
+                            }
+                        }
+                    } catch (e) {
+                         console.error("Failed to sync onboarding data", e)
+                    }
+
+                    setUser(fetchedUser)
+
                     try {
                         const walletRes = await fetch(`${API_URL}/api/wallet/me`, { credentials: 'include' })
                         if (walletRes.ok) {

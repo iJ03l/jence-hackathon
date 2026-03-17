@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BookOpen, Users, Rocket, Clock, Star } from 'lucide-react'
+import { ArrowRight, BookOpen, Users, Rocket, Star } from 'lucide-react'
 import { api } from '../lib/api'
 import ContentHero from '../sections/ContentHero'
 import Verticals from '../sections/Verticals'
 import ForumPreview from '../sections/ForumPreview'
-import FAQ from '../sections/FAQ'
 import SEO from '../components/SEO'
 
 export default function LandingPage() {
@@ -66,76 +65,85 @@ export default function LandingPage() {
                             ))}
                         </div>
                     ) : latestPosts.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {/* We want to arrange them as: 1 full row (large), then 2 rows of up to 3 under.
-                                But the user asked for: "covering a full row and 2 rows of upto 3 under" -> meaning 1 article takes the full row, 
-                                but they might mean "1 large article spanning 2 columns, and 2 small articles taking 1 column each" forming a 3-col grid row. 
-                                Let's build a CSS grid layout: 
-                                row 1: [Large Post (col-span-1 md:col-span-2 lg:col-span-2)] [Small Post 1 (col-span-1)]
-                                row 2... a bit tricky. 
-                                Let's just do an awesome masonry-like or 1-large/2-small repeating pattern. 
-                            */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex flex-col gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                                 {latestPosts.map((post, index) => {
-                                    // Make the very first post large, or every 3rd post large if we want a repeating pattern.
-                                    // User said: "covering a full row and 2 rows of upto 3 under"
-                                    // So: 
-                                    // Row 1: 1 article (full width)
-                                    // Row 2: 3 articles
-                                    // Row 3: 3 articles
                                     const isFeaturePost = index === 0;
 
                                     return (
                                         <Link
                                             key={post.id}
                                             to={`/post/${post.id}`}
-                                            className={`card-plug group relative overflow-hidden transition-all hover:border-jence-gold/40 flex flex-col ${isFeaturePost
-                                                    ? 'md:col-span-3 min-h-[300px] md:min-h-[400px]'
-                                                    : 'col-span-1 min-h-[280px]'
-                                                }`}
+                                            className={`group relative overflow-hidden transition-all duration-500 rounded-2xl border border-border/40 bg-card/20 backdrop-blur-sm hover:bg-card/40 hover:border-jence-gold/30 hover:shadow-[0_0_30px_rgba(212,175,55,0.05)] flex flex-col ${
+                                                isFeaturePost
+                                                    ? 'md:col-span-12 lg:col-span-8 min-h-[380px] md:min-h-[460px]'
+                                                    : 'md:col-span-6 lg:col-span-4 min-h-[320px]'
+                                            }`}
                                         >
                                             {post.imageUrl && (
-                                                <div className="absolute inset-0 z-0">
+                                                <div className="absolute inset-0 z-0 overflow-hidden">
                                                     <img
                                                         src={post.imageUrl}
                                                         alt={post.title}
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80"
                                                     />
-                                                    <div className={`absolute inset-0 bg-gradient-to-t ${isFeaturePost ? 'from-background via-background/80 to-background/20' : 'from-background via-background/90 to-background/30'}`} />
+                                                    <div className={`absolute inset-0 bg-gradient-to-t ${
+                                                        isFeaturePost 
+                                                            ? 'from-background via-background/70 to-transparent' 
+                                                            : 'from-background via-background/90 to-transparent'
+                                                    }`} />
+                                                    {/* Premium lighting accent */}
+                                                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-jence-gold/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                                                 </div>
                                             )}
 
-                                            <div className="relative z-10 flex flex-col h-full p-5 sm:p-6 justify-end">
-                                                <div className="flex items-center gap-2 mb-3">
+                                            {/* Fallback pattern if no image */}
+                                            {!post.imageUrl && (
+                                                 <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+                                            )}
+
+                                            <div className="relative z-10 flex flex-col h-full p-6 sm:p-8 justify-end">
+                                                <div className="flex flex-wrap items-center gap-2 mb-4">
                                                     {post.verticalName && (
-                                                        <span className="px-2 py-1 rounded-sm bg-jence-gold/20 text-jence-gold text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                                                        <span className="px-2.5 py-1 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-[10px] font-semibold uppercase tracking-widest backdrop-blur-md">
                                                             {post.verticalName}
                                                         </span>
                                                     )}
                                                     {post.isFree && !post.imageUrl && (
-                                                        <span className="px-1.5 py-0.5 rounded-sm bg-jence-green/10 text-jence-green text-[10px] font-bold uppercase tracking-wider">
-                                                            Free
+                                                        <span className="px-2.5 py-1 rounded-full border border-jence-green/20 bg-jence-green/5 text-jence-green text-[10px] font-semibold uppercase tracking-widest">
+                                                            Free Edition
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <h3 className={`font-bold text-foreground transition-colors group-hover:text-jence-gold mb-2 ${isFeaturePost ? 'text-2xl sm:text-3xl lg:text-4xl leading-tight' : 'text-lg leading-snug line-clamp-2'}`}>
+                                                <h3 className={`font-medium text-foreground transition-colors group-hover:text-jence-gold mb-3 ${
+                                                    isFeaturePost 
+                                                        ? 'text-2xl sm:text-3xl lg:text-4xl leading-[1.15] tracking-tight' 
+                                                        : 'text-xl leading-snug tracking-tight line-clamp-2'
+                                                }`}>
                                                     {post.title}
                                                 </h3>
 
-                                                <p className={`text-muted-foreground ${isFeaturePost ? 'text-sm sm:text-base line-clamp-2 sm:line-clamp-3 max-w-3xl mb-4' : 'text-xs line-clamp-2 mb-3'}`}>
+                                                <p className={`text-muted-foreground/80 font-light ${
+                                                    isFeaturePost 
+                                                        ? 'text-base sm:text-lg line-clamp-2 sm:line-clamp-3 max-w-2xl mb-6' 
+                                                        : 'text-sm line-clamp-2 mb-5'
+                                                }`}>
                                                     {post.excerpt || ''}
                                                 </p>
 
-                                                <div className="flex items-center gap-2 mt-auto">
-                                                    <span className="text-xs font-medium text-foreground">
-                                                        {post.creatorPseudonym || 'Author'}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">·</span>
-                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Clock size={10} />
-                                                        {new Date(post.createdAt).toLocaleDateString()}
-                                                    </span>
+                                                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-border/30">
+                                                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
+                                                        {(post.creatorPseudonym || 'A')[0].toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-foreground/90 leading-none mb-1">
+                                                            {post.creatorPseudonym || 'Jence Author'}
+                                                        </span>
+                                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                                            {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </Link>
@@ -310,7 +318,6 @@ export default function LandingPage() {
             </section>
 
             <ForumPreview />
-            <FAQ />
         </>
     )
 }

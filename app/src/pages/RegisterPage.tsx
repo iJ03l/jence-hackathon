@@ -9,7 +9,11 @@ import AuthInteractiveBg from '../components/AuthInteractiveBg'
 export default function RegisterPage() {
     const navigate = useNavigate()
     const { signUp } = useAuth()
-    const [role, setRole] = useState<'subscriber' | 'creator'>('subscriber')
+    
+    // Read from localStorage if coming from onboarding
+    const initialRole = (localStorage.getItem('jence_role') as 'subscriber' | 'creator') || 'subscriber'
+    
+    const [role, setRole] = useState<'subscriber' | 'creator'>(initialRole)
     const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -47,6 +51,23 @@ export default function RegisterPage() {
             } catch (err) {
                 console.error("Failed to provision embedded wallet:", err)
             }
+            
+            // Sync onboarding metadata
+            try {
+                const storedVerticals = localStorage.getItem('jence_verticals')
+                if (storedVerticals) {
+                    await api.saveOnboardingData({
+                        role,
+                        verticals: JSON.parse(storedVerticals)
+                    })
+                    localStorage.removeItem('jence_verticals')
+                    localStorage.removeItem('jence_role')
+                    localStorage.removeItem('jence_onboarded')
+                }
+            } catch (err) {
+               console.error("Failed to sync onboarding data:", err)
+            }
+            
             navigate(role === 'creator' ? '/creator-onboarding' : '/dashboard')
         }
         setLoading(false)

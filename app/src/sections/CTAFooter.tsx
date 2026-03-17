@@ -31,7 +31,8 @@ export default function CTAFooter() {
           {/* Links & Social */}
           <div className="flex flex-col sm:flex-row items-center gap-10">
             {/* Legal */}
-            <div className="flex gap-6 sm:gap-10">
+            <div className="flex flex-wrap justify-center sm:justify-start gap-5 sm:gap-8">
+              <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</Link>
               <Link to="/terms" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
               <Link to="/privacy" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
               <a href="mailto:hello@jence.xyz" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Support</a>

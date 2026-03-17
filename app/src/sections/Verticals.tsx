@@ -56,7 +56,7 @@ export default function Verticals() {
         gsap.to(gridRef.current, {
           xPercent: -50,
           ease: 'none',
-          duration: verticals.length * 3, // Adjust duration based on item count for consistent speed
+          duration: verticals.length * 8, // Slower, premium scroll speed
           repeat: -1,
         })
       }
@@ -66,8 +66,8 @@ export default function Verticals() {
     return () => ctx.revert()
   }, [verticals.length])
 
-  // Duplicate the array so the infinite scroll is seamless
-  const duplicatedVerticals = [...verticals, ...verticals]
+  // Quadruple the array so the infinite scroll is seamless even on ultrawide monitors
+  const duplicatedVerticals = [...verticals, ...verticals, ...verticals, ...verticals]
 
   return (
     <section
@@ -115,24 +115,29 @@ export default function Verticals() {
                         <Link
                           key={`${vertical.id}-${index}`}
                           to={`/verticals/${vertical.slug}`}
-                          className="vertical-card group w-[280px] p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 flex-shrink-0 flex flex-col"
+                          className="group relative w-[220px] sm:w-[260px] md:w-[280px] p-6 sm:p-7 rounded-2xl bg-card/60 dark:bg-[#0A0A0A]/60 backdrop-blur-xl border border-border/50 dark:border-white/5 hover:bg-card/80 dark:hover:bg-[#111] hover:border-jence-gold/40 dark:hover:border-jence-gold/20 transition-all duration-500 overflow-hidden flex-shrink-0 flex flex-col hover:-translate-y-1 shadow-sm hover:shadow-2xl hover:shadow-jence-gold/10"
                         >
-                          <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500"
-                            style={{ backgroundColor: `${vertical.color}15`, color: vertical.color }}
-                          >
-                            <Icon size={24} />
-                          </div>
-                          <h3 className="font-semibold text-lg text-foreground mb-2 group-hover:text-white transition-colors">
-                            {vertical.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-6 line-clamp-2">
-                            {vertical.description}
-                          </p>
+                          {/* Premium Top Glow Accent */}
+                          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-jence-gold/0 group-hover:via-jence-gold/40 to-transparent transition-all duration-700" />
                           
-                          <div className="mt-auto">
-                            <span className="text-xs font-mono text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1.5">
-                              <FileText size={12} /> {12 + (dbStats?.articlesByVertical?.[vertical.slug] || 0)} articles
+                          <div className="relative z-10">
+                              <div
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 bg-muted/50 dark:bg-white/5 border border-border/50 dark:border-white/5 shadow-inner"
+                                style={{ color: vertical.color || '#D4AF37' }}
+                              >
+                                <Icon size={24} strokeWidth={1.5} className="sm:w-7 sm:h-7 w-6 h-6 opacity-80 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                              <h3 className="font-medium tracking-tight text-base sm:text-lg text-foreground/90 mb-2 group-hover:text-jence-gold transition-colors">
+                                {vertical.name}
+                              </h3>
+                              <p className="text-[12px] sm:text-[13px] leading-relaxed text-muted-foreground/80 mb-6 line-clamp-2 font-light">
+                                {vertical.description}
+                              </p>
+                          </div>
+                          
+                          <div className="mt-auto relative z-10 pt-4 border-t border-border/50 dark:border-white/5 group-hover:border-border dark:group-hover:border-white/10 transition-colors">
+                            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-muted-foreground/80 dark:text-muted-foreground/60 group-hover:text-jence-gold transition-colors flex items-center gap-2">
+                              {12 + (dbStats?.articlesByVertical?.[vertical.slug] || 0)} published
                             </span>
                           </div>
                         </Link>

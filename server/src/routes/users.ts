@@ -63,6 +63,35 @@ usersRoutes.post('/check-email', zValidator('json', z.object({
     return c.json({ exists: !!found })
 })
 
+// POST /api/users/onboarding — sync onboarding preferences
+usersRoutes.post('/onboarding', requireAuth, zValidator('json', z.object({
+    role: z.enum(['subscriber', 'creator', 'reader']).optional(),
+    verticals: z.array(z.string()).optional()
+})), async (c) => {
+    const { role, verticals } = c.req.valid('json')
+    const sessionUser = c.get('user')
+
+    // Map 'reader' back to 'subscriber' for DB consistency
+    const mappedRole = role === 'reader' ? 'subscriber' : role
+
+    // Filter out undefined fields
+    const updates: any = { updatedAt: new Date() }
+    if (mappedRole) updates.role = mappedRole
+    if (verticals) updates.onboardingVerticals = verticals
+
+    const [updatedUser] = await db
+        .update(user)
+        .set(updates)
+        .where(eq(user.id, sessionUser.id))
+        .returning()
+
+    if (!updatedUser) {
+        return c.json({ error: 'User not found' }, 404)
+    }
+
+    return c.json(updatedUser)
+})
+
 // GET /api/users/:id/export — export user data
 usersRoutes.get('/:id/export', requireAuth, async (c) => {
     const id = c.req.param('id')

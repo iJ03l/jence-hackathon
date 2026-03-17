@@ -10,6 +10,7 @@ export const user = pgTable('user', {
     emailVerified: boolean('email_verified').notNull().default(false),
     image: text('image'),
     role: text('role').notNull().default('subscriber'), // 'subscriber' | 'creator' | 'admin'
+    onboardingVerticals: jsonb('onboarding_verticals').$type<string[]>().default([]),
     isBanned: boolean('is_banned').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),

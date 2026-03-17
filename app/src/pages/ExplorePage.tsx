@@ -95,27 +95,32 @@ export default function ExplorePage() {
                                         <div className="absolute -inset-0.5 bg-gradient-to-br from-jence-gold/50 to-transparent rounded-[2rem] blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                                         <Link 
                                             to={`/verticals/${featuredVertical.slug}`}
-                                            className="relative flex flex-col h-full bg-[#0a0a0a] border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden hover:border-jence-gold/30 transition-colors"
+                                            className="relative flex flex-col h-full bg-card/60 dark:bg-[#0A0A0A]/80 border border-border/50 dark:border-white/5 rounded-[2rem] p-8 md:p-12 overflow-hidden hover:border-jence-gold/40 dark:hover:border-jence-gold/30 transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-jence-gold/10 backdrop-blur-xl group/featured"
                                         >
-                                            <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-1/4 -translate-y-1/4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
+                                            {/* Top Subtle Glow */}
+                                            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-jence-gold/0 group-hover/featured:via-jence-gold/40 to-transparent transition-all duration-700" />
+
+                                            <div className="absolute top-0 right-0 p-8 opacity-5 dark:opacity-10 transform translate-x-1/4 -translate-y-1/4 group-hover/featured:scale-110 group-hover/featured:rotate-12 transition-transform duration-700 pointer-events-none text-foreground dark:text-white">
                                                 <Icon size={240} color={featuredVertical.color} />
                                             </div>
 
                                             <div className="flex items-center justify-between mb-12">
                                                 <div 
-                                                    className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-md bg-white/5 border border-white/10"
+                                                    className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner backdrop-blur-md bg-muted/60 dark:bg-white/5 border border-border/50 dark:border-white/10 group-hover/featured:scale-110 group-hover/featured:-rotate-3 transition-transform duration-500"
                                                     style={{ color: featuredVertical.color }}
                                                 >
                                                     <Icon size={32} />
                                                 </div>
-                                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-mono text-muted-foreground">Featured</span>
+                                                <span className="px-3 py-1 bg-muted/50 dark:bg-white/5 border border-border/50 dark:border-white/10 rounded-full text-[11px] uppercase tracking-widest font-mono text-muted-foreground/80 dark:text-muted-foreground/90">
+                                                    Featured
+                                                </span>
                                             </div>
 
                                             <div className="mt-auto relative z-10">
-                                                <h2 className="text-3xl font-bold text-white mb-4 group-hover:text-jence-gold transition-colors">
+                                                <h2 className="text-3xl font-bold tracking-tight text-foreground mb-4 group-hover/featured:text-jence-gold transition-colors">
                                                     {featuredVertical.name}
                                                 </h2>
-                                                <p className="text-white/70 text-lg mb-6 leading-relaxed">
+                                                <p className="text-muted-foreground/90 dark:text-white/70 text-lg mb-8 leading-relaxed font-light">
                                                     {featuredVertical.description}
                                                 </p>
                                                 
@@ -123,19 +128,19 @@ export default function ExplorePage() {
                                                 {(featuredVertical.tags && featuredVertical.tags.length > 0) && (
                                                     <div className="flex flex-wrap gap-2 mb-8">
                                                         {featuredVertical.tags.map((tag: string) => (
-                                                            <span key={tag} className="px-2.5 py-1 text-[11px] uppercase tracking-wider font-mono text-white/60 bg-white/5 rounded-md border border-white/5">
+                                                            <span key={tag} className="px-2.5 py-1 text-[11px] uppercase tracking-wider font-mono text-muted-foreground/80 dark:text-white/60 bg-muted/40 dark:bg-white/5 rounded-md border border-border/50 dark:border-white/5">
                                                                 {tag}
                                                             </span>
                                                         ))}
                                                     </div>
                                                 )}
 
-                                                <div className="flex items-center justify-between border-t border-white/10 pt-6">
-                                                    <div className="flex items-center gap-2 text-white/50 text-sm font-mono">
+                                                <div className="flex items-center justify-between border-t border-border/50 dark:border-white/5 pt-6 group-hover/featured:border-border dark:group-hover/featured:border-white/10 transition-colors">
+                                                    <div className="flex items-center gap-2 text-muted-foreground/80 dark:text-white/50 text-[13px] uppercase tracking-widest font-mono">
                                                         <FileText size={16} />
                                                         {articleCount} articles
                                                     </div>
-                                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-jence-gold group-hover:text-black transition-colors">
+                                                    <div className="w-10 h-10 rounded-full bg-muted/50 dark:bg-white/5 flex items-center justify-center group-hover/featured:bg-jence-gold group-hover/featured:text-black transition-colors text-foreground dark:text-white shadow-sm">
                                                         <ArrowRight size={18} />
                                                     </div>
                                                 </div>
@@ -156,25 +161,28 @@ export default function ExplorePage() {
                                         <Link
                                             key={vertical.id}
                                             to={`/verticals/${vertical.slug}`}
-                                            className="explore-list-item group flex flex-col p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 min-h-[220px]"
+                                            className="explore-list-item group relative flex flex-col p-6 sm:p-7 rounded-2xl bg-card/40 dark:bg-white/[0.02] border border-border/40 dark:border-white/5 hover:bg-card/80 dark:hover:bg-white/[0.04] hover:border-jence-gold/30 dark:hover:border-white/10 transition-all duration-500 min-h-[220px] shadow-sm hover:shadow-xl hover:shadow-jence-gold/5 hover:-translate-y-1 overflow-hidden"
                                         >
-                                            <div className="flex items-start justify-between mb-4">
+                                            {/* Subdued Premium Glow */}
+                                            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-jence-gold/0 group-hover:via-jence-gold/20 to-transparent transition-all duration-700" />
+                                            
+                                            <div className="relative z-10 flex items-start justify-between mb-5">
                                                 <div 
-                                                    className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 group-hover:scale-110 transition-transform duration-500"
-                                                    style={{ color: vertical.color }}
+                                                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-muted/60 dark:bg-white/5 border border-border/40 dark:border-transparent group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner"
+                                                    style={{ color: vertical.color || '#D4AF37' }}
                                                 >
-                                                    <Icon size={24} />
+                                                    <Icon size={24} strokeWidth={1.5} className="opacity-80 group-hover:opacity-100 transition-opacity" />
                                                 </div>
-                                                <span className="text-xs font-mono text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1.5">
-                                                    <FileText size={12} /> {articleCount} articles
+                                                <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/60 group-hover:text-jence-gold/80 transition-colors flex items-center gap-1.5 uppercase tracking-widest">
+                                                    <FileText size={12} /> {articleCount} published
                                                 </span>
                                             </div>
                                             
-                                            <div className="mt-auto">
-                                                <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-white transition-colors">
+                                            <div className="mt-auto relative z-10">
+                                                <h3 className="text-lg font-medium tracking-tight text-foreground mb-2 group-hover:text-jence-gold transition-colors">
                                                     {vertical.name}
                                                 </h3>
-                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                                <p className="text-sm text-muted-foreground/90 font-light line-clamp-2 mb-5">
                                                     {vertical.description}
                                                 </p>
                                                 
@@ -182,7 +190,7 @@ export default function ExplorePage() {
                                                 {(vertical.tags && vertical.tags.length > 0) && (
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {vertical.tags.map((tag: string) => (
-                                                            <span key={tag} className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-mono text-muted-foreground/60 bg-muted/20 rounded border border-border/30">
+                                                            <span key={tag} className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-mono text-muted-foreground/70 bg-muted/30 border border-border/40 rounded">
                                                                 {tag}
                                                             </span>
                                                         ))}
@@ -195,12 +203,14 @@ export default function ExplorePage() {
                             </div>
 
                             {/* Call to action at bottom of list */}
-                            <div className="explore-list-item mt-4 p-8 rounded-2xl border border-dashed border-border/50 bg-muted/20 flex flex-col items-center justify-center text-center">
-                                <h4 className="text-lg font-medium text-foreground mb-2">Don't see your domain?</h4>
-                                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                            <div className="explore-list-item mt-8 p-8 sm:p-10 rounded-2xl border border-dashed border-border/60 bg-muted/30 dark:bg-white/[0.02] flex flex-col items-center justify-center text-center transition-colors hover:bg-muted/50 dark:hover:bg-white/[0.04]">
+                                <h4 className="text-xl font-medium tracking-tight text-foreground mb-3">Don't see your domain?</h4>
+                                <p className="text-sm sm:text-base text-muted-foreground/90 font-light mb-6 max-w-md leading-relaxed">
                                     We're always expanding our coverage. Let us know what technical areas you want to read or write about.
                                 </p>
-                                <a href="mailto:hello@jence.xyz" className="text-sm font-medium text-jence-gold hover:underline">Contact Editorial →</a>
+                                <a href="mailto:hello@jence.xyz" className="px-6 py-2.5 rounded-full bg-foreground text-background font-medium text-sm hover:bg-jence-gold hover:text-black transition-colors shadow-sm">
+                                    Contact Editorial
+                                </a>
                             </div>
                         </div>
 
