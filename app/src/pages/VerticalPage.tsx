@@ -6,6 +6,7 @@ import {
     AlertTriangle, Clock, FileText
 } from 'lucide-react'
 import { api } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import SEO from '../components/SEO'
 
 const iconMap: Record<string, any> = {
@@ -14,6 +15,7 @@ const iconMap: Record<string, any> = {
 }
 
 export default function VerticalPage() {
+    const { user } = useAuth()
     const { slug } = useParams<{ slug: string }>()
     const [data, setData] = useState<{ vertical: any; posts: any[] } | null>(null)
     const [loading, setLoading] = useState(true)
@@ -94,10 +96,20 @@ export default function VerticalPage() {
                 </div>
 
                 {/* Posts */}
-                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <FileText size={18} />
-                    Recent posts
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-foreground flex items-center gap-2">
+                        <FileText size={18} />
+                        Recent posts
+                    </h2>
+                    {user?.role === 'creator' && (
+                        <Link
+                            to={`/dashboard?new=true&vertical=${vertical.id}`}
+                            className="bg-jence-gold/10 hover:bg-jence-gold/20 text-jence-gold text-xs font-medium px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                            Create new post
+                        </Link>
+                    )}
+                </div>
 
                 {posts.length > 0 ? (
                     <div className="space-y-4">

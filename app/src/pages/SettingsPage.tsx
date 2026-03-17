@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Bell, Shield, CreditCard, DollarSign, Copy, Check } from 'lucide-react'
+import { User, Bell, Shield, CreditCard, Copy, Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Data', icon: Shield },
-    { id: 'subscription', label: 'Tipping', icon: CreditCard },
+    { id: 'subscription', label: 'Tipping & Payouts', icon: CreditCard },
 ]
 
 export default function SettingsPage() {
@@ -26,7 +26,6 @@ export default function SettingsPage() {
     const [website, setWebsite] = useState('')
 
     const [uploadingImage, setUploadingImage] = useState(false)
-    const [exportingData, setExportingData] = useState(false)
     const [creatorId, setCreatorId] = useState<string | null>(null)
     const [walletCreating, setWalletCreating] = useState(false)
     const [walletError, setWalletError] = useState('')
@@ -175,29 +174,6 @@ export default function SettingsPage() {
         return () => { if (payoutSaveTimer.current) clearTimeout(payoutSaveTimer.current) }
     }, [subscriptionPrice, payoutAddress, payoutMethod, autoSavePayout, creatorId])
 
-    const handleExportData = async () => {
-        if (!user?.id) return
-        setExportingData(true)
-        try {
-            const data = await api.exportData(user.id)
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `jence_export_${user.id}.json`
-            document.body.appendChild(a)
-            a.click()
-            window.URL.revokeObjectURL(url)
-            document.body.removeChild(a)
-        } catch (err) {
-            console.error(err)
-            alert('Failed to export data')
-        } finally {
-            setExportingData(false)
-        }
-    }
-
-
 
     const handleCopyAddress = () => {
         if (!walletAddress) return
@@ -282,20 +258,6 @@ export default function SettingsPage() {
                                     </button>
                                 )
                             })}
-                            {user?.role === 'creator' && (
-                                <>
-                                    <button
-                                        onClick={() => setActiveTab('payouts')}
-                                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all text-left w-full active:scale-[0.97] ${activeTab === 'payouts'
-                                            ? 'bg-jence-gold/10 text-jence-gold font-medium'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                                            }`}
-                                    >
-                                        <DollarSign size={16} />
-                                        <span className="hidden md:inline">Payouts</span>
-                                    </button>
-                                </>
-                            )}
                         </div>
                     </nav>
 
@@ -423,149 +385,54 @@ export default function SettingsPage() {
                             </div>
                         )}
 
-                        {activeTab === 'payouts' && (
-                            <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Tipping & Earnings</h2>
-                                <p className="text-sm text-muted-foreground mb-6">
-                                    Configure how much your supporters tip each month to access your premium work. Payments are processed via Jence's payout provider and sent to your payout wallet.
-                                </p>
-
-                                <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-jence-gold">Revenue Split:</p>
-                                        <p className="text-sm text-foreground"><span className="font-bold">{creatorShare}%</span> Creator / <span className="font-bold">{platformShare}%</span> Platform</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Tipping Amount (USD)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={subscriptionPrice}
-                                                onChange={(e) => setSubscriptionPrice(e.target.value)}
-                                                className="input-field !pl-7 font-mono text-sm"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Set to 0 for free access.
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Payout wallet address</label>
-                                        <div className="flex gap-2 items-center">
-                                            <input
-                                                type="text"
-                                                value={walletAddress || 'No embedded wallet found'}
-                                                className="input-field font-mono text-sm flex-1 bg-muted/50"
-                                                readOnly
-                                            />
-                                            {hasWallet && (
-                                                <>
-                                                    <button
-                                                        onClick={handleCopyAddress}
-                                                        className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                                                        title="Copy Address"
-                                                    >
-                                                        {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-                                                    </button>
-                                                    <button
-                                                        onClick={handleExportWallet}
-                                                        disabled={exportingWallet}
-                                                        className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50 text-xs"
-                                                    >
-                                                        {exportingWallet ? 'Exporting...' : 'Export Key'}
-                                                    </button>
-                                                </>
-                                            )}
-                                            {!hasWallet && (
-                                                <button
-                                                    onClick={handleCreateWallet}
-                                                    disabled={walletCreating}
-                                                    className="btn-secondary h-[42px] px-4 shrink-0 transition-opacity whitespace-nowrap disabled:opacity-50"
-                                                >
-                                                    {walletCreating ? 'Creating...' : 'Create Wallet'}
-                                                </button>
-                                            )}
-                                            {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                            This is your natively provisioned secure wallet. Earnings are sent directly here. You can export the key to use with a compatible wallet and manage your balance there.
-                                        </p>
-
-
-                                    </div>
-
-                                    <div className="flex items-center gap-2 h-8">
-                                        {autoSaveStatus === 'saving' && <p className="text-xs text-jence-gold animate-pulse">Saving payout settings...</p>}
-                                        {autoSaveStatus === 'saved' && <p className="text-xs text-green-500 flex items-center gap-1"><Check size={12} /> Payout settings saved</p>}
-                                        {autoSaveStatus === 'error' && <p className="text-xs text-red-400">Failed to save</p>}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-
-                        {activeTab === 'notifications' && (
-                            <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Notification Preferences</h2>
-                                <div className="space-y-4">
-                                    {[
-                                        { label: 'New posts from supported creators', desc: 'Get notified when creators publish new content' },
-                                        { label: 'Creator announcements', desc: 'Updates from creators you follow' },
-                                        { label: 'Platform updates', desc: 'New features, policy changes, and announcements' },
-                                    ].map((item, i) => (
-                                        <label key={i} className="flex items-start justify-between gap-4 p-3 rounded-xl border border-border hover:border-jence-gold/20 transition-colors cursor-pointer">
-                                            <div>
-                                                <p className="text-sm font-medium text-foreground">{item.label}</p>
-                                                <p className="text-xs text-muted-foreground">{item.desc}</p>
-                                            </div>
-                                            <input type="checkbox" defaultChecked className="mt-1 accent-jence-gold" />
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'privacy' && (
-                            <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Privacy & Data</h2>
-                                <p className="text-sm text-muted-foreground mb-6">
-                                    In compliance with the General Data Protection Regulation (GDPR) and global privacy standards, you have the right to request
-                                    deletion of your personal data.
-                                </p>
-
-                                <div className="space-y-4">
-                                    <div className="p-4 rounded-xl border border-border">
-                                        <h3 className="text-sm font-medium text-foreground mb-1">Download your data</h3>
-                                        <p className="text-xs text-muted-foreground mb-3">
-                                            Request a copy of all your data stored on Jence.
-                                        </p>
-                                        <button
-                                            onClick={handleExportData}
-                                            disabled={exportingData}
-                                            className="btn-secondary text-sm active:scale-[0.97] transition-all disabled:opacity-50"
-                                        >
-                                            {exportingData ? 'Exporting...' : 'Request data export'}
-                                        </button>
-                                    </div>
-
-                                    {/* Delete account functionally removed per requirements */}
-                                </div>
-                            </div>
-                        )}
-
                         {activeTab === 'subscription' && (
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Tipping Management</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Manage your creator tipping. Payments are processed using your saved payment wallet.
+                                    Manage your creator tipping. Payments are processed using your natively provisioned secure wallet. Support creators to see them here.
                                 </p>
+
+                                {user?.role === 'creator' && (
+                                    <>
+                                        <h3 className="text-sm font-semibold text-foreground mt-8 mb-4 border-t border-border pt-6">Creator Earnings & Payouts</h3>
+                                        <p className="text-sm text-muted-foreground mb-6">
+                                            Configure how much your supporters tip each month to access your premium work. Earnings are sent zero-fee to your wallet.
+                                        </p>
+
+                                        <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium text-jence-gold">Revenue Split:</p>
+                                                <p className="text-sm text-foreground"><span className="font-bold">{creatorShare}%</span> Creator / <span className="font-bold">{platformShare}%</span> Platform</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 mb-8">
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Tipping Amount (USD)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={subscriptionPrice}
+                                                        onChange={(e) => setSubscriptionPrice(e.target.value)}
+                                                        className="input-field !pl-7 font-mono text-sm"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Set to 0 for free access.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2 h-8">
+                                                {autoSaveStatus === 'saving' && <p className="text-xs text-jence-gold animate-pulse">Saving payout settings...</p>}
+                                                {autoSaveStatus === 'saved' && <p className="text-xs text-green-500 flex items-center gap-1"><Check size={12} /> Payout settings saved</p>}
+                                                {autoSaveStatus === 'error' && <p className="text-xs text-red-400">Failed to save</p>}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className="mb-6 p-4 rounded-xl border border-border bg-muted/20">
                                     <h3 className="text-sm font-medium text-foreground mb-2">Your payment wallet</h3>

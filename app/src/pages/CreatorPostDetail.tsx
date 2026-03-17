@@ -172,7 +172,12 @@ export default function CreatorPostDetail() {
                                 <p className="text-sm text-muted-foreground">{disclosureText}</p>
                             </div>
 
-                            <div className="prose prose-invert max-w-none mb-6 relative">
+                            <div className="prose prose-invert max-w-none mb-6 relative text-base sm:text-lg leading-relaxed">
+                                {post.imageUrl && (
+                                    <div className="mb-8 rounded-2xl overflow-hidden border border-border/50 bg-muted/20">
+                                        <img src={post.imageUrl} alt={post.title} className="w-full h-auto max-h-[600px] object-cover" />
+                                    </div>
+                                )}
                                 {post.isFree || post.hasAccess ? (
                                     <p className="text-foreground/90 whitespace-pre-wrap break-words">{linkifyText(post.content)}</p>
                                 ) : (

@@ -356,7 +356,7 @@ creatorsRoutes.post('/onboard', async (c) => {
         website
     } = body
 
-    if (!userId || !pseudonym || !verticalId || !selfCertificationSigned) {
+    if (!userId || !pseudonym || selfCertificationSigned === undefined) {
         return c.json({ error: 'Missing required fields' }, 400)
     }
 
@@ -367,7 +367,7 @@ creatorsRoutes.post('/onboard', async (c) => {
         credentials,
         location,
         website,
-        verticalId,
+        verticalId: verticalId || null,
         kycDocumentType,
         selfCertificationSigned,
         selfCertificationDate: new Date(),
