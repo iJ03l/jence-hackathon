@@ -22,6 +22,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
     getGlobalStats: () => request<any>('/stats/global'),
 
+    // Admin
+    getAdminMetrics: () => request<any>('/admin/metrics'),
+    getAdminUsers: (query: string = '') => request<any>(`/admin/users?q=${query}`),
+
     // Users
     saveOnboardingData: (data: { role?: string, verticals?: string[] }) => 
         request<any>('/users/onboarding', { method: 'POST', body: JSON.stringify(data) }),
@@ -114,7 +118,7 @@ export const api = {
     exportData: (userId: string) =>
         request<any>(`/users/${userId}/export`),
     toggleUserBan: (userId: string, isBanned: boolean) =>
-        request<any>(`/users/${userId}/ban`, { method: 'PUT', body: JSON.stringify({ isBanned }) }),
+        request<any>(`/admin/users/${userId}/ban`, { method: 'POST', body: JSON.stringify({ isBanned }) }),
 
     // Uploads
     uploadImage: (file: File) => {

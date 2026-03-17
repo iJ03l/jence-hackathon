@@ -179,9 +179,9 @@ export default function CreatorPostDetail() {
                                     <>
                                         {/* Dummy blurred text to indicate content length without leaking actual analysis */}
                                         <p className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words">
-                                            {linkifyText(post.excerpt || `This is a premium article prepared exclusively for subscribers. The article contains in-depth data, actionable insights, and field-tested takeaways.
+                                            {linkifyText(post.excerpt || `This is a premium article prepared exclusively for supporters. The article contains in-depth data, actionable insights, and field-tested takeaways.
                                             
-To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription supports the creator and gives you access to their complete library of premium insights.`)}
+To view the full content of this post, please support ${post.creatorPseudonym}'s channel. Your support helps the creator and gives you access to their complete library of premium insights.`)}
                                         </p>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center pointer-events-none">
                                             <div className="bg-background/90 backdrop-blur-md px-5 py-6 sm:px-6 sm:py-4 w-full max-w-xs sm:max-w-sm rounded-xl border border-border/80 shadow-2xl pointer-events-auto flex flex-col items-center">
@@ -190,10 +190,10 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                                 </div>
                                                 <h3 className="text-lg font-bold text-foreground mb-1">Premium Article</h3>
                                                 <p className="text-sm text-muted-foreground mb-4">
-                                                    Subscribe to <strong>{post.creatorPseudonym}</strong> to unlock this full post.
+                                                    Support <strong>{post.creatorPseudonym}</strong> to unlock this full post.
                                                 </p>
                                                 <Link to={`/${post.creatorUsername || '#'}`} className="btn-primary w-full text-center">
-                                                    View Subscription Plans
+                                                    View Support Options
                                                 </Link>
                                             </div>
                                         </div>

@@ -26,6 +26,7 @@ import uploadRoutes from './routes/upload.js'
 import walletRoutes from './routes/wallet.js'
 import statsRoutes from './routes/stats.js'
 import launchRoutes from './routes/launches.js'
+import adminRoutes from './routes/admin.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
 
 const app = new Hono()
@@ -73,6 +74,7 @@ app.route('/api/upload', uploadRoutes)
 app.route('/api/wallet', walletRoutes)
 app.route('/api/stats', statsRoutes)
 app.route('/api/launches', launchRoutes)
+app.route('/api/admin', adminRoutes)
 
 // Start server
 const port = parseInt(process.env.PORT || '8080', 10)

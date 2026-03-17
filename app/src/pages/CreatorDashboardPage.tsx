@@ -242,7 +242,7 @@ export default function CreatorDashboardPage() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
-                        label="Total Subscribers"
+                        label="Total Supporters"
                         value={stats.totalSubscribers.toLocaleString()}
                         icon={Users}
                     />
@@ -614,7 +614,7 @@ function CreatePostForm({ creatorId, verticalId, onClose, onSuccess }: any) {
                     />
                     <div>
                         <p className="text-sm font-medium text-foreground">Make this post free</p>
-                        <p className="text-xs text-muted-foreground">Free posts are visible to non-subscribers and help attract new users.</p>
+                        <p className="text-xs text-muted-foreground">Free posts are visible to everyone and help attract new users.</p>
                     </div>
                 </label>
 

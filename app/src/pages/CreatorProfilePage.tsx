@@ -195,7 +195,7 @@ export default function CreatorProfilePage() {
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <SEO
                 title={`${creator.pseudonym || username} — Robotics & Hardware Author`}
-                description={`Subscribe to ${creator.pseudonym || username}'s engineering articles on Jence. ${creator.bio || 'Credited technical writing, disclosures, and lab-grade rigor.'}`}
+                description={`Support ${creator.pseudonym || username}'s engineering articles on Jence. ${creator.bio || 'Credited technical writing, disclosures, and lab-grade rigor.'}`}
                 url={`/${username}`}
                 image={creator.image || undefined}
                 type="profile"
@@ -277,7 +277,7 @@ export default function CreatorProfilePage() {
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Users size={12} />
-                                        {creator.subscriberCount || 0} subscribers
+                                        {creator.subscriberCount || 0} supporters
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <FileText size={12} />
@@ -313,21 +313,21 @@ export default function CreatorProfilePage() {
                                     {subscribing ? (
                                         <>
                                             <Loader2 size={14} className="animate-spin inline mr-2" />
-                                            {subscriptionPrice > 0 ? 'Processing payment...' : 'Subscribing...'}
+                                            {subscriptionPrice > 0 ? 'Processing payment...' : 'Supporting...'}
                                         </>
                                     ) : (
                                         subscriptionPrice > 0
-                                            ? `Subscribe · $${subscriptionPrice}/mo`
-                                            : 'Subscribe · Free'
+                                            ? `Support · $${subscriptionPrice}/mo`
+                                            : 'Support · Free'
                                     )}
                                 </button>
                             ) : subscribed ? (
                                 <span className="flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg bg-jence-green/10 text-jence-green text-sm font-medium">
-                                    ✓ Subscribed
+                                    ✓ Supporting
                                 </span>
                             ) : (
                                 <Link to="/login" className="btn-primary w-full sm:w-auto text-center block text-sm active:scale-[0.97] transition-all">
-                                    Sign in to subscribe
+                                    Sign in to support
                                 </Link>
                             )}
                         </div>
@@ -392,7 +392,7 @@ export default function CreatorProfilePage() {
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             <div className="bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border shadow-sm pointer-events-auto">
                                                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                                    🔒 Subscribe to read
+                                                    🔒 Support to read
                                                 </span>
                                             </div>
                                         </div>
@@ -503,7 +503,7 @@ export default function CreatorProfilePage() {
                                         </div>
                                     ) : (
                                         <div className="card-plug p-4 mb-6 bg-background text-center border-dashed">
-                                            <p className="text-xs text-muted-foreground">Subscribe to leave a review.</p>
+                                            <p className="text-xs text-muted-foreground">Support creator to leave a review.</p>
                                         </div>
                                     )
                                 )}

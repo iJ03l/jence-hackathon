@@ -21,6 +21,7 @@ import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import AboutPage from './pages/AboutPage'
 import OnboardingPage from './pages/OnboardingPage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 import './App.css'
 
 /** Redirect first-time visitors to /welcome */
@@ -61,6 +62,9 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/welcome" element={<OnboardingPage />} />
+        
+        {/* Hidden Admin Dashboard */}
+        <Route path="/0x000" element={<AdminDashboardPage />} />
       </Routes>
     </ThemeProvider>
   )

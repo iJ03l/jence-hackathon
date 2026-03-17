@@ -202,7 +202,7 @@ export default function DashboardPage() {
                             </div>
                             <h3 className="font-semibold text-foreground mb-2">Your feed is empty</h3>
                             <p className="text-sm text-muted-foreground mb-4">
-                                Subscribe to authors to start seeing their latest articles here.
+                                Support authors to start seeing their latest articles here.
                             </p>
                             <Link to="/explore" className="btn-primary inline-flex active:scale-[0.97] transition-all">
                                 <Users size={16} />

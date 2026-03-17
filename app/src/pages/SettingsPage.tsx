@@ -7,7 +7,7 @@ const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Data', icon: Shield },
-    { id: 'subscription', label: 'Subscription', icon: CreditCard },
+    { id: 'subscription', label: 'Tipping', icon: CreditCard },
 ]
 
 export default function SettingsPage() {
@@ -425,9 +425,9 @@ export default function SettingsPage() {
 
                         {activeTab === 'payouts' && (
                             <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Subscription & Earnings</h2>
+                                <h2 className="font-semibold text-foreground mb-4">Tipping & Earnings</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Configure how much subscribers pay each month to access your premium work. Payments are processed via Jence's payout provider and sent to your payout wallet.
+                                    Configure how much your supporters tip each month to access your premium work. Payments are processed via Jence's payout provider and sent to your payout wallet.
                                 </p>
 
                                 <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
@@ -439,7 +439,7 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Subscription Price (USD)</label>
+                                        <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Tipping Amount (USD)</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                             <input
@@ -453,7 +453,7 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            Set to 0 for free subscriptions.
+                                            Set to 0 for free access.
                                         </p>
                                     </div>
                                     <div>
@@ -516,7 +516,7 @@ export default function SettingsPage() {
                                 <h2 className="font-semibold text-foreground mb-4">Notification Preferences</h2>
                                 <div className="space-y-4">
                                     {[
-                                        { label: 'New posts from subscribed creators', desc: 'Get notified when creators publish new content' },
+                                        { label: 'New posts from supported creators', desc: 'Get notified when creators publish new content' },
                                         { label: 'Creator announcements', desc: 'Updates from creators you follow' },
                                         { label: 'Platform updates', desc: 'New features, policy changes, and announcements' },
                                     ].map((item, i) => (
@@ -562,9 +562,9 @@ export default function SettingsPage() {
 
                         {activeTab === 'subscription' && (
                             <div className="card-plug p-6">
-                                <h2 className="font-semibold text-foreground mb-4">Subscription Management</h2>
+                                <h2 className="font-semibold text-foreground mb-4">Tipping Management</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Manage your creator subscriptions. Payments are processed using your saved payment wallet.
+                                    Manage your creator tipping. Payments are processed using your saved payment wallet.
                                 </p>
 
                                 <div className="mb-6 p-4 rounded-xl border border-border bg-muted/20">
@@ -606,15 +606,15 @@ export default function SettingsPage() {
                                         {walletError && <p className="text-xs text-red-400 mt-1">{walletError}</p>}
                                     </div>
                                     <p className="text-xs text-muted-foreground mb-3">
-                                        Fund this wallet to pay for subscriptions. You can export it to a compatible wallet and check your balance there.
+                                        Fund this wallet to pay for tipping. You can export it to a compatible wallet and check your balance there.
                                     </p>
 
                                 </div>
 
                                 <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
-                                    <p className="text-muted-foreground text-sm">No active subscriptions</p>
+                                    <p className="text-muted-foreground text-sm">No active tips</p>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        Subscribe to creators to see them here
+                                        Support creators to see them here
                                     </p>
                                 </div>
                             </div>

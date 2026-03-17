@@ -5,6 +5,7 @@ import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
+import { Resend } from 'resend'
 
 type Variables = {
     user: any
@@ -137,6 +138,35 @@ launchRoutes.put('/:id/review', requireAuth, zValidator('json', reviewSchema), a
         })
         .where(eq(launchNote.id, id))
         .returning()
+
+    // Send email to user
+    try {
+        const targetUser = await db.query.user.findFirst({
+            where: eq(user.id, existing.userId)
+        })
+
+        if (targetUser && targetUser.email) {
+            const resend = new Resend(process.env.RESEND_API_KEY)
+            
+            const subject = status === 'approved' 
+                ? `Launch Note Approved: ${existing.name}` 
+                : `Launch Note Update: ${existing.name}`
+
+            const bodyText = status === 'approved'
+                ? `Great news! Your launch note for "${existing.name}" has been approved and is now live on Jence.\n\n${reviewNote ? `Admin Note: ${reviewNote}` : ''}`
+                : `Your launch note for "${existing.name}" was not approved at this time.\n\nReason/Note: ${reviewNote || 'No specific reason provided.'}\n\nPlease review our guidelines and try again later if appropriate.`
+
+            await resend.emails.send({
+                from: process.env.FROM_EMAIL || 'Jence <admin@jence.xyz>',
+                to: targetUser.email,
+                subject,
+                text: bodyText,
+            })
+            console.log(`Sent launch review email to ${targetUser.email}`)
+        }
+    } catch (e) {
+        console.error('Failed to send launch review email', e)
+    }
 
     return c.json({ success: true, launch: { ...updated, tags: JSON.parse(updated.tags) } })
 })
