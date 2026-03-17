@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Users, Activity, Loader2, Search, ShieldAlert, ShieldCheck, DollarSign, FileText, LogOut, Rocket, CheckCircle, XCircle } from 'lucide-react'
+import { AreaChart, Area, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
 import SEO from '../components/SEO'
 import { Link } from 'react-router-dom'
 
@@ -20,6 +21,12 @@ export default function AdminDashboardPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [loadingData, setLoadingData] = useState(false)
     const [errorData, setErrorData] = useState('')
+    const [usersVisible, setUsersVisible] = useState(10)
+    
+    // Chart state
+    const [chartInterval, setChartInterval] = useState('7d')
+    const [historyData, setHistoryData] = useState<any[]>([])
+    const [loadingHistory, setLoadingHistory] = useState(false)
     
     // Review launch state
     const [reviewingLaunch, setReviewingLaunch] = useState<any>(null)
@@ -82,6 +89,23 @@ export default function AdminDashboardPage() {
         return () => clearTimeout(timeoutId)
 
     }, [user, searchQuery])
+
+    // Fetch history when interval changes
+    useEffect(() => {
+        if (!user || user.role !== 'admin') return
+        const fetchHistory = async () => {
+            setLoadingHistory(true)
+            try {
+                const res = await api.getAdminMetricsHistory(chartInterval)
+                setHistoryData(res.history || [])
+            } catch (err) {
+                console.error("Failed to load history metrics")
+            } finally {
+                setLoadingHistory(false)
+            }
+        }
+        fetchHistory()
+    }, [user, chartInterval])
 
     // Toggle ban
     const handleToggleBan = async (userId: string, currentStatus: boolean) => {
@@ -258,6 +282,82 @@ export default function AdminDashboardPage() {
                     </div>
                 )}
 
+                {/* Charts Area */}
+                {historyData.length > 0 && (
+                    <div className="card-plug border-zinc-800 bg-black p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <h2 className="text-sm font-mono font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                <Activity size={16} />
+                                Platform Growth
+                            </h2>
+                            <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+                                {['24h', '7d', 'all'].map(interval => (
+                                    <button
+                                        key={interval}
+                                        onClick={() => setChartInterval(interval)}
+                                        className={`px-4 py-1.5 text-xs font-mono font-bold uppercase transition-colors ${
+                                            chartInterval === interval 
+                                                ? 'bg-zinc-800 text-white' 
+                                                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                        }`}
+                                    >
+                                        {interval === 'all' ? 'All Time' : interval}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {loadingHistory ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <Loader2 size={24} className="animate-spin text-zinc-600" />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-64">
+                                <div className="h-full">
+                                    <p className="text-xs font-mono text-zinc-500 mb-2">Total Users</p>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={historyData}>
+                                            <defs>
+                                                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                                            <RechartsTooltip 
+                                                contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px' }}
+                                                itemStyle={{ color: '#fff', fontSize: '12px', fontFamily: 'monospace' }}
+                                                labelStyle={{ color: '#a1a1aa', fontSize: '10px', fontFamily: 'monospace', marginBottom: '4px' }}
+                                            />
+                                            <Area type="monotone" dataKey="users" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="h-full">
+                                    <p className="text-xs font-mono text-zinc-500 mb-2">Tipped Volume (USDC)</p>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={historyData}>
+                                            <defs>
+                                                <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#eab308" stopOpacity={0.3}/>
+                                                    <stop offset="95%" stopColor="#eab308" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                                            <RechartsTooltip 
+                                                contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px' }}
+                                                itemStyle={{ color: '#eab308', fontSize: '12px', fontFamily: 'monospace' }}
+                                                labelStyle={{ color: '#a1a1aa', fontSize: '10px', fontFamily: 'monospace', marginBottom: '4px' }}
+                                            />
+                                            <Area type="monotone" dataKey="volume" stroke="#eab308" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* Top Articles List */}
@@ -329,7 +429,7 @@ export default function AdminDashboardPage() {
                                     ) : users.length === 0 ? (
                                         <tr><td colSpan={5} className="p-8 text-center text-zinc-500">No matching users found.</td></tr>
                                     ) : (
-                                        users.map((u: any) => (
+                                        users.slice(0, usersVisible).map((u: any) => (
                                             <tr key={u.id} className="hover:bg-zinc-900/30 transition-colors group">
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-3">
@@ -384,6 +484,17 @@ export default function AdminDashboardPage() {
                                     )}
                                 </tbody>
                             </table>
+                            
+                            {users.length > usersVisible && (
+                                <div className="p-4 border-t border-zinc-800 text-center">
+                                    <button 
+                                        onClick={() => setUsersVisible(prev => prev + 10)}
+                                        className="text-xs font-mono font-bold text-zinc-400 hover:text-white transition-colors bg-zinc-900/50 hover:bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-800"
+                                    >
+                                        LOAD MORE ({Math.min(10, users.length - usersVisible)} REMAINING)
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

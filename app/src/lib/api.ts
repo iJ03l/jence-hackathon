@@ -24,6 +24,7 @@ export const api = {
 
     // Admin
     getAdminMetrics: () => request<any>('/admin/metrics'),
+    getAdminMetricsHistory: (interval: string) => request<any>(`/admin/metrics/history?interval=${interval}`),
     getAdminUsers: (query: string = '') => request<any>(`/admin/users?q=${query}`),
 
     // Users
