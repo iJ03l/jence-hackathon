@@ -1,6 +1,6 @@
 import SEO from '../components/SEO'
 import Navigation from '../sections/Navigation'
-import { Shield, FileCheck, Users, ChevronDown, Check, X, ArrowRight, FlaskConical } from 'lucide-react'
+import { Shield, FileCheck, Users, ChevronDown, Check, X, ArrowRight, HandCoins } from 'lucide-react'
 import { useState } from 'react'
 
 const VERTICALS = [
@@ -67,8 +67,8 @@ const VERTICALS = [
     {
         name: 'Launch Notes',
         emoji: '🚀',
-        description: 'Curated product launches reviewed by editorial before publication.',
-        tags: ['Launches', 'Review', 'Disclosure', 'Safety'],
+        description: 'Open product launch updates with clear disclosure, ship notes, and community support.',
+        tags: ['Launches', 'Support', 'Disclosure', 'Shipping'],
     },
     {
         name: 'Community Q&A',
@@ -104,16 +104,20 @@ const FAQS = [
         a: 'No. Weaponization content and export-controlled material are out of scope and will be removed.',
     },
     {
-        q: 'How do subscriptions work?',
-        a: 'Subscribe to individual authors or issues. Labs and benchmarks are published with reproducible methodology, and Launch Notes are curated by editorial.',
+        q: 'How do tips work?',
+        a: 'Jence uses one-time tips, not subscriptions. Readers can directly support useful articles, research disclosures, and Launch Notes.',
     },
     {
-        q: 'Can I submit a Launch Notes item?',
-        a: 'Yes. Launch Notes are reviewed for disclosure, safety, and quality before publication. Submissions are not auto-published.',
+        q: 'Can researchers publish and get rewarded?',
+        a: 'Yes. Researchers can publish findings, teardowns, benchmarks, and disclosed technical work, then receive one-time tips from the community.',
     },
     {
-        q: 'Can I become an author?',
-        a: 'Yes. Apply to publish under your real name, submit verification links, and follow disclosure and safety policies.',
+        q: 'Can product launchers get community support?',
+        a: 'Yes. Launch Notes are open to submit, and product launchers can receive community tips when their work is useful to readers.',
+    },
+    {
+        q: 'Do I need to apply before I submit?',
+        a: 'No. Jence is open to contributors. If you have research, field notes, or a launch update to share, submit it directly and include clear disclosure and safety context.',
     },
 ]
 
@@ -155,18 +159,19 @@ const faqSchema = {
 
 const STATS = [
     { value: '10', label: 'Engineering sections' },
-    { value: '4', label: 'Issue drops per year' },
+    { value: 'Open', label: 'Submission access' },
+    { value: 'Tips', label: 'Support model' },
     { value: '100%', label: 'Credited bylines' },
-    { value: '0', label: 'Weaponization content' },
+    { value: '0', label: 'Application gate' },
 ]
 
 const COMPARISONS = [
     { feature: 'Credited authorship', jence: true, pr: false, blogs: false },
-    { feature: 'Conflict-of-interest disclosure', jence: true, pr: false, blogs: false },
+    { feature: 'Clear disclosure and article credit', jence: true, pr: false, blogs: false },
     { feature: 'Reproducible labs and datasets', jence: true, pr: false, blogs: false },
     { feature: 'Responsible disclosure for security work', jence: true, pr: false, blogs: false },
-    { feature: 'Editorial review for launches', jence: true, pr: false, blogs: false },
-    { feature: 'Safety limits and mitigations', jence: true, pr: false, blogs: false },
+    { feature: 'Open submissions from researchers and builders', jence: true, pr: false, blogs: false },
+    { feature: 'One-time community support via tips', jence: true, pr: false, blogs: false },
 ]
 
 export default function AboutPage() {
@@ -174,7 +179,7 @@ export default function AboutPage() {
         <div className="min-h-screen flex flex-col bg-background selection:bg-jence-gold/30 selection:text-foreground">
             <SEO
                 title="Jence — Robotics and Hardware Engineering Publication"
-                description="Jence is a global robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure."
+                description="Jence is an open robotics and hardware publishing platform where researchers, builders, and launchers share disclosed work and earn community tips."
                 url="/about"
             >
                 <script type="application/ld+json">
@@ -197,7 +202,7 @@ export default function AboutPage() {
                             Engineering work with credit, disclosure, and rigor.
                         </h1>
                         <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-8">
-                            Jence is a robotics and hardware engineering publication. Read deep technical articles, teardowns, security research, and field notes from builders across the stack.
+                            Jence is an open robotics and hardware publishing platform. Read deep technical articles, disclosed research, product launch notes, and field reports from builders across the stack, then support useful work with one-time tips.
                         </p>
                         <a
                             href="/explore"
@@ -208,7 +213,7 @@ export default function AboutPage() {
                     </div>
 
                     {/* ── STATS ── */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
                         {STATS.map((s) => (
                             <div key={s.label} className="p-6 rounded-2xl bg-card border border-border/50 text-center">
                                 <div className="text-3xl font-black text-jence-gold mb-1">{s.value}</div>
@@ -221,7 +226,7 @@ export default function AboutPage() {
                     <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
                         <div className="mb-8">
                             <h2 className="text-3xl font-bold tracking-tight mb-3">A global publication for builders</h2>
-                            <p className="text-muted-foreground text-lg">Ten engineering sections, a curated launch desk, and an open community forum for Q&amp;A.</p>
+                            <p className="text-muted-foreground text-lg">Ten engineering sections, open Launch Notes, and a community forum where research and product work can earn support.</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {VERTICALS.map((v) => (
@@ -246,12 +251,12 @@ export default function AboutPage() {
                     {/* ── HOW IT WORKS ── */}
                     <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-both">
                         <h2 className="text-3xl font-bold tracking-tight mb-3">How it works</h2>
-                        <p className="text-muted-foreground text-lg mb-8">Real names, verified credentials, and disclosure-first publishing.</p>
+                        <p className="text-muted-foreground text-lg mb-8">Open submissions, clear disclosure, and tip-based support.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
                                 { icon: <Users size={28} />, step: '01', title: 'Read credited authors', body: 'Every profile lists a real-name byline, verification links, and optional affiliation.' },
-                                { icon: <FileCheck size={28} />, step: '02', title: 'Track disclosures', body: 'Every article includes a conflict-of-interest box and safety notes where needed.' },
-                                { icon: <FlaskConical size={28} />, step: '03', title: 'Use labs and benchmarks', body: 'Labs include reproducible datasets, methodology, and measurement context.' },
+                                { icon: <FileCheck size={28} />, step: '02', title: 'Track disclosure and credit', body: 'Every article and launch can include article credit, sponsor context, and safety notes where needed.' },
+                                { icon: <HandCoins size={28} />, step: '03', title: 'Support useful work', body: 'Readers can reward strong research, disclosed findings, and launch updates with one-time tips.' },
                             ].map((item) => (
                                 <div key={item.step} className="p-6 rounded-2xl bg-card border border-border/50 relative overflow-hidden">
                                     <div className="absolute top-4 right-4 text-5xl font-black text-muted/20 select-none">{item.step}</div>
@@ -292,8 +297,8 @@ export default function AboutPage() {
 
                     {/* ── JENCE VS ALTERNATIVES ── */}
                     <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both">
-                        <h2 className="text-3xl font-bold tracking-tight mb-3">Jence vs. typical launch posts</h2>
-                        <p className="text-muted-foreground text-lg mb-8">Product marketing rarely includes disclosures, safety notes, or reproducible tests. Jence does.</p>
+                        <h2 className="text-3xl font-bold tracking-tight mb-3">Jence vs. typical tech posts</h2>
+                        <p className="text-muted-foreground text-lg mb-8">Most technical publishing stops at posting. Jence adds credit, disclosure, and direct community support.</p>
                         <div className="overflow-x-auto rounded-2xl border border-border/50">
                             <table className="w-full text-sm">
                                 <thead>
@@ -329,19 +334,19 @@ export default function AboutPage() {
                         <div className="flex flex-col md:flex-row items-start gap-8">
                             <div className="flex-1">
                                 <div className="inline-flex items-center gap-2 bg-jence-gold/10 border border-jence-gold/20 rounded-full px-3 py-1 text-xs font-medium text-jence-gold mb-4">
-                                    <Users size={12} /> For engineers and labs
+                                    <Users size={12} /> For researchers, builders, and launchers
                                 </div>
-                                <h2 className="text-3xl font-bold tracking-tight mb-4">Publish with credit. Build reputation.</h2>
+                                <h2 className="text-3xl font-bold tracking-tight mb-4">Publish openly. Get supported.</h2>
                                 <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-                                    If you run experiments, design hardware, or ship robotics software, Jence gives you a credible place to publish and earn from your work.
+                                    If you run experiments, disclose research, design hardware, ship robotics software, or launch products, Jence gives you an open place to publish with credit and earn one-time tips from the community.
                                 </p>
                                 <ul className="space-y-3 mb-6">
                                     {[
-                                        'Real-name bylines with verification links',
-                                        'Conflict-of-interest disclosures on every article',
-                                        'Safety and responsible disclosure policies',
-                                        'Set your own subscription price',
-                                        'Earn recurring revenue from your technical work',
+                                        'Open submission flow with no application gate',
+                                        'Article credit and disclosure on every post',
+                                        'One-time tips on articles and Launch Notes',
+                                        'Community support for product launchers',
+                                        'Clear safety and responsible disclosure expectations',
                                     ].map((item) => (
                                         <li key={item} className="flex items-center gap-3 text-foreground">
                                             <Check size={16} className="text-jence-gold flex-shrink-0" />
@@ -353,15 +358,15 @@ export default function AboutPage() {
                                     href="/register?role=creator"
                                     className="inline-flex items-center gap-2 bg-jence-gold text-background font-bold px-6 py-3 rounded-xl hover:bg-jence-gold/90 transition-colors"
                                 >
-                                    Apply to Publish <ArrowRight size={16} />
+                                    Start Publishing <ArrowRight size={16} />
                                 </a>
                             </div>
                             <div className="flex-shrink-0 p-6 rounded-2xl bg-card border border-border/50 w-full md:w-60">
-                                <div className="text-sm text-muted-foreground mb-4 font-medium">Example earnings</div>
+                                <div className="text-sm text-muted-foreground mb-4 font-medium">Support examples</div>
                                 {[
-                                    { subs: '50 subscribers', price: '$5/mo', earn: '$250/mo' },
-                                    { subs: '200 subscribers', price: '$10/mo', earn: '$2,000/mo' },
-                                    { subs: '500 subscribers', price: '$15/mo', earn: '$7,500/mo' },
+                                    { subs: 'Research note', price: 'Tips enabled', earn: 'Reward useful disclosure' },
+                                    { subs: 'Launch Note', price: 'Community support', earn: 'Get backed by readers' },
+                                    { subs: 'Field teardown', price: 'Credited publishing', earn: 'Turn work into trust' },
                                 ].map((row) => (
                                     <div key={row.subs} className="mb-4 last:mb-0">
                                         <div className="text-xs text-muted-foreground">{row.subs} @ {row.price}</div>
@@ -379,12 +384,12 @@ export default function AboutPage() {
                         <p className="text-muted-foreground text-lg mb-8">Publishing policies that protect readers, vendors, and the wider robotics ecosystem.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {[
-                                { icon: '📋', title: 'Disclosure-first', body: 'Every article includes a conflict-of-interest box with sponsor and vendor ties.' },
+                                { icon: '📋', title: 'Disclosure-first', body: 'Every article includes article credit plus sponsor, vendor, or research context where relevant.' },
                                 { icon: '🧯', title: 'Safety policy', body: 'No harmful step-by-step instructions. Mitigations and limits are required.' },
                                 { icon: '🔐', title: 'Responsible disclosure', body: 'Security research follows clear vendor contact and timeline requirements.' },
                                 { icon: '🚫', title: 'No weaponization', body: 'Weaponization content and export-controlled material are out of scope.' },
                                 { icon: '📝', title: 'Corrections policy', body: 'Corrections are transparent and timestamped for long-term credibility.' },
-                                { icon: '✅', title: 'Launch review', body: 'Launch Notes are editorially reviewed before publication.' },
+                                { icon: '✅', title: 'Open launch support', body: 'Product launches can be shared with clear disclosure and receive community tips.' },
                             ].map((item) => (
                                 <div key={item.title} className="p-6 rounded-2xl bg-card border border-border/50">
                                     <div className="text-2xl mb-3">{item.icon}</div>
@@ -398,7 +403,7 @@ export default function AboutPage() {
                     {/* ── FAQ ── */}
                     <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both">
                         <h2 className="text-3xl font-bold tracking-tight mb-3">Frequently Asked Questions</h2>
-                        <p className="text-muted-foreground text-lg mb-8">Everything you need to know before you subscribe or publish.</p>
+                        <p className="text-muted-foreground text-lg mb-8">Everything you need to know before you publish, tip, or support a launch.</p>
                         <div className="space-y-3">
                             {FAQS.map((faq) => (
                                 <FAQItem key={faq.q} q={faq.q} a={faq.a} />
@@ -412,7 +417,7 @@ export default function AboutPage() {
                             Hardware and robotics, every layer.
                         </h2>
                         <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                            Subscribe to credited authors and publish work you can stand behind.
+                            Publish research, launch updates, and field work openly, then support what matters with tips.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
@@ -425,7 +430,7 @@ export default function AboutPage() {
                                 href="/register?role=creator"
                                 className="inline-flex items-center justify-center gap-2 border border-border/50 text-foreground font-bold px-8 py-4 rounded-2xl text-lg hover:bg-muted/50 transition-colors"
                             >
-                                Apply to publish
+                                Start publishing
                             </a>
                         </div>
                     </div>
