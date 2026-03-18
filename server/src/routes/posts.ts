@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { post, creatorProfile, subscription, postVote, postComment, user, vertical, strike, notification, postDailyView, tip } from '../db/schema.js'
-import { eq, inArray, desc, sql, and, count, sum } from 'drizzle-orm'
+import { eq, inArray, desc, sql, and, count, sum, isNotNull } from 'drizzle-orm'
 import { notifySubscribersOfNewPost } from '../services/notify.js'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
@@ -84,7 +84,8 @@ postsRoutes.get('/', optionalAuth, async (c) => {
             .leftJoin(postScores, eq(post.id, postScores.postId))
             .where(and(
                 inArray(post.creatorId, creatorIds),
-                eq(post.isPublished, true)
+                eq(post.isPublished, true),
+                isNotNull(post.verticalId)
             ))
             .orderBy(desc(postTodayViewsOrder), desc(postScoreOrder), desc(post.createdAt))
             .limit(50)
@@ -112,7 +113,10 @@ postsRoutes.get('/', optionalAuth, async (c) => {
         .leftJoin(vertical, eq(post.verticalId, vertical.id))
         .leftJoin(postTodayViews, eq(post.id, postTodayViews.postId))
         .leftJoin(postScores, eq(post.id, postScores.postId))
-        .where(eq(post.isPublished, true))
+        .where(and(
+            eq(post.isPublished, true),
+            isNotNull(post.verticalId)
+        ))
         .orderBy(desc(postTodayViewsOrder), desc(postScoreOrder), desc(post.createdAt))
         .limit(50)
 
