@@ -99,7 +99,7 @@ export const post = pgTable('post', {
     disclosure: text('disclosure'),
     imageUrl: text('image_url'),
     creatorId: uuid('creator_id').notNull().references(() => creatorProfile.id),
-    verticalId: uuid('vertical_id').notNull().references(() => vertical.id),
+    verticalId: uuid('vertical_id').references(() => vertical.id),
     isPublished: boolean('is_published').notNull().default(true),
     isFree: boolean('is_free').notNull().default(false),
     allowTips: boolean('allow_tips').notNull().default(false),

@@ -126,7 +126,7 @@ const createPostSchema = z.object({
     disclosure: z.string().optional(),
     imageUrl: z.string().url().optional(),
     creatorId: z.string().uuid(),
-    verticalId: z.string().uuid(),
+    verticalId: z.string().uuid().optional(),
     isFree: z.boolean().optional(),
     allowTips: z.boolean().optional(),
 })
@@ -153,7 +153,7 @@ postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (
         disclosure: disclosure?.trim() || null,
         imageUrl: imageUrl || null,
         creatorId,
-        verticalId,
+        verticalId: verticalId || null,
         isFree: isFree ?? false,
         allowTips: allowTips ?? false,
     }).returning()
