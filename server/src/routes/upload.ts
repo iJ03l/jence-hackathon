@@ -26,9 +26,23 @@ uploadRoutes.post('/', requireAuth, async (c) => {
 
         const { buffer, filename } = await normalizeUploadImage(file)
 
-        const asset = await sanityClient.assets.upload('image', buffer, {
-            filename,
-        })
+        let asset;
+        try {
+            asset = await sanityClient.assets.upload('image', buffer, {
+                filename,
+            })
+        } catch (sanityError: any) {
+            const msg = sanityError.message || ''
+            // Under limited token roles (e.g. "create" but no "update"), Sanity throws an 
+            // update permission error if the image already exists (deduplication) because 
+            // it attempts to PATCH the existing asset with the new filename.
+            if (msg.includes('permission "update" required')) {
+                console.log('Sanity deduplication patch failed (token lacks update rights). Retrying without filename...')
+                asset = await sanityClient.assets.upload('image', buffer)
+            } else {
+                throw sanityError
+            }
+        }
 
         return c.json({ url: asset.url })
     } catch (error) {
