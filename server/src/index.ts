@@ -30,6 +30,7 @@ import launchRoutes from './routes/launches.js'
 import adminRoutes from './routes/admin.js'
 import shareRoutes from './routes/share.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
+import { runDatabaseMigrations } from './db/migrate.js'
 
 const app = new Hono()
 
@@ -84,15 +85,22 @@ app.route('/share', shareRoutes)
 const shouldStartServer = process.env.NODE_ENV !== 'test' && !process.env.VITEST
 
 if (shouldStartServer) {
-    const port = parseInt(process.env.PORT || '8080', 10)
+    void (async () => {
+        await runDatabaseMigrations()
 
-    serve({
-        fetch: app.fetch,
-        port,
-        hostname: '0.0.0.0', // Listen on all network interfaces
-    }, (info) => {
-        console.log(`🚀 Jence server running on http://localhost:${info.port}`)
-        startSubscriptionCron()
+        const port = parseInt(process.env.PORT || '8080', 10)
+
+        serve({
+            fetch: app.fetch,
+            port,
+            hostname: '0.0.0.0', // Listen on all network interfaces
+        }, (info) => {
+            console.log(`🚀 Jence server running on http://localhost:${info.port}`)
+            startSubscriptionCron()
+        })
+    })().catch((error) => {
+        console.error('Failed to start server:', error)
+        process.exit(1)
     })
 }
 
