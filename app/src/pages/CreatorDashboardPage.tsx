@@ -495,7 +495,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             }
         } catch (err: any) {
             console.error('Image upload failed:', err)
-            alert('Failed to upload image. Please try again.')
+            alert(err?.message || 'Failed to upload image. Please try again.')
         } finally {
             setUploadingImage(false)
         }
@@ -586,7 +586,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                             <input
                                 type="file"
                                 id="cover-upload"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
                                 onChange={handleImageUpload}
                                 disabled={uploadingImage}
                                 className="sr-only"
@@ -605,7 +605,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                                         <>
                                             <Upload size={32} className="text-muted-foreground mb-3 group-hover:text-jence-gold transition-colors" />
                                             <p className="mb-1 text-sm text-foreground font-medium">Click to upload cover image</p>
-                                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB</p>
+                                            <p className="text-xs text-muted-foreground">JPG, PNG, GIF, or WebP up to 5MB</p>
                                         </>
                                     )}
                                 </div>

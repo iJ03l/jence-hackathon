@@ -115,7 +115,7 @@ export default function SettingsPage() {
             }
         } catch (error) {
             console.error('Failed to upload image:', error)
-            alert('Failed to upload image. Please try again.')
+            alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.')
         } finally {
             setUploadingImage(false)
         }
@@ -280,13 +280,13 @@ export default function SettingsPage() {
                                             <label className="block text-sm font-medium text-foreground mb-1.5">Profile Picture</label>
                                             <input
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png,image/gif,image/webp"
                                                 onChange={handleImageUpload}
                                                 disabled={uploadingImage}
                                                 className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-jence-gold/10 file:text-jence-gold hover:file:bg-jence-gold/20 cursor-pointer disabled:opacity-50"
                                             />
                                             {uploadingImage && <p className="text-xs text-jence-gold mt-1">Uploading...</p>}
-                                            {!uploadingImage && <p className="text-xs text-muted-foreground mt-1">Upload a JPG, PNG, or WebP.</p>}
+                                            {!uploadingImage && <p className="text-xs text-muted-foreground mt-1">Upload a JPG, PNG, GIF, or WebP.</p>}
                                         </div>
                                     </div>
 

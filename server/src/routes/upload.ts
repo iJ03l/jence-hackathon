@@ -23,9 +23,17 @@ uploadRoutes.post('/', requireAuth, async (c) => {
             return c.json({ error: 'File size exceeds 5MB limit' }, 400)
         }
 
-        // Validate basic image types if necessary
-        if (!file.type.startsWith('image/')) {
-            return c.json({ error: 'Invalid file type. Only images are allowed' }, 400)
+        const allowedTypes = new Set([
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ])
+
+        if (!allowedTypes.has(file.type)) {
+            return c.json({
+                error: 'Unsupported image format. Use JPG, PNG, GIF, or WebP.',
+            }, 400)
         }
 
         const buffer = await file.arrayBuffer()
@@ -37,6 +45,20 @@ uploadRoutes.post('/', requireAuth, async (c) => {
         return c.json({ url: asset.url })
     } catch (error) {
         console.error('Error uploading to Sanity:', error)
+
+        const message = error instanceof Error ? error.message : ''
+        if (message.includes('permission "update" required')) {
+            return c.json({
+                error: 'Sanity upload is not configured with write access. Check SANITY_WRITE_TOKEN.',
+            }, 500)
+        }
+
+        if (message.includes('Invalid image, could not read metadata')) {
+            return c.json({
+                error: 'Unsupported or corrupt image. Use JPG, PNG, GIF, or WebP.',
+            }, 400)
+        }
+
         return c.json({ error: 'File upload failed' }, 500)
     }
 })

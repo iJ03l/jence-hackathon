@@ -131,9 +131,12 @@ export const api = {
             method: 'POST',
             body: formData,
             credentials: 'include',
-        }).then(res => {
-            if (!res.ok) throw new Error('Failed to upload image')
-            return res.json()
+        }).then(async res => {
+            const data = await res.json().catch(() => null)
+            if (!res.ok) {
+                throw new Error(data?.error || data?.message || 'Failed to upload image')
+            }
+            return data
         })
     },
 
