@@ -154,9 +154,7 @@ export default function PostDetail() {
         <div className="card-plug p-4 sm:p-6 mb-8">
           <div className="flex gap-3 sm:gap-4">
             <Link
-              to={`/${post.author?.username}`}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
-            >
+              to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
               {post.author?.image ? (
                 <img
                   src={post.author.image}
@@ -171,9 +169,7 @@ export default function PostDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Link
-                  to={`/${post.author?.username}`}
-                  className="font-semibold text-foreground hover:underline"
-                >
+                  to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="font-semibold text-foreground hover:underline">
                   {post.author?.displayName}
                 </Link>
                 {post.author?.isCreator && (
@@ -320,9 +316,7 @@ export default function PostDetail() {
             >
               <div className="flex gap-3">
                 <Link
-                  to={`/${comment.user?.username}`}
-                  className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
-                >
+                  to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-xs font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
                   {comment.user?.image ? (
                     <img
                       src={comment.user.image}
@@ -337,9 +331,7 @@ export default function PostDetail() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Link
-                      to={`/${comment.user?.username}`}
-                      className="font-semibold text-sm text-foreground hover:underline"
-                    >
+                      to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="font-semibold text-sm text-foreground hover:underline">
                       {comment.user?.displayName}
                     </Link>
                     {comment.user?.isCreator && (

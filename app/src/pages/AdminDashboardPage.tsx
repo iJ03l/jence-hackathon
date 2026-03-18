@@ -531,7 +531,7 @@ export default function AdminDashboardPage() {
                                                 </div>
                                             </td>
                                             <td className="p-4 text-zinc-400 text-xs">
-                                                {l.authorName} <br/> <span className="opacity-50">@{l.authorUsername}</span>
+                                                {l.authorName} <br/> <span className="opacity-50">@{l.authorPseudonym || l.authorUsername}</span>
                                             </td>
                                             <td className="p-4">
                                                 <span className={`inline-flex px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${

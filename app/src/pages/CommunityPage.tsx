@@ -357,7 +357,7 @@ export default function CommunityPage() {
                                 <div key={post.id} className="card-plug p-4 sm:p-5 hover:border-jence-gold/20 transition-colors">
                                     <div className="flex gap-3 sm:gap-4">
                                         {post.author?.isCreator ? (
-                                            <Link to={`/${post.author?.username}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
+                                            <Link to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
                                                 {post.author?.image ? (
                                                     <img src={post.author.image} className="w-full h-full object-cover" />
                                                 ) : (
@@ -381,7 +381,7 @@ export default function CommunityPage() {
                                             <div className="flex items-start sm:items-center justify-between mb-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     {post.author?.isCreator ? (
-                                                        <Link to={`/${post.author?.username}`} className="font-semibold text-foreground hover:underline">
+                                                        <Link to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="font-semibold text-foreground hover:underline">
                                                             {post.author?.displayName}
                                                         </Link>
                                                     ) : (

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { creatorProfile, post, subscription, vertical, user, creatorRating } from '../db/schema.js'
-import { eq, sql, and, desc, avg, count } from 'drizzle-orm'
+import { eq, sql, and, desc, avg, count, or } from 'drizzle-orm'
 
 const creatorsRoutes = new Hono()
 
@@ -143,7 +143,12 @@ creatorsRoutes.get('/u/:username', async (c) => {
         .from(creatorProfile)
         .leftJoin(vertical, eq(creatorProfile.verticalId, vertical.id))
         .innerJoin(user, eq(creatorProfile.userId, user.id))
-        .where(eq(user.username, username))
+        .where(
+            or(
+                eq(user.username, username),
+                eq(creatorProfile.pseudonym, username)
+            )
+        )
 
     if (!creator) {
         return c.json({ error: 'Creator not found' }, 404)

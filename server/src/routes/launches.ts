@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { launchNote, user } from '../db/schema.js'
+import { launchNote, user, creatorProfile } from '../db/schema.js'
 import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
@@ -36,9 +36,11 @@ launchRoutes.get('/', optionalAuth, async (c) => {
                 userId: launchNote.userId,
                 authorName: user.name,
                 authorUsername: user.username,
+                authorPseudonym: creatorProfile.pseudonym,
             })
             .from(launchNote)
             .leftJoin(user, eq(launchNote.userId, user.id))
+            .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
             .where(filter)
             .orderBy(desc(launchNote.createdAt))
             .limit(50)
@@ -58,9 +60,11 @@ launchRoutes.get('/', optionalAuth, async (c) => {
             createdAt: launchNote.createdAt,
             authorName: user.name,
             authorUsername: user.username,
+            authorPseudonym: creatorProfile.pseudonym,
         })
         .from(launchNote)
         .leftJoin(user, eq(launchNote.userId, user.id))
+        .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
         .where(eq(launchNote.status, 'approved'))
         .orderBy(desc(launchNote.createdAt))
         .limit(50)

@@ -342,14 +342,14 @@ export default function LaunchNotesPage() {
                                             </span>
                                             <span className="text-xs text-muted-foreground">·</span>
                                             <span className="text-xs text-muted-foreground">{launch.company}</span>
-                                            {launch.authorUsername && (
+                                            {(launch.authorUsername || launch.authorPseudonym) && (
                                                 <>
                                                     <span className="text-xs text-muted-foreground">·</span>
                                                     <Link
-                                                        to={`/${launch.authorUsername}`}
+                                                        to={`/${launch.authorPseudonym || launch.authorUsername}`}
                                                         className="text-xs text-jence-gold hover:underline"
                                                     >
-                                                        @{launch.authorUsername}
+                                                        @{launch.authorPseudonym || launch.authorUsername}
                                                     </Link>
                                                 </>
                                             )}

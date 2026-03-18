@@ -117,7 +117,7 @@ export default function VerticalPage() {
                             <article key={post.id} className="card-plug p-5">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Link
-                                        to={`/${post.creatorUsername || '#'}`}
+                                        to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`}
                                         className="flex items-center gap-2 group"
                                     >
                                         <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 group-hover:opacity-80 transition-opacity">

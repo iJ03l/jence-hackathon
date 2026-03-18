@@ -285,7 +285,7 @@ export default function LandingPage() {
                             {creators.map((creator: any) => (
                                 <Link
                                     key={creator.id}
-                                    to={`/${creator.username || creator.pseudonym}`}
+                                    to={`/${creator.pseudonym || creator.username || '#'}`}
                                     className="card-plug p-4 text-center group hover:border-jence-gold/30 transition-all"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center mx-auto mb-2 text-jence-gold font-bold group-hover:scale-110 transition-transform">

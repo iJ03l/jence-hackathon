@@ -16,6 +16,7 @@ export default function CreatorDashboardPage() {
     const [loading, setLoading] = useState(true)
     const [creatorId, setCreatorId] = useState<string>('')
     const [verticalId, setVerticalId] = useState<string>('')
+    const [creatorInfo, setCreatorInfo] = useState<any>(null)
 
     const [stats, setStats] = useState({
         totalSubscribers: 0,
@@ -76,6 +77,7 @@ export default function CreatorDashboardPage() {
                     const cId = profileRes.creator.id
                     setCreatorId(cId)
                     setVerticalId(profileRes.creator.verticalId)
+                    setCreatorInfo(profileRes.creator)
                     setFeedback(profileRes.feedback || [])
 
 
@@ -234,8 +236,8 @@ export default function CreatorDashboardPage() {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Creator Dashboard</h1>
-                        {user?.username && (
-                            <Link to={`/${user.username}`} className="text-sm text-muted-foreground hover:text-jence-gold transition-colors flex items-center gap-1.5 mt-1">
+                        {(user?.username || creatorInfo?.pseudonym) && (
+                            <Link to={`/${user?.username || creatorInfo?.pseudonym}`} className="text-sm text-muted-foreground hover:text-jence-gold transition-colors flex items-center gap-1.5 mt-1">
                                 <ExternalLink size={12} />
                                 View Public Profile
                             </Link>

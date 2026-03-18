@@ -137,13 +137,13 @@ export default function CreatorPostDetail() {
                 {/* Main Post */}
                 <div className="card-plug p-4 sm:p-6 mb-8">
                     <div className="flex gap-3 sm:gap-4">
-                        <Link to={`/${post.creatorUsername || '#'}`} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
+                        <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
                             {post.creatorPseudonym?.[0]}
                         </Link>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <Link to={`/${post.creatorUsername || '#'}`} className="font-semibold text-foreground hover:underline">
-                                    {post.creatorPseudonym}
+                                <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="font-semibold text-foreground hover:underline">
+                                    {post.creatorPseudonym || post.creatorUsername}
                                 </Link>
                                 {post.verticalName && (
                                     <Link to={`/verticals/${post.verticalSlug}`} className="text-xs px-2 py-0.5 rounded-full bg-muted hover:bg-muted/80 transition-colors">
@@ -193,13 +193,17 @@ To view the full content of this post, please support ${post.creatorPseudonym}'s
                                                 <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-foreground mb-1">Premium Article</h3>
-                                                <p className="text-sm text-muted-foreground mb-4">
-                                                    Support <strong>{post.creatorPseudonym}</strong> to unlock this full post.
-                                                </p>
-                                                <Link to={`/${post.creatorUsername || '#'}`} className="btn-primary w-full text-center">
-                                                    View Support Options
-                                                </Link>
+                                                <h3 className="font-bold text-foreground mb-1">{post.creatorPseudonym || post.creatorUsername}</h3>
+                                                <p className="text-xs text-muted-foreground line-clamp-2">{post.creatorBio || 'Author on Jence'}</p>
+                                                <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t border-border/50">
+                                                    {user && user.id !== post.creatorUserId ? (
+                                                        <button className="btn-primary flex-1 text-xs">Support Author</button>
+                                                    ) : (
+                                                        <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary w-full text-center">
+                                                            View Profile
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </>
@@ -291,12 +295,12 @@ To view the full content of this post, please support ${post.creatorPseudonym}'s
                     {comments.map((comment) => (
                         <div key={comment.id} className="p-4 rounded-xl border border-border/50 bg-background/50">
                             <div className="flex gap-3">
-                                <Link to={`/${comment.user?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-xs text-muted-foreground">
+                                <Link to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-xs text-muted-foreground">
                                     {(comment.user?.displayName || '?')[0].toUpperCase()}
                                 </Link>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <Link to={`/${comment.user?.username}`} className="font-semibold text-sm text-foreground hover:underline">
+                                        <Link to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="font-semibold text-sm text-foreground hover:underline">
                                             {comment.user?.displayName}
                                         </Link>
                                         {comment.user?.isCreator && (
