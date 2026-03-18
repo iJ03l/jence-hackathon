@@ -413,24 +413,6 @@ export default function SettingsPage() {
                                         </div>
 
                                         <div className="space-y-4 mb-8">
-                                            <div>
-                                                <label className="block text-sm font-medium text-foreground mb-1.5">Monthly Tipping Amount (USD)</label>
-                                                <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={subscriptionPrice}
-                                                        onChange={(e) => setSubscriptionPrice(e.target.value)}
-                                                        className="input-field !pl-7 font-mono text-sm"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Set to 0 for open access.
-                                                </p>
-                                            </div>
                                             <div className="flex items-center gap-2 h-8">
                                                 {autoSaveStatus === 'saving' && <p className="text-xs text-jence-gold animate-pulse">Saving payout settings...</p>}
                                                 {autoSaveStatus === 'saved' && <p className="text-xs text-green-500 flex items-center gap-1"><Check size={12} /> Payout settings saved</p>}

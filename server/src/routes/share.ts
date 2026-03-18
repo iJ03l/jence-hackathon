@@ -49,7 +49,8 @@ export function renderPreviewPage(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${title} | ${SITE_NAME}</title>
   <meta name="description" content="${description}" />
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="${redirectUrl}" />
 
   <meta property="og:site_name" content="${SITE_NAME}" />
   <meta property="og:type" content="${type}" />
@@ -58,7 +59,7 @@ export function renderPreviewPage(params: {
   <meta property="og:image" content="${image}" />
   <meta property="og:image:secure_url" content="${image}" />
   <meta property="og:image:alt" content="${title}" />
-  <meta property="og:url" content="${shareUrl}" />
+  <meta property="og:url" content="${redirectUrl}" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title} | ${SITE_NAME}" />
@@ -128,7 +129,6 @@ shareRoutes.get('/post/:id', async (c) => {
     const author = postData.creatorPseudonym || postData.creatorUsername || 'Jence'
 
     c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
-    c.header('X-Robots-Tag', 'noindex, nofollow')
     return c.html(renderPreviewPage({
         title: postData.title,
         description,
@@ -174,7 +174,6 @@ shareRoutes.get('/community/post/:id', async (c) => {
     const description = normalizeText(postData.content, 160) || `Read the discussion by ${author} on Jence.`
 
     c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
-    c.header('X-Robots-Tag', 'noindex, nofollow')
     return c.html(renderPreviewPage({
         title: `Discussion by @${postData.username || author}`,
         description,

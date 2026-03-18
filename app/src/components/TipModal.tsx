@@ -79,6 +79,12 @@ export function TipModal({
                 </div>
 
                 <div className="p-6 space-y-4">
+                    <div className="p-3 bg-muted/30 border border-border/50 rounded-xl mb-2">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                            Tips are processed instantly using your secure embedded wallet. The creator receives the full amount directly in USDC, with no platform fees taken.
+                        </p>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-foreground mb-1.5">Tip amount (USDC)</label>
                         <div className="relative">

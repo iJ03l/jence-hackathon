@@ -27,7 +27,7 @@ export default function LandingPage() {
             api.getTopCreators(),
         ]).then(([postsRes, launchesRes, creatorsRes]) => {
             if (postsRes.status === 'fulfilled') setLatestPosts(postsRes.value.slice(0, 6))
-            if (launchesRes.status === 'fulfilled') setLaunches(launchesRes.value.slice(0, 3))
+            if (launchesRes.status === 'fulfilled') setLaunches(launchesRes.value.slice(0, 5))
             if (creatorsRes.status === 'fulfilled') setCreators(creatorsRes.value.slice(0, 6))
         }).finally(() => setLoading(false))
     }, [])
