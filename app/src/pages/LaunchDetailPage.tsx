@@ -232,9 +232,7 @@ export default function LaunchDetailPage() {
                             </div>
                         </div>
 
-                        <p className="mt-8 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-                            {launch.summary}
-                        </p>
+
 
                         <div className="mt-8 flex flex-wrap items-center gap-3">
                             {launch.status === 'approved' && (
@@ -305,6 +303,7 @@ export default function LaunchDetailPage() {
                             {launch.summary}
                         </div>
                     </article>
+
 
                     <aside className="space-y-6">
                         <div className="card-plug p-6">

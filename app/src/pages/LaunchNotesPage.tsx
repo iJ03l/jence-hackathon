@@ -690,6 +690,7 @@ export default function LaunchNotesPage() {
                                     authorTo={launch.authorPseudonym || launch.authorUsername ? `/${launch.authorPseudonym || launch.authorUsername}` : undefined}
                                     actions={actions.length > 0 ? actions : undefined}
                                     className={getLaunchStackClass(index)}
+                                    hideSummary={true}
                                 />
                             )
                         })}

@@ -7,6 +7,7 @@ type LaunchPreviewCardProps = {
     authorTo?: string
     actions?: React.ReactNode
     className?: string
+    hideSummary?: boolean
 }
 
 function joinClassNames(...values: Array<string | undefined | false>) {
@@ -40,7 +41,7 @@ export function getLaunchStatusMeta(status: string) {
     }
 }
 
-export default function LaunchPreviewCard({ launch, to, authorTo, actions, className }: LaunchPreviewCardProps) {
+export default function LaunchPreviewCard({ launch, to, authorTo, actions, className, hideSummary = false }: LaunchPreviewCardProps) {
     const author = launch.authorPseudonym || launch.authorUsername || launch.authorName || 'Jence author'
     const statusMeta = getLaunchStatusMeta(launch.status)
     const companyMark = getMonogram(launch.company || launch.name || 'JN')
@@ -110,10 +111,11 @@ export default function LaunchPreviewCard({ launch, to, authorTo, actions, class
                             )}
                         </div>
                     </div>
-                </div>
-
-
-
+                </div>                {!hideSummary && (
+                    <p className="mt-5 line-clamp-4 text-sm leading-7 text-muted-foreground sm:text-[15px]">
+                        {launch.summary}
+                    </p>
+                )}
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${launch.userHasUpvoted ? 'border-jence-gold/20 bg-jence-gold/5 text-jence-gold' : 'border-border/60 bg-background text-muted-foreground'}`}>
                         <ArrowBigUp size={12} className={launch.userHasUpvoted ? 'fill-current' : ''} />
