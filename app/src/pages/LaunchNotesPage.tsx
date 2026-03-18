@@ -9,6 +9,7 @@ import { api } from '../lib/api'
 import SEO from '../components/SEO'
 import { Switch } from '../components/ui/switch'
 import { TipModal } from '../components/TipModal'
+import LaunchPreviewCard from '../components/LaunchPreviewCard'
 
 export default function LaunchNotesPage() {
     const { user, walletAddress, walletBalance } = useAuth()
@@ -174,7 +175,7 @@ export default function LaunchNotesPage() {
                         Curated product launches for robotics and hardware
                     </h1>
                     <p className="body-md max-w-2xl mx-auto">
-                        Submit your product launch for editorial review. Approved launches are published for the community.
+                        Submit a launch note for editorial review, then publish the full release context, disclosures, and community support path in one place.
                     </p>
                 </div>
 
@@ -337,7 +338,9 @@ export default function LaunchNotesPage() {
                                 {myLaunches.map(launch => (
                                     <div key={launch.id} className="card-plug p-4 flex items-center justify-between">
                                         <div className="min-w-0 mr-3">
-                                            <h4 className="text-sm font-medium text-foreground truncate">{launch.name}</h4>
+                                            <Link to={`/launches/${launch.id}`} className="text-sm font-medium text-foreground transition-colors hover:text-jence-gold">
+                                                {launch.name}
+                                            </Link>
                                             <p className="text-xs text-muted-foreground">{launch.company}</p>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
@@ -370,100 +373,76 @@ export default function LaunchNotesPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {launches.map((launch) => (
-                            <article key={launch.id} className="card-plug p-5">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs text-muted-foreground">
-                                                {new Date(launch.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">·</span>
-                                            <span className="text-xs text-muted-foreground">{launch.company}</span>
-                                            {(launch.authorUsername || launch.authorPseudonym) && (
-                                                <>
-                                                    <span className="text-xs text-muted-foreground">·</span>
-                                                    <Link
-                                                        to={`/${launch.authorPseudonym || launch.authorUsername}`}
-                                                        className="text-xs text-jence-gold hover:underline"
-                                                    >
-                                                        @{launch.authorPseudonym || launch.authorUsername}
-                                                    </Link>
-                                                </>
-                                            )}
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-foreground mb-1">
-                                            {launch.name}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {launch.summary}
-                                        </p>
-                                    </div>
-                                    {statusBadge(launch.status)}
-                                </div>
-                                {launch.allowTips && (
-                                    <div className="mt-4 flex justify-end">
-                                        {!user ? (
-                                            <Link
-                                                to="/login"
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
-                                            >
-                                                <HandCoins size={12} />
-                                                Tip launch
-                                            </Link>
-                                        ) : !ownLaunchIds.has(launch.id) ? (
-                                            <button
-                                                onClick={() => {
-                                                    setTipError('')
-                                                    setTipTarget({
-                                                        launchId: launch.id,
-                                                        title: launch.name,
-                                                        description: `Send a one-time tip for "${launch.name}".`,
-                                                    })
-                                                }}
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
-                                            >
-                                                <HandCoins size={12} />
-                                                Tip launch
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                )}
-                                {launch.tags && launch.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-4">
-                                        {launch.tags.map((tag: string) => (
-                                            <span
-                                                key={tag}
-                                                className="text-xs px-2.5 py-1 rounded-full bg-muted/60 text-muted-foreground"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+                    <div className="grid gap-5 lg:grid-cols-2">
+                        {launches.map((launch) => {
+                            const actions: React.ReactNode[] = []
 
-                                {/* Admin review buttons */}
-                                {user?.role === 'admin' && launch.status === 'pending' && (
-                                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                                        <button
-                                            onClick={() => handleReview(launch.id, 'approved')}
-                                            disabled={reviewing === launch.id}
-                                            className="btn-primary text-xs py-1.5 px-4 active:scale-[0.97] disabled:opacity-50"
+                            if (launch.allowTips && launch.status === 'approved') {
+                                if (!user) {
+                                    actions.push(
+                                        <Link
+                                            key="login-tip"
+                                            to="/login"
+                                            className="inline-flex items-center gap-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 px-3 py-1.5 text-xs font-medium text-jence-gold transition-colors hover:bg-jence-gold/10"
                                         >
-                                            {reviewing === launch.id ? 'Processing...' : 'Approve'}
-                                        </button>
+                                            <HandCoins size={12} />
+                                            Tip launch
+                                        </Link>
+                                    )
+                                } else if (!ownLaunchIds.has(launch.id)) {
+                                    actions.push(
                                         <button
-                                            onClick={() => handleReview(launch.id, 'rejected')}
-                                            disabled={reviewing === launch.id}
-                                            className="btn-outline text-xs py-1.5 px-4 text-red-400 border-red-400/30 hover:bg-red-400/5 active:scale-[0.97] disabled:opacity-50"
+                                            key="launch-tip"
+                                            onClick={() => {
+                                                setTipError('')
+                                                setTipTarget({
+                                                    launchId: launch.id,
+                                                    title: launch.name,
+                                                    description: `Send a one-time tip for "${launch.name}".`,
+                                                })
+                                            }}
+                                            className="inline-flex items-center gap-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 px-3 py-1.5 text-xs font-medium text-jence-gold transition-colors hover:bg-jence-gold/10"
                                         >
-                                            Reject
+                                            <HandCoins size={12} />
+                                            Tip launch
                                         </button>
-                                    </div>
-                                )}
-                            </article>
-                        ))}
+                                    )
+                                }
+                            }
+
+                            if (user?.role === 'admin' && launch.status === 'pending') {
+                                actions.push(
+                                    <button
+                                        key="approve"
+                                        onClick={() => handleReview(launch.id, 'approved')}
+                                        disabled={reviewing === launch.id}
+                                        className="btn-primary px-4 py-2 text-xs active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        {reviewing === launch.id ? 'Processing...' : 'Approve'}
+                                    </button>
+                                )
+                                actions.push(
+                                    <button
+                                        key="reject"
+                                        onClick={() => handleReview(launch.id, 'rejected')}
+                                        disabled={reviewing === launch.id}
+                                        className="btn-outline border-red-400/30 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        Reject
+                                    </button>
+                                )
+                            }
+
+                            return (
+                                <LaunchPreviewCard
+                                    key={launch.id}
+                                    launch={launch}
+                                    to={`/launches/${launch.id}`}
+                                    authorTo={launch.authorPseudonym || launch.authorUsername ? `/${launch.authorPseudonym || launch.authorUsername}` : undefined}
+                                    actions={actions.length > 0 ? actions : undefined}
+                                />
+                            )
+                        })}
 
                         {launches.length === 0 && !loading && (
                             <div className="card-plug p-12 text-center">

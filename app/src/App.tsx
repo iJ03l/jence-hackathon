@@ -14,6 +14,7 @@ import CommunityGuidelinesPage from './pages/CommunityGuidelinesPage'
 import PostDetail from './pages/PostDetail'
 import CreatorPostDetail from './pages/CreatorPostDetail'
 import LaunchNotesPage from './pages/LaunchNotesPage'
+import LaunchDetailPage from './pages/LaunchDetailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
@@ -47,6 +48,7 @@ function App() {
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/guidelines" element={<CommunityGuidelinesPage />} />
           <Route path="/launches" element={<LaunchNotesPage />} />
+          <Route path="/launches/:id" element={<LaunchDetailPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/about" element={<AboutPage />} />

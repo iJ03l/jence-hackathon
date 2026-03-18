@@ -148,6 +148,8 @@ export const api = {
     // Launches
     getLaunches: (status?: string) =>
         request<any[]>(`/launches${status ? `?status=${status}` : ''}`),
+    getLaunch: (id: string) =>
+        request<any>(`/launches/${id}`),
     getMyLaunches: () =>
         request<any[]>('/launches/my'),
     submitLaunch: (data: { name: string; company: string; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>

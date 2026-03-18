@@ -6,6 +6,7 @@ import ContentHero from '../sections/ContentHero'
 import Verticals from '../sections/Verticals'
 import ForumPreview from '../sections/ForumPreview'
 import SEO from '../components/SEO'
+import LaunchPreviewCard from '../components/LaunchPreviewCard'
 
 export default function LandingPage() {
     const [latestPosts, setLatestPosts] = useState<any[]>([])
@@ -185,43 +186,15 @@ export default function LandingPage() {
                             ))}
                         </div>
                     ) : launches.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="grid gap-5 lg:grid-cols-3">
                             {launches.map(launch => (
-                                <div key={launch.id} className="card-plug p-5 hover:border-jence-gold/20 transition-colors">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 mb-1.5">
-                                                <Rocket size={14} className="text-jence-gold shrink-0" />
-                                                <span className="text-xs text-muted-foreground">{launch.company}</span>
-                                                <span className="text-xs text-muted-foreground">·</span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {new Date(launch.createdAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-semibold text-foreground text-sm mb-1">
-                                                {launch.name}
-                                            </h3>
-                                            <p className="text-xs text-muted-foreground line-clamp-2">
-                                                {launch.summary}
-                                            </p>
-                                        </div>
-                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-jence-green/10 text-jence-green text-[10px] shrink-0">
-                                            ✓ Approved
-                                        </span>
-                                    </div>
-                                    {launch.tags && launch.tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1.5 mt-3">
-                                            {launch.tags.map((t: string) => (
-                                                <span
-                                                    key={t}
-                                                    className="text-[10px] px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground"
-                                                >
-                                                    {t}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <LaunchPreviewCard
+                                    key={launch.id}
+                                    launch={launch}
+                                    to={`/launches/${launch.id}`}
+                                    authorTo={launch.authorPseudonym || launch.authorUsername ? `/${launch.authorPseudonym || launch.authorUsername}` : undefined}
+                                    className="h-full"
+                                />
                             ))}
                         </div>
                     ) : (

@@ -1,11 +1,12 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { launchNote, user, creatorProfile } from '../db/schema.js'
-import { eq, desc, and } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import { Resend } from 'resend'
+import { getFrontendUrl, renderPlainTextEmail, renderPremiumEmail } from '../lib/email.js'
 
 type Variables = {
     user: any
@@ -87,6 +88,54 @@ launchRoutes.get('/my', requireAuth, async (c) => {
     return c.json(myLaunches.map(l => ({ ...l, tags: JSON.parse(l.tags) })))
 })
 
+// GET /api/launches/:id — public detail for approved launches, or private detail for owner/admin
+launchRoutes.get('/:id', optionalAuth, async (c) => {
+    const id = c.req.param('id')
+    const userFromSession = c.get('user')
+
+    const [launch] = await db
+        .select({
+            id: launchNote.id,
+            name: launchNote.name,
+            company: launchNote.company,
+            summary: launchNote.summary,
+            tags: launchNote.tags,
+            disclosure: launchNote.disclosure,
+            allowTips: launchNote.allowTips,
+            status: launchNote.status,
+            reviewNote: launchNote.reviewNote,
+            createdAt: launchNote.createdAt,
+            updatedAt: launchNote.updatedAt,
+            userId: launchNote.userId,
+            authorName: user.name,
+            authorUsername: user.username,
+            authorPseudonym: creatorProfile.pseudonym,
+        })
+        .from(launchNote)
+        .leftJoin(user, eq(launchNote.userId, user.id))
+        .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
+        .where(eq(launchNote.id, id))
+        .limit(1)
+
+    if (!launch) {
+        return c.json({ error: 'Launch not found' }, 404)
+    }
+
+    const canView =
+        launch.status === 'approved' ||
+        userFromSession?.role === 'admin' ||
+        userFromSession?.id === launch.userId
+
+    if (!canView) {
+        return c.json({ error: 'Launch not found' }, 404)
+    }
+
+    return c.json({
+        ...launch,
+        tags: JSON.parse(launch.tags),
+    })
+})
+
 // POST /api/launches — submit a new launch (any logged-in user)
 const createLaunchSchema = z.object({
     name: z.string().min(1).max(200),
@@ -153,22 +202,74 @@ launchRoutes.put('/:id/review', requireAuth, zValidator('json', reviewSchema), a
             where: eq(user.id, existing.userId)
         })
 
-        if (targetUser && targetUser.email) {
+        if (process.env.RESEND_API_KEY && targetUser && targetUser.email) {
             const resend = new Resend(process.env.RESEND_API_KEY)
-            
-            const subject = status === 'approved' 
-                ? `Launch Note Approved: ${existing.name}` 
-                : `Launch Note Update: ${existing.name}`
 
-            const bodyText = status === 'approved'
-                ? `Great news! Your launch note for "${existing.name}" has been approved and is now live on Jence.\n\n${reviewNote ? `Admin Note: ${reviewNote}` : ''}`
-                : `Your launch note for "${existing.name}" was not approved at this time.\n\nReason/Note: ${reviewNote || 'No specific reason provided.'}\n\nPlease review our guidelines and try again later if appropriate.`
+            const subject = status === 'approved' 
+                ? `Your launch note is live: ${existing.name}`
+                : `Update on your launch note: ${existing.name}`
+
+            const intro = status === 'approved'
+                ? `Your launch note for ${existing.name} has been approved and is now live on Jence.`
+                : `Your launch note for ${existing.name} was reviewed, but it was not approved for publication at this time.`
+
+            const footer = status === 'approved'
+                ? 'Thanks for publishing on Jence. Keep disclosures, safety notes, and specifications current as your launch evolves.'
+                : 'You can revise the submission and send a stronger version when it is ready. Clear disclosures, safety context, and specific claims help the review process move faster.'
+
+            const cta = status === 'approved'
+                ? {
+                    label: 'Open Launch Note',
+                    url: getFrontendUrl(`/launches/${existing.id}`),
+                }
+                : {
+                    label: 'Review Launch Notes',
+                    url: getFrontendUrl('/launches'),
+                }
+
+            const sections = [
+                {
+                    label: 'Company',
+                    value: existing.company,
+                },
+                {
+                    label: 'Status',
+                    value: status === 'approved' ? 'Approved and published' : 'Needs revision before publication',
+                },
+                ...(reviewNote?.trim() ? [{
+                    label: 'Editorial note',
+                    value: reviewNote.trim(),
+                }] : []),
+            ]
 
             await resend.emails.send({
                 from: process.env.FROM_EMAIL || 'Jence <admin@jence.xyz>',
                 to: targetUser.email,
                 subject,
-                text: bodyText,
+                html: renderPremiumEmail({
+                    preheader: intro,
+                    eyebrow: status === 'approved' ? 'Launch Approved' : 'Launch Review',
+                    title: existing.name,
+                    intro,
+                    sections,
+                    cta,
+                    secondaryCta: {
+                        label: 'Open Jence',
+                        url: getFrontendUrl('/dashboard'),
+                    },
+                    footer,
+                }),
+                text: renderPlainTextEmail({
+                    title: existing.name,
+                    intro,
+                    sections,
+                    cta,
+                    secondaryCta: {
+                        label: 'Open Jence',
+                        url: getFrontendUrl('/dashboard'),
+                    },
+                    footer,
+                }),
             })
             console.log(`Sent launch review email to ${targetUser.email}`)
         }

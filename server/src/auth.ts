@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db/index.js'
 import * as schema from './db/schema.js'
+import { renderPlainTextEmail, renderPremiumEmail } from './lib/email.js'
 
 export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:8080/api/auth',
@@ -35,20 +36,36 @@ export const auth = betterAuth({
             const resend = new Resend(process.env.RESEND_API_KEY)
 
             try {
+                const html = renderPremiumEmail({
+                    eyebrow: 'Password Reset',
+                    title: 'Reset your password',
+                    intro: 'A password reset was requested for your Jence account. Use the secure link below to choose a new password. This link expires in 1 hour.',
+                    cta: {
+                        label: 'Reset Password',
+                        url,
+                    },
+                    secondaryCta: {
+                        label: 'Open Jence',
+                        url: process.env.FRONTEND_URL || 'http://localhost:5173',
+                    },
+                    footer: `If you did not request this reset, you can safely ignore this email.\n\nFor security, do not forward this link.`,
+                })
+                const text = renderPlainTextEmail({
+                    title: 'Reset your password',
+                    intro: 'A password reset was requested for your Jence account. This link expires in 1 hour.',
+                    cta: {
+                        label: 'Reset Password',
+                        url,
+                    },
+                    footer: `If you did not request this reset, you can safely ignore this email.\nFor security, do not forward this link.`,
+                })
+
                 const result = await resend.emails.send({
                     from: process.env.FROM_EMAIL || 'Jence <auth@jence.xyz>',
                     to: user.email,
                     subject: 'Reset your Jence password',
-                    html: `
-                        <div style="font-family: -apple-system, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-                            <h2 style="color: #333;">Reset Password</h2>
-                            <p style="color: #555; font-size: 16px;">Click the button below to reset your password. This link expires in 1 hour.</p>
-                            <a href="${url}" style="display: inline-block; background: #D4AF37; color: #1a1a1a; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">
-                                Reset Password
-                            </a>
-                            <p style="color: #999; font-size: 14px; margin-top: 32px;">If you didn't request this, you can safely ignore this email.</p>
-                        </div>
-                    `,
+                    html,
+                    text,
                 })
                 console.log('📧 Resend result:', JSON.stringify(result))
             } catch (error) {
