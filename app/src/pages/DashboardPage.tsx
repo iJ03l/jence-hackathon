@@ -171,7 +171,7 @@ export default function DashboardPage() {
                         <div className="space-y-4">
                             {posts.map((post) => (
                                 <article key={post.id} className="card-plug p-5 hover:border-jence-gold/20 transition-colors">
-                                    <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
                                         <span className="text-sm font-medium text-jence-gold">
                                             {post.creatorPseudonym}
                                         </span>
@@ -180,9 +180,9 @@ export default function DashboardPage() {
                                             <Clock size={12} />
                                             {new Date(post.createdAt).toLocaleDateString()}
                                         </span>
-                                        {post.isFree && (
-                                            <span className="px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs">
-                                                Free
+                                        {post.verticalName && (
+                                            <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs">
+                                                {post.verticalName}
                                             </span>
                                         )}
                                     </div>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                             </div>
                             <h3 className="font-semibold text-foreground mb-2">Your feed is empty</h3>
                             <p className="text-sm text-muted-foreground mb-4">
-                                Support authors to start seeing their latest articles here.
+                                Subscribe to authors to start seeing their latest articles here.
                             </p>
                             <Link to="/explore" className="btn-primary inline-flex active:scale-[0.97] transition-all">
                                 <Users size={16} />

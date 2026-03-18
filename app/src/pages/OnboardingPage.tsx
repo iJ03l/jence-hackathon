@@ -524,7 +524,7 @@ export default function OnboardingPage() {
               </div>
 
               <p className="anim-item text-xs text-muted-foreground">
-                Free to read. Credited authorship. Disclosure-first.
+                Open access. Credited authorship. Disclosure-first.
               </p>
             </div>
           )}

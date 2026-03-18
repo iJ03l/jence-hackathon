@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check, HandCoins } from 'lucide-react'
 import { linkifyText } from '../lib/linkify'
 import SEO from '../components/SEO'
+import { TipModal } from '../components/TipModal'
+import { buildArticleShareUrl } from '../lib/public-url'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -29,7 +31,7 @@ const PostSkeleton = () => (
 export default function CreatorPostDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { user } = useAuth()
+    const { user, walletAddress, walletBalance } = useAuth()
 
     const [post, setPost] = useState<any>(null)
     const [comments, setComments] = useState<any[]>([])
@@ -37,6 +39,9 @@ export default function CreatorPostDetail() {
     const [newComment, setNewComment] = useState('')
     const [submittingComment, setSubmittingComment] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
+    const [tipOpen, setTipOpen] = useState(false)
+    const [tipping, setTipping] = useState(false)
+    const [tipError, setTipError] = useState('')
 
     useEffect(() => {
         if (id) loadData(id)
@@ -106,6 +111,28 @@ export default function CreatorPostDetail() {
         }
     }
 
+    const handleTip = async (amountUsdc: number) => {
+        if (!post) return
+
+        setTipping(true)
+        setTipError('')
+
+        try {
+            await api.tip({
+                amountUsdc,
+                postId: post.id,
+            })
+            setTipOpen(false)
+        } catch (err: any) {
+            console.error('Tip failed:', err)
+            setTipError(err?.message || 'Tip failed. Please try again.')
+        } finally {
+            setTipping(false)
+        }
+    }
+
+    const shareUrl = post ? buildArticleShareUrl(post.id) : ''
+
     if (loading) {
         return (
             <div className="min-h-screen bg-background pt-24 px-4 sm:px-6 lg:px-8">
@@ -128,24 +155,27 @@ export default function CreatorPostDetail() {
     const disclosureText = post.disclosure?.trim() || 'No conflicts of interest were declared for this article.'
 
     return (
-        <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
+        <section className="pt-20 sm:pt-24 pb-16 px-3 sm:px-6 lg:px-8 bg-background min-h-screen">
             <SEO 
                 title={post.title}
                 description={post.excerpt || post.content?.substring(0, 160) + (post.content?.length > 160 ? "..." : "")}
-                image={post.imageUrl}
+                image={post.imageUrl || post.creatorImage || undefined}
                 url={`/post/${post.id}`}
                 type="article"
             />
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 <button onClick={() => navigate(-1)} className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
                     <ArrowLeft size={16} className="mr-2" />
                     Back
                 </button>
 
                 {/* Main Post */}
-                <div className="card-plug p-4 sm:p-6 mb-8">
-                    <div className="flex gap-3 sm:gap-4">
-                        <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
+                <div className="card-plug p-4 sm:p-6 lg:p-8 mb-8">
+                    <div className="flex gap-3 sm:gap-4 items-start">
+                        <Link
+                            to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`}
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent"
+                        >
                             {post.creatorPseudonym?.[0]}
                         </Link>
                         <div className="flex-1 min-w-0">
@@ -162,112 +192,145 @@ export default function CreatorPostDetail() {
                                     <Clock size={12} />
                                     {new Date(post.createdAt).toLocaleDateString()}
                                 </span>
-                                {post.isFree ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs">
-                                        Free
-                                    </span>
-                                ) : (
-                                    <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs">
-                                        Paid
-                                    </span>
-                                )}
                             </div>
 
-                            <h1 className="text-2xl font-bold text-foreground mb-4">{post.title}</h1>
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
+                                {post.title}
+                            </h1>
+                        </div>
+                    </div>
 
-                            <div className="mb-6 p-4 rounded-xl border border-border bg-muted/30">
-                                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Conflict of interest</p>
-                                <p className="text-sm text-muted-foreground">{disclosureText}</p>
+                    <div className="mt-5 sm:mt-6 space-y-5">
+                        <div className="p-4 rounded-xl border border-border bg-muted/30">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Conflict of interest</p>
+                            <p className="text-sm text-muted-foreground">{disclosureText}</p>
+                        </div>
+
+                        {post.imageUrl && (
+                            <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/20 aspect-[16/9]">
+                                <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
                             </div>
+                        )}
 
-                            <div className="prose prose-invert max-w-none mb-6 relative text-base sm:text-lg leading-relaxed">
-                                {post.imageUrl && (
-                                    <div className="mb-8 rounded-2xl overflow-hidden border border-border/50 bg-muted/20">
-                                        <img src={post.imageUrl} alt={post.title} className="w-full h-auto max-h-[600px] object-cover" />
+                        <div className="relative">
+                            {post.isFree || post.hasAccess ? (
+                                <div className="text-foreground/90 whitespace-pre-wrap break-words text-sm sm:text-[15px] leading-6 sm:leading-7">
+                                    {linkifyText(post.content)}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Dummy blurred text to indicate content length without leaking actual analysis */}
+                                    <div className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words text-sm sm:text-[15px] leading-6 sm:leading-7">
+                                        {linkifyText(post.excerpt || `This is a premium article prepared exclusively for subscribers. The article contains in-depth data, actionable insights, and field-tested takeaways.
+
+To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription helps the creator and gives you access to their complete library of premium insights.`)}
                                     </div>
-                                )}
-                                {post.isFree || post.hasAccess ? (
-                                    <p className="text-foreground/90 whitespace-pre-wrap break-words">{linkifyText(post.content)}</p>
-                                ) : (
-                                    <>
-                                        {/* Dummy blurred text to indicate content length without leaking actual analysis */}
-                                        <p className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words">
-                                            {linkifyText(post.excerpt || `This is a premium article prepared exclusively for supporters. The article contains in-depth data, actionable insights, and field-tested takeaways.
-                                            
-To view the full content of this post, please support ${post.creatorPseudonym}'s channel. Your support helps the creator and gives you access to their complete library of premium insights.`)}
-                                        </p>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center pointer-events-none">
-                                            <div className="bg-background/90 backdrop-blur-md px-5 py-6 sm:px-6 sm:py-4 w-full max-w-xs sm:max-w-sm rounded-xl border border-border/80 shadow-2xl pointer-events-auto flex flex-col items-center">
-                                                <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                </div>
-                                                <h3 className="font-bold text-foreground mb-1">{post.creatorPseudonym || post.creatorUsername}</h3>
-                                                <p className="text-xs text-muted-foreground line-clamp-2">{post.creatorBio || 'Author on Jence'}</p>
-                                                <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t border-border/50">
-                                                    {user && user.id !== post.creatorUserId ? (
-                                                        <button className="btn-primary flex-1 text-xs">Support Author</button>
-                                                    ) : (
-                                                        <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary w-full text-center">
-                                                            View Profile
-                                                        </Link>
-                                                    )}
-                                                </div>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center pointer-events-none">
+                                        <div className="bg-background/90 backdrop-blur-md px-5 py-6 sm:px-6 sm:py-4 w-full max-w-xs sm:max-w-sm rounded-xl border border-border/80 shadow-2xl pointer-events-auto flex flex-col items-center">
+                                            <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                            </div>
+                                            <h3 className="font-bold text-foreground mb-1">{post.creatorPseudonym || post.creatorUsername}</h3>
+                                            <p className="text-xs text-muted-foreground line-clamp-2">{post.creatorBio || 'Author on Jence'}</p>
+                                            <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t border-border/50">
+                                                {user && user.id !== post.creatorUserId ? (
+                                                    <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary flex-1 text-xs text-center">
+                                                        Subscribe
+                                                    </Link>
+                                                ) : (
+                                                    <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary w-full text-center">
+                                                        View Profile
+                                                    </Link>
+                                                )}
                                             </div>
                                         </div>
-                                    </>
-                                )}
-                            </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center gap-6 pt-4 border-t border-border/50">
-                                <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
-                                    <button
-                                        onClick={() => handleVote(1)}
-                                        className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === 1 ? 'text-orange-500' : 'text-muted-foreground'}`}
-                                    >
-                                        <ArrowBigUp size={24} fill={post.userVote === 1 ? "currentColor" : "none"} />
-                                    </button>
-                                    <span className={`text-base font-bold min-w-[1.5em] text-center ${post.userVote === 1 ? 'text-orange-500' : post.userVote === -1 ? 'text-blue-500' : 'text-muted-foreground'}`}>
-                                        {post.likes || 0}
-                                    </span>
-                                    <button
-                                        onClick={() => handleVote(-1)}
-                                        className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === -1 ? 'text-blue-500' : 'text-muted-foreground'}`}
-                                    >
-                                        <ArrowBigDown size={24} fill={post.userVote === -1 ? "currentColor" : "none"} />
-                                    </button>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <MessageCircle size={18} />
-                                    <span>{comments.length}</span>
-                                </div>
+                        {/* Actions */}
+                        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
                                 <button
-                                    onClick={async () => {
-                                        const url = `${window.location.origin}/post/${post.id}`
-                                        if (navigator.share) {
-                                            try {
-                                                await navigator.share({
-                                                    title: post.title,
-                                                    text: 'Check out this article on Jence!',
-                                                    url
-                                                })
-                                            } catch (e) {
-                                                console.error('Error sharing', e)
-                                            }
-                                        } else {
-                                            navigator.clipboard.writeText(url)
-                                            setIsCopied(true)
-                                            setTimeout(() => setIsCopied(false), 2000)
-                                        }
-                                    }}
-                                    className={`flex items-center gap-2 text-sm transition-colors ml-auto ${isCopied ? 'text-jence-green' : 'text-muted-foreground hover:text-foreground'}`}
+                                    onClick={() => handleVote(1)}
+                                    className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === 1 ? 'text-orange-500' : 'text-muted-foreground'}`}
                                 >
-                                    {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+                                    <ArrowBigUp size={24} fill={post.userVote === 1 ? "currentColor" : "none"} />
+                                </button>
+                                <span className={`text-base font-bold min-w-[1.5em] text-center ${post.userVote === 1 ? 'text-orange-500' : post.userVote === -1 ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                                    {post.likes || 0}
+                                </span>
+                                <button
+                                    onClick={() => handleVote(-1)}
+                                    className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === -1 ? 'text-blue-500' : 'text-muted-foreground'}`}
+                                >
+                                    <ArrowBigDown size={24} fill={post.userVote === -1 ? "currentColor" : "none"} />
                                 </button>
                             </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <MessageCircle size={18} />
+                                <span>{comments.length}</span>
+                            </div>
+                            {post.allowTips && (
+                                user && user.id !== post.creatorUserId ? (
+                                    <button
+                                        onClick={() => {
+                                            setTipError('')
+                                            setTipOpen(true)
+                                        }}
+                                        className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors"
+                                    >
+                                        <HandCoins size={18} />
+                                        Tip creator
+                                    </button>
+                                ) : (
+                                    <Link to="/login" className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors">
+                                        <HandCoins size={18} />
+                                        Tip creator
+                                    </Link>
+                                )
+                            )}
+                            <button
+                                onClick={async () => {
+                                    const url = shareUrl
+                                    if (navigator.share) {
+                                        try {
+                                            await navigator.share({
+                                                title: post.title,
+                                                text: post.excerpt || `Read ${post.title} on Jence.`,
+                                                url
+                                            })
+                                        } catch (e) {
+                                            console.error('Error sharing', e)
+                                        }
+                                    } else {
+                                        navigator.clipboard.writeText(url)
+                                        setIsCopied(true)
+                                        setTimeout(() => setIsCopied(false), 2000)
+                                    }
+                                }}
+                                className={`flex items-center gap-2 text-sm transition-colors ml-auto ${isCopied ? 'text-jence-green' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+                            </button>
                         </div>
                     </div>
                 </div>
+
+                <TipModal
+                    isOpen={tipOpen}
+                    onClose={() => {
+                        setTipOpen(false)
+                        setTipError('')
+                    }}
+                    onConfirm={handleTip}
+                    isSubmitting={tipping}
+                    title={`Tip ${post.creatorPseudonym || post.creatorUsername || 'creator'}`}
+                    description={`Send a one-time tip for "${post.title}".`}
+                    balance={walletAddress ? walletBalance : undefined}
+                    error={tipError}
+                />
 
                 {/* Comment Form */}
                 {user ? (

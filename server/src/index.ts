@@ -20,6 +20,7 @@ import verticalsRoutes from './routes/verticals.js'
 import creatorsRoutes from './routes/creators.js'
 import postsRoutes from './routes/posts.js'
 import subscriptionsRoutes from './routes/subscriptions.js'
+import tipsRoutes from './routes/tips.js'
 import notificationsRoutes from './routes/notifications.js'
 import communityRoutes from './routes/community.js'
 import uploadRoutes from './routes/upload.js'
@@ -27,6 +28,7 @@ import walletRoutes from './routes/wallet.js'
 import statsRoutes from './routes/stats.js'
 import launchRoutes from './routes/launches.js'
 import adminRoutes from './routes/admin.js'
+import shareRoutes from './routes/share.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
 
 const app = new Hono()
@@ -68,6 +70,7 @@ app.route('/api/verticals', verticalsRoutes)
 app.route('/api/creators', creatorsRoutes)
 app.route('/api/posts', postsRoutes)
 app.route('/api/subscriptions', subscriptionsRoutes)
+app.route('/api/tips', tipsRoutes)
 app.route('/api/notifications', notificationsRoutes)
 app.route('/api/community', communityRoutes)
 app.route('/api/upload', uploadRoutes)
@@ -75,17 +78,22 @@ app.route('/api/wallet', walletRoutes)
 app.route('/api/stats', statsRoutes)
 app.route('/api/launches', launchRoutes)
 app.route('/api/admin', adminRoutes)
+app.route('/share', shareRoutes)
 
 // Start server
-const port = parseInt(process.env.PORT || '8080', 10)
+const shouldStartServer = process.env.NODE_ENV !== 'test' && !process.env.VITEST
 
-serve({
-    fetch: app.fetch,
-    port,
-    hostname: '0.0.0.0', // Listen on all network interfaces
-}, (info) => {
-    console.log(`🚀 Jence server running on http://localhost:${info.port}`)
-    startSubscriptionCron()
-})
+if (shouldStartServer) {
+    const port = parseInt(process.env.PORT || '8080', 10)
+
+    serve({
+        fetch: app.fetch,
+        port,
+        hostname: '0.0.0.0', // Listen on all network interfaces
+    }, (info) => {
+        console.log(`🚀 Jence server running on http://localhost:${info.port}`)
+        startSubscriptionCron()
+    })
+}
 
 export default app

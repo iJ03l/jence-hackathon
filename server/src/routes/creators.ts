@@ -5,6 +5,33 @@ import { eq, sql, and, desc, avg, count, or } from 'drizzle-orm'
 
 const creatorsRoutes = new Hono()
 
+const creatorPostSelect = {
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    excerpt: post.excerpt,
+    disclosure: post.disclosure,
+    imageUrl: post.imageUrl,
+    isFree: post.isFree,
+    allowTips: post.allowTips,
+    isPinned: post.isPinned,
+    isPublished: post.isPublished,
+    moderationStatus: post.moderationStatus,
+    createdAt: post.createdAt,
+    creatorId: post.creatorId,
+    verticalId: post.verticalId,
+    verticalName: vertical.name,
+    verticalSlug: vertical.slug,
+}
+
+const fetchCreatorPosts = (creatorId: string) => db
+    .select(creatorPostSelect)
+    .from(post)
+    .leftJoin(vertical, eq(post.verticalId, vertical.id))
+    .where(eq(post.creatorId, creatorId))
+    .orderBy(desc(post.isPinned), desc(post.createdAt))
+    .limit(20)
+
 // GET /api/creators — list all creators
 creatorsRoutes.get('/', async (c) => {
     const creators = await db
@@ -96,11 +123,7 @@ creatorsRoutes.get('/:id', async (c) => {
         .limit(10)
 
     // Get creator's posts
-    const creatorPosts = await db
-        .select()
-        .from(post)
-        .where(eq(post.creatorId, id))
-        .limit(20)
+    const creatorPosts = await fetchCreatorPosts(id)
 
     return c.json({
         creator: {
@@ -210,12 +233,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
         .limit(10)
 
     // Get creator's posts
-    const creatorPosts = await db
-        .select()
-        .from(post)
-        .where(eq(post.creatorId, creator.id))
-        .orderBy(desc(post.isPinned), desc(post.createdAt)) // Ensure pinned post first, then recent
-        .limit(20)
+    const creatorPosts = await fetchCreatorPosts(creator.id)
 
     const isOwner = viewerUserId === creator.userId;
     const canViewPremium = isOwner || isSubscribed;
@@ -323,12 +341,7 @@ creatorsRoutes.get('/user/:userId', async (c) => {
         .limit(10)
 
     // Get creator's posts
-    const creatorPosts = await db
-        .select()
-        .from(post)
-        .where(eq(post.creatorId, creator.id))
-        .orderBy(desc(post.isPinned), desc(post.createdAt))
-        .limit(20)
+    const creatorPosts = await fetchCreatorPosts(creator.id)
 
     const isOwner = viewerUserId === creator.userId;
     const canViewPremium = isOwner || isSubscribed;

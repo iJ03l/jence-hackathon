@@ -76,42 +76,15 @@ export default function LandingPage() {
                                             to={`/post/${post.id}`}
                                             className={`group relative overflow-hidden transition-all duration-500 rounded-2xl border border-border/40 bg-card/20 backdrop-blur-sm hover:bg-card/40 hover:border-jence-gold/30 hover:shadow-[0_0_30px_rgba(212,175,55,0.05)] flex flex-col ${
                                                 isFeaturePost
-                                                    ? 'md:col-span-12 lg:col-span-8 min-h-[380px] md:min-h-[460px]'
-                                                    : 'md:col-span-6 lg:col-span-4 min-h-[320px]'
+                                                    ? 'md:col-span-12 lg:col-span-8'
+                                                    : 'md:col-span-6 lg:col-span-4'
                                             }`}
                                         >
-                                            {post.imageUrl && (
-                                                <div className="absolute inset-0 z-0 overflow-hidden">
-                                                    <img
-                                                        src={post.imageUrl}
-                                                        alt={post.title}
-                                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80"
-                                                    />
-                                                    <div className={`absolute inset-0 bg-gradient-to-t ${
-                                                        isFeaturePost 
-                                                            ? 'from-background via-background/70 to-transparent' 
-                                                            : 'from-background via-background/90 to-transparent'
-                                                    }`} />
-                                                    {/* Premium lighting accent */}
-                                                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-jence-gold/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                                </div>
-                                            )}
-
-                                            {/* Fallback pattern if no image */}
-                                            {!post.imageUrl && (
-                                                 <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-                                            )}
-
-                                            <div className="relative z-10 flex flex-col h-full p-6 sm:p-8 justify-end">
+                                            <div className="relative z-10 flex flex-col h-full p-6 sm:p-8">
                                                 <div className="flex flex-wrap items-center gap-2 mb-4">
                                                     {post.verticalName && (
                                                         <span className="px-2.5 py-1 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-[10px] font-semibold uppercase tracking-widest backdrop-blur-md">
                                                             {post.verticalName}
-                                                        </span>
-                                                    )}
-                                                    {post.isFree && !post.imageUrl && (
-                                                        <span className="px-2.5 py-1 rounded-full border border-jence-green/20 bg-jence-green/5 text-jence-green text-[10px] font-semibold uppercase tracking-widest">
-                                                            Free Edition
                                                         </span>
                                                     )}
                                                 </div>
@@ -132,7 +105,7 @@ export default function LandingPage() {
                                                     {post.excerpt || ''}
                                                 </p>
 
-                                                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-border/30">
+                                                <div className="flex items-center gap-3 pt-4 border-t border-border/30">
                                                     <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
                                                         {(post.creatorPseudonym || 'A')[0].toUpperCase()}
                                                     </div>
@@ -144,6 +117,18 @@ export default function LandingPage() {
                                                             {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                         </span>
                                                     </div>
+                                                </div>
+
+                                                <div className={`mt-5 overflow-hidden rounded-2xl border border-border/40 bg-muted/20 ${isFeaturePost ? 'aspect-[16/10]' : 'aspect-[4/3]'}`}>
+                                                    {post.imageUrl ? (
+                                                        <img
+                                                            src={post.imageUrl}
+                                                            alt={post.title}
+                                                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+                                                    )}
                                                 </div>
                                             </div>
                                         </Link>

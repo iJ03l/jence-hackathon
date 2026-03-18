@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { linkifyText } from "../lib/linkify";
 import SEO from "../components/SEO";
+import { buildCommunityPostShareUrl } from "../lib/public-url";
 
 export default function PostDetail() {
   const { id } = useParams();
@@ -140,15 +141,18 @@ export default function PostDetail() {
     );
   }
 
+  const shareUrl = buildCommunityPostShareUrl(post.id);
+
   return (
-    <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
+    <section className="pt-20 sm:pt-24 pb-16 px-3 sm:px-6 lg:px-8 bg-background min-h-screen">
       <SEO 
         title={`Discussion by @${post.author?.username || 'user'}`}
         description={post.content?.substring(0, 160) + (post.content?.length > 160 ? "..." : "")}
+        image={post.author?.image || undefined}
         url={`/community/post/${post.id}`}
         type="article"
       />
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
@@ -158,8 +162,8 @@ export default function PostDetail() {
         </button>
 
         {/* Main Post */}
-        <div className="card-plug p-4 sm:p-6 mb-8">
-          <div className="flex gap-3 sm:gap-4">
+        <div className="card-plug p-4 sm:p-6 lg:p-8 mb-8">
+          <div className="flex gap-3 sm:gap-4 items-start">
             <Link
               to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent">
               {post.author?.image ? (
@@ -192,81 +196,86 @@ export default function PostDetail() {
                   {new Date(post.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <p className="text-foreground sm:text-lg whitespace-pre-wrap break-words mb-4">
-                {linkifyText(post.content.replace(/#[\w]+/gi, "").trim())}
-              </p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
+                Discussion
+              </h1>
+            </div>
+          </div>
 
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {post.tags.map((tag: any) => (
-                    <Link
-                      key={tag.name}
-                      to={`/community?tag=${tag.name}`}
-                      className="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-foreground transition-colors"
-                      style={{ color: tag.color }}
-                    >
-                      #{tag.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
+          <div className="mt-5 sm:mt-6 space-y-5">
+            {post.tags && post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag: any) => (
+                  <Link
+                    key={tag.name}
+                    to={`/community?tag=${tag.name}`}
+                    className="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-foreground transition-colors"
+                    style={{ color: tag.color }}
+                  >
+                    #{tag.name}
+                  </Link>
+                ))}
+              </div>
+            )}
 
-              {/* Actions */}
-              <div className="flex items-center gap-6 pt-4 border-t border-border/50">
-                <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
-                  <button
-                    onClick={() => handleVote(1)}
-                    className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === 1 ? "text-orange-500" : "text-muted-foreground"}`}
-                  >
-                    <ArrowBigUp
-                      size={24}
-                      fill={post.userVote === 1 ? "currentColor" : "none"}
-                    />
-                  </button>
-                  <span
-                    className={`text-base font-bold min-w-[1.5em] text-center ${post.userVote === 1 ? "text-orange-500" : post.userVote === -1 ? "text-blue-500" : "text-muted-foreground"}`}
-                  >
-                    {post.likes || 0}
-                  </span>
-                  <button
-                    onClick={() => handleVote(-1)}
-                    className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === -1 ? "text-blue-500" : "text-muted-foreground"}`}
-                  >
-                    <ArrowBigDown
-                      size={24}
-                      fill={post.userVote === -1 ? "currentColor" : "none"}
-                    />
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MessageCircle size={18} />
-                  <span>{post.comments}</span>
-                </div>
+            <div className="text-foreground text-sm sm:text-[15px] leading-6 sm:leading-7 whitespace-pre-wrap break-words">
+              {linkifyText(post.content.replace(/#[\w]+/gi, "").trim())}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-4 border-t border-border/50">
+              <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
                 <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}/community/post/${post.id}`;
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({
-                          title: "Jence Community",
-                          text: "Check out this discussion on Jence!",
-                          url,
-                        });
-                      } catch (e) {
-                        console.error("Error sharing", e);
-                      }
-                    } else {
-                      navigator.clipboard.writeText(url);
-                      setIsCopied(true);
-                      setTimeout(() => setIsCopied(false), 2000);
-                    }
-                  }}
-                  className={`flex items-center gap-2 text-sm transition-colors ml-auto ${isCopied ? "text-jence-green" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => handleVote(1)}
+                  className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === 1 ? "text-orange-500" : "text-muted-foreground"}`}
                 >
-                  {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+                  <ArrowBigUp
+                    size={24}
+                    fill={post.userVote === 1 ? "currentColor" : "none"}
+                  />
+                </button>
+                <span
+                  className={`text-base font-bold min-w-[1.5em] text-center ${post.userVote === 1 ? "text-orange-500" : post.userVote === -1 ? "text-blue-500" : "text-muted-foreground"}`}
+                >
+                  {post.likes || 0}
+                </span>
+                <button
+                  onClick={() => handleVote(-1)}
+                  className={`p-1.5 rounded hover:bg-muted transition-colors ${post.userVote === -1 ? "text-blue-500" : "text-muted-foreground"}`}
+                >
+                  <ArrowBigDown
+                    size={24}
+                    fill={post.userVote === -1 ? "currentColor" : "none"}
+                  />
                 </button>
               </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MessageCircle size={18} />
+                <span>{post.comments}</span>
+              </div>
+              <button
+                onClick={async () => {
+                  const url = shareUrl;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Discussion by ${post.author?.displayName || post.author?.username || 'Jence user'}`,
+                        text: post.content?.substring(0, 120) || "Check out this discussion on Jence!",
+                        url,
+                      });
+                    } catch (e) {
+                      console.error("Error sharing", e);
+                    }
+                  } else {
+                    navigator.clipboard.writeText(url);
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 2000);
+                  }
+                }}
+                className={`flex items-center gap-2 text-sm transition-colors ml-auto ${isCopied ? "text-jence-green" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {isCopied ? <Check size={18} /> : <Share2 size={18} />}
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { sanityClient } from '../lib/sanity.js'
+import { normalizeUploadImage, UploadImageError } from '../lib/image-transcode.js'
 import { requireAuth } from '../middleware/auth.js'
 
 type Variables = {
@@ -23,27 +24,18 @@ uploadRoutes.post('/', requireAuth, async (c) => {
             return c.json({ error: 'File size exceeds 5MB limit' }, 400)
         }
 
-        const allowedTypes = new Set([
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-        ])
+        const { buffer, filename } = await normalizeUploadImage(file)
 
-        if (!allowedTypes.has(file.type)) {
-            return c.json({
-                error: 'Unsupported image format. Use JPG, PNG, GIF, or WebP.',
-            }, 400)
-        }
-
-        const buffer = await file.arrayBuffer()
-
-        const asset = await sanityClient.assets.upload('image', Buffer.from(buffer), {
-            filename: file.name
+        const asset = await sanityClient.assets.upload('image', buffer, {
+            filename,
         })
 
         return c.json({ url: asset.url })
     } catch (error) {
+        if (error instanceof UploadImageError) {
+            return c.json({ error: error.message }, error.statusCode)
+        }
+
         console.error('Error uploading to Sanity:', error)
 
         const message = error instanceof Error ? error.message : ''
@@ -53,9 +45,13 @@ uploadRoutes.post('/', requireAuth, async (c) => {
             }, 500)
         }
 
-        if (message.includes('Invalid image, could not read metadata')) {
+        if (
+            message.includes('Invalid image, could not read metadata') ||
+            message.includes('Could not convert AVIF image') ||
+            message.includes('Could not convert HEIC image')
+        ) {
             return c.json({
-                error: 'Unsupported or corrupt image. Use JPG, PNG, GIF, or WebP.',
+                error: 'Jence could not process that image. Use JPG, PNG, GIF, WebP, AVIF, or HEIC.',
             }, 400)
         }
 

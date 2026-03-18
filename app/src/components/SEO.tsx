@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import { getSiteBaseUrl } from '../lib/public-url'
 
 interface SEOProps {
     title?: string
@@ -13,7 +14,7 @@ interface SEOProps {
 const SITE_NAME = 'Jence'
 const DEFAULT_DESCRIPTION = 'Jence is a robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure.'
 const DEFAULT_IMAGE = 'https://jence.xyz/og-image.png'
-const BASE_URL = 'https://jence.xyz'
+const BASE_URL = getSiteBaseUrl()
 
 export default function SEO({
     title,

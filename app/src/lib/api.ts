@@ -75,7 +75,12 @@ export const api = {
     unsubscribe: (id: string) =>
         request<any>(`/subscriptions/${id}`, { method: 'DELETE' }),
 
+    // Tips
+    tip: (data: { amountUsdc: number; creatorProfileId?: string; postId?: string; launchNoteId?: string }) =>
+        request<any>('/tips', { method: 'POST', body: JSON.stringify(data) }),
+
     // Wallet
+    getWalletMe: () => request<{ address: string | null; usdcBalance: number }>('/wallet/me'),
     createWallet: () => request<any>('/wallet/create', { method: 'POST' }),
     exportWallet: () => request<{ privateKey: string }>('/wallet/export'),
 
@@ -134,7 +139,7 @@ export const api = {
         }).then(async res => {
             const data = await res.json().catch(() => null)
             if (!res.ok) {
-                throw new Error(data?.error || data?.message || 'Failed to upload image')
+                throw new Error(data?.error || data?.message || 'Jence could not upload that image.')
             }
             return data
         })
@@ -145,7 +150,7 @@ export const api = {
         request<any[]>(`/launches${status ? `?status=${status}` : ''}`),
     getMyLaunches: () =>
         request<any[]>('/launches/my'),
-    submitLaunch: (data: { name: string; company: string; summary: string; tags?: string[]; disclosure?: string }) =>
+    submitLaunch: (data: { name: string; company: string; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>
         request<any>('/launches', { method: 'POST', body: JSON.stringify(data) }),
     reviewLaunch: (id: string, status: 'approved' | 'rejected', reviewNote?: string) =>
         request<any>(`/launches/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, reviewNote }) }),

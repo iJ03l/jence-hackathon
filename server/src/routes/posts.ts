@@ -38,12 +38,16 @@ postsRoutes.get('/', optionalAuth, async (c) => {
                 title: post.title,
                 excerpt: post.excerpt,
                 isFree: post.isFree,
+                allowTips: post.allowTips,
                 createdAt: post.createdAt,
                 creatorPseudonym: creatorProfile.pseudonym,
                 creatorId: creatorProfile.id,
+                verticalName: vertical.name,
+                verticalSlug: vertical.slug,
             })
             .from(post)
             .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
+            .leftJoin(vertical, eq(post.verticalId, vertical.id))
             .where(inArray(post.creatorId, creatorIds))
             .orderBy(desc(post.createdAt))
             .limit(50)
@@ -53,17 +57,18 @@ postsRoutes.get('/', optionalAuth, async (c) => {
 
     // Public feed — latest posts
     const latestPosts = await db
-        .select({
-            id: post.id,
-            title: post.title,
-            excerpt: post.excerpt,
-            imageUrl: post.imageUrl,
-            isFree: post.isFree,
-            createdAt: post.createdAt,
-            creatorPseudonym: creatorProfile.pseudonym,
-            creatorId: creatorProfile.id,
-            verticalName: vertical.name,
-            verticalSlug: vertical.slug,
+            .select({
+                id: post.id,
+                title: post.title,
+                excerpt: post.excerpt,
+                imageUrl: post.imageUrl,
+                isFree: post.isFree,
+                allowTips: post.allowTips,
+                createdAt: post.createdAt,
+                creatorPseudonym: creatorProfile.pseudonym,
+                creatorId: creatorProfile.id,
+                verticalName: vertical.name,
+                verticalSlug: vertical.slug,
         })
         .from(post)
         .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
@@ -84,12 +89,13 @@ const createPostSchema = z.object({
     creatorId: z.string().uuid(),
     verticalId: z.string().uuid(),
     isFree: z.boolean().optional(),
+    allowTips: z.boolean().optional(),
 })
 
 // POST /api/posts — create a new post (creator only)
 postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (c) => {
     const userFromSession = c.get('user')
-    const { title, content, excerpt, disclosure, imageUrl, creatorId, verticalId, isFree } = c.req.valid('json')
+    const { title, content, excerpt, disclosure, imageUrl, creatorId, verticalId, isFree, allowTips } = c.req.valid('json')
 
     // Verify user owns the creator profile
     const creatorUser = await db.query.creatorProfile.findFirst({
@@ -110,6 +116,7 @@ postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (
         creatorId,
         verticalId,
         isFree: isFree ?? false,
+        allowTips: allowTips ?? false,
     }).returning()
 
     // Fire-and-forget: notify all subscribers via in-app + email
@@ -182,12 +189,16 @@ postsRoutes.get('/my', requireAuth, async (c) => {
             title: post.title,
             excerpt: post.excerpt,
             isFree: post.isFree,
+            allowTips: post.allowTips,
             isPinned: post.isPinned,
             isPublished: post.isPublished,
             moderationStatus: post.moderationStatus,
             createdAt: post.createdAt,
+            verticalName: vertical.name,
+            verticalSlug: vertical.slug,
         })
         .from(post)
+        .leftJoin(vertical, eq(post.verticalId, vertical.id))
         .where(eq(post.creatorId, creatorProfileId))
         .orderBy(desc(post.isPinned), desc(post.createdAt))
     ).map(async (p) => {
@@ -259,9 +270,11 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
             disclosure: post.disclosure,
             imageUrl: post.imageUrl,
             isFree: post.isFree,
+            allowTips: post.allowTips,
             createdAt: post.createdAt,
             creatorId: post.creatorId,
             creatorPseudonym: creatorProfile.pseudonym,
+            creatorUserId: user.id,
             creatorImage: user.image, // helpful for UI
             creatorUsername: user.username, // helpful for linking
             verticalId: post.verticalId,

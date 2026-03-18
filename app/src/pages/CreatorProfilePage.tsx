@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin, ShieldCheck } from 'lucide-react'
+import { Clock, Users, FileText, AlertTriangle, Loader2, ArrowBigUp, MessageCircle, Star, X, Pin, ShieldCheck, HandCoins } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
+import { TipModal } from '../components/TipModal'
 
 export default function CreatorProfilePage() {
     const { username } = useParams<{ username: string }>()
-    const { user } = useAuth()
+    const { user, walletAddress, walletBalance } = useAuth()
     const [data, setData] = useState<{ creator: any; posts: any[]; feedback?: any[] } | null>(null)
     const [loading, setLoading] = useState(true)
     const [subscribing, setSubscribing] = useState(false)
     const [subscribed, setSubscribed] = useState(false)
     const [paymentError, setPaymentError] = useState('')
+    const [tipTarget, setTipTarget] = useState<{ creatorProfileId?: string; postId?: string; title: string; description: string } | null>(null)
+    const [tipping, setTipping] = useState(false)
+    const [tipError, setTipError] = useState('')
 
     // Rating state
     const [ratingValue, setRatingValue] = useState(0)
@@ -51,6 +55,28 @@ export default function CreatorProfilePage() {
             setPaymentError(err?.message || 'Payment failed. Please try again.')
         } finally {
             setSubscribing(false)
+        }
+    }
+
+    const handleTip = async (amountUsdc: number) => {
+        if (!user || !tipTarget) return
+
+        setTipping(true)
+        setTipError('')
+
+        try {
+            await api.tip({
+                amountUsdc,
+                ...(tipTarget.creatorProfileId
+                    ? { creatorProfileId: tipTarget.creatorProfileId }
+                    : { postId: tipTarget.postId }),
+            })
+            setTipTarget(null)
+        } catch (err: any) {
+            console.error('Tip failed:', err)
+            setTipError(err?.message || 'Tip failed. Please try again.')
+        } finally {
+            setTipping(false)
         }
     }
 
@@ -195,7 +221,7 @@ export default function CreatorProfilePage() {
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <SEO
                 title={`${creator.pseudonym || username} — Robotics & Hardware Author`}
-                description={`Support ${creator.pseudonym || username}'s engineering articles on Jence. ${creator.bio || 'Credited technical writing, disclosures, and lab-grade rigor.'}`}
+                description={`Subscribe to ${creator.pseudonym || username}'s engineering articles on Jence. ${creator.bio || 'Credited technical writing, disclosures, and lab-grade rigor.'}`}
                 url={`/${username}`}
                 image={creator.image || undefined}
                 type="profile"
@@ -277,7 +303,7 @@ export default function CreatorProfilePage() {
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Users size={12} />
-                                        {creator.subscriberCount || 0} supporters
+                                        {creator.subscriberCount || 0} subscribers
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <FileText size={12} />
@@ -300,35 +326,64 @@ export default function CreatorProfilePage() {
                                             ? 'bg-muted text-muted-foreground hover:bg-muted/80'
                                             : 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20'
                                         }`}
-                                >
-                                    {togglingBan ? 'Processing...' : (creator.isBanned ? 'Unban Account' : 'Ban Account')}
+                                    >
+                                        {togglingBan ? 'Processing...' : (creator.isBanned ? 'Unban Account' : 'Ban Account')}
                                 </button>
                             )}
-                            {user && !subscribed ? (
-                                <button
-                                    onClick={handleSubscribe}
-                                    disabled={subscribing}
-                                    className="btn-primary w-full sm:w-auto text-sm disabled:opacity-60 active:scale-[0.97] transition-all"
-                                >
-                                    {subscribing ? (
-                                        <>
-                                            <Loader2 size={14} className="animate-spin inline mr-2" />
-                                            {subscriptionPrice > 0 ? 'Processing payment...' : 'Supporting...'}
-                                        </>
+                            {user && user.id !== creator.userId ? (
+                                <>
+                                    {!subscribed ? (
+                                        <button
+                                            onClick={handleSubscribe}
+                                            disabled={subscribing}
+                                            className="btn-primary w-full sm:w-auto text-sm disabled:opacity-60 active:scale-[0.97] transition-all"
+                                        >
+                                            {subscribing ? (
+                                                <>
+                                                    <Loader2 size={14} className="animate-spin inline mr-2" />
+                                                    {subscriptionPrice > 0 ? 'Processing subscription...' : 'Subscribing...'}
+                                                </>
+                                            ) : (
+                                                subscriptionPrice > 0
+                                                    ? `Subscribe · $${subscriptionPrice}/mo`
+                                                    : 'Subscribe'
+                                            )}
+                                        </button>
                                     ) : (
-                                        subscriptionPrice > 0
-                                            ? `Support · $${subscriptionPrice}/mo`
-                                            : 'Support · Free'
+                                        <span className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 rounded-lg border border-jence-gold/30 bg-jence-gold/10 text-jence-gold text-sm font-semibold">
+                                            <ShieldCheck size={14} />
+                                            Premium access active
+                                        </span>
                                     )}
-                                </button>
-                            ) : subscribed ? (
-                                <span className="flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg bg-jence-green/10 text-jence-green text-sm font-medium">
-                                    ✓ Supporting
+
+                                    <button
+                                        onClick={() => {
+                                            setTipError('')
+                                            setTipTarget({
+                                                creatorProfileId: creator.id,
+                                                title: creator.pseudonym,
+                                                description: `Send a one-time tip to ${creator.pseudonym}.`,
+                                            })
+                                        }}
+                                        className="btn-secondary w-full sm:w-auto text-sm active:scale-[0.97] transition-all inline-flex items-center justify-center gap-2"
+                                    >
+                                        <HandCoins size={14} />
+                                        Tip creator
+                                    </button>
+                                </>
+                            ) : user ? (
+                                <span className="flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg border border-border bg-muted/30 text-sm font-medium text-muted-foreground">
+                                    This is your profile
                                 </span>
                             ) : (
-                                <Link to="/login" className="btn-primary w-full sm:w-auto text-center block text-sm active:scale-[0.97] transition-all">
-                                    Sign in to support
-                                </Link>
+                                <>
+                                    <Link to="/login" className="btn-primary w-full sm:w-auto text-center block text-sm active:scale-[0.97] transition-all">
+                                        Sign in to subscribe
+                                    </Link>
+                                    <Link to="/login" className="btn-secondary w-full sm:w-auto text-center block text-sm active:scale-[0.97] transition-all">
+                                        Tip creator
+                                    </Link>
+                                </>
                             )}
                         </div>
                     </div>
@@ -354,21 +409,42 @@ export default function CreatorProfilePage() {
                     <div className="space-y-4">
                         {posts.map((post: any) => (
                             <article key={post.id} className="card-plug p-5 hover:border-jence-gold/20 transition-colors">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
                                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                                         <Clock size={12} />
                                         {new Date(post.createdAt).toLocaleDateString()}
                                     </span>
-                                    {post.isFree && (
-                                        <span className="px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs">
-                                            Free
+                                    {post.verticalName && (
+                                        <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs">
+                                            {post.verticalName}
                                         </span>
                                     )}
-                                    {!post.isFree && (
-                                        <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-jence-gold" />
-                                            Paid
-                                        </span>
+                                    {post.allowTips && (
+                                        user && user.id !== creator.userId ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setTipError('')
+                                                    setTipTarget({
+                                                        postId: post.id,
+                                                        title: post.title,
+                                                        description: `Send a one-time tip for "${post.title}".`,
+                                                    })
+                                                }}
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-xs hover:bg-jence-gold/10 transition-colors"
+                                            >
+                                                <HandCoins size={10} />
+                                                Tip
+                                            </button>
+                                        ) : (
+                                            <Link
+                                                to="/login"
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-xs hover:bg-jence-gold/10 transition-colors"
+                                            >
+                                                <HandCoins size={10} />
+                                                Tip
+                                            </Link>
+                                        )
                                     )}
                                     {post.isPinned && (
                                         <span className="px-2 py-0.5 rounded-full bg-jence-gold/10 text-jence-gold text-xs flex items-center gap-1">
@@ -391,9 +467,13 @@ export default function CreatorProfilePage() {
                                     {!post.isFree && !subscribed && user?.id !== creator.userId && (
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             <div className="bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border shadow-sm pointer-events-auto">
-                                                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                                    🔒 Support to read
-                                                </span>
+                                                <Link
+                                                    to={`/${creator.username || creator.pseudonym}`}
+                                                    className="text-xs font-semibold text-foreground flex items-center gap-1.5"
+                                                >
+                                                    <ShieldCheck size={12} />
+                                                    Subscribe to read
+                                                </Link>
                                             </div>
                                         </div>
                                     )}
@@ -503,7 +583,7 @@ export default function CreatorProfilePage() {
                                         </div>
                                     ) : (
                                         <div className="card-plug p-4 mb-6 bg-background text-center border-dashed">
-                                            <p className="text-xs text-muted-foreground">Support creator to leave a review.</p>
+                                            <p className="text-xs text-muted-foreground">Subscribe to leave a review.</p>
                                         </div>
                                     )
                                 )}
@@ -549,6 +629,20 @@ export default function CreatorProfilePage() {
                         </div>
                     </div>
                 )}
+
+                <TipModal
+                    isOpen={!!tipTarget}
+                    onClose={() => {
+                        setTipTarget(null)
+                        setTipError('')
+                    }}
+                    onConfirm={handleTip}
+                    isSubmitting={tipping}
+                    title={tipTarget ? `Tip ${tipTarget.title}` : 'Tip creator'}
+                    description={tipTarget?.description || 'Send a one-time tip from your embedded wallet.'}
+                    balance={walletAddress ? walletBalance : undefined}
+                    error={tipError}
+                />
 
                 {/* Disclaimer */}
                 <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">

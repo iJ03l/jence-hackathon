@@ -107,6 +107,12 @@ export default function SettingsPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        const supportedImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|avif|avifs|heic|heif|heics|heifs)$/i.test(file.name)
+        if (!supportedImage) {
+            alert('Jence only accepts JPG, PNG, GIF, WebP, AVIF, or HEIC images.')
+            return
+        }
+
         setUploadingImage(true)
         try {
             const res = await api.uploadImage(file)
@@ -115,7 +121,7 @@ export default function SettingsPage() {
             }
         } catch (error) {
             console.error('Failed to upload image:', error)
-            alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.')
+            alert(error instanceof Error ? error.message : 'Jence could not upload that image. Please try again.')
         } finally {
             setUploadingImage(false)
         }
@@ -280,13 +286,13 @@ export default function SettingsPage() {
                                             <label className="block text-sm font-medium text-foreground mb-1.5">Profile Picture</label>
                                             <input
                                                 type="file"
-                                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif"
                                                 onChange={handleImageUpload}
                                                 disabled={uploadingImage}
                                                 className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-jence-gold/10 file:text-jence-gold hover:file:bg-jence-gold/20 cursor-pointer disabled:opacity-50"
                                             />
                                             {uploadingImage && <p className="text-xs text-jence-gold mt-1">Uploading...</p>}
-                                            {!uploadingImage && <p className="text-xs text-muted-foreground mt-1">Upload a JPG, PNG, GIF, or WebP.</p>}
+                                            {!uploadingImage && <p className="text-xs text-muted-foreground mt-1">Jence supports JPG, PNG, GIF, WebP, AVIF, or HEIC.</p>}
                                         </div>
                                     </div>
 
@@ -389,14 +395,14 @@ export default function SettingsPage() {
                             <div className="card-plug p-6">
                                 <h2 className="font-semibold text-foreground mb-4">Tipping Management</h2>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Manage your creator tipping. Payments are processed using your natively provisioned secure wallet. Support creators to see them here.
+                                    Manage your creator tipping. Payments are processed using your natively provisioned secure wallet. Subscribe to creators to see them here.
                                 </p>
 
                                 {user?.role === 'creator' && (
                                     <>
                                         <h3 className="text-sm font-semibold text-foreground mt-8 mb-4 border-t border-border pt-6">Creator Earnings & Payouts</h3>
                                         <p className="text-sm text-muted-foreground mb-6">
-                                            Configure how much your supporters tip each month to access your premium work. Earnings are sent zero-fee to your wallet.
+                                            Configure how much your subscribers tip each month to access your premium work. Earnings are sent zero-fee to your wallet.
                                         </p>
 
                                         <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
@@ -422,7 +428,7 @@ export default function SettingsPage() {
                                                     />
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-1">
-                                                    Set to 0 for free access.
+                                                    Set to 0 for open access.
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2 h-8">
@@ -481,7 +487,7 @@ export default function SettingsPage() {
                                 <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
                                     <p className="text-muted-foreground text-sm">No active tips</p>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        Support creators to see them here
+                                        Subscribe to creators to see them here
                                     </p>
                                 </div>
                             </div>

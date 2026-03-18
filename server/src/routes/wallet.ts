@@ -5,6 +5,7 @@ import { wallet } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 import { generateAndEncryptWallet, decryptWallet } from '../lib/kms.js'
 import { getRpcConnection, signWithRelayer } from '../lib/relayer.js'
+import { getUsdcBalance } from '../lib/usdc.js'
 import { VersionedTransaction } from '@solana/web3.js'
 import bs58 from 'bs58'
 
@@ -41,10 +42,12 @@ walletRoutes.get('/me', async (c) => {
     })
 
     if (!userWallet) {
-        return c.json({ address: null })
+        return c.json({ address: null, usdcBalance: 0 })
     }
 
-    return c.json({ address: userWallet.publicKey })
+    const usdcBalance = await getUsdcBalance(userWallet.publicKey)
+
+    return c.json({ address: userWallet.publicKey, usdcBalance })
 })
 
 // POST /api/wallet/create - Create a new managed wallet for the user

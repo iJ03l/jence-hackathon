@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { user, creatorProfile, subscription, post, postVote } from '../db/schema.js'
+import { user, creatorProfile, subscription, post, postVote, tip } from '../db/schema.js'
 import { count, eq, sql, desc, sum, and } from 'drizzle-orm'
 import { auth } from '../auth.js'
 
@@ -40,13 +40,19 @@ adminRoutes.get('/metrics', async (c) => {
         const [{ totalCreators }] = await db.select({ totalCreators: count() })
             .from(user).where(eq(user.role, 'creator'))
         
-        // Amount tipped (sum of all subscriptions tracked if we assume they are active tipped amounts)
-        // Since subscriptionAmountUsdc is a string, we SQL cast it
-        const [{ amountTipped }] = await db.select({
-            amountTipped: sql<number>`SUM(CAST(${subscription.amountUsdc} AS numeric))`
+        // Amount tipped now includes both active subscriptions and one-time tips.
+        const [{ subscriptionTipped }] = await db.select({
+            subscriptionTipped: sql<number>`COALESCE(SUM(CAST(COALESCE(${subscription.amountUsdc}, '0') AS numeric)), 0)`
         })
-        .from(subscription)
-        .where(eq(subscription.status, 'active'))
+            .from(subscription)
+            .where(eq(subscription.status, 'active'))
+
+        const [{ oneTimeTipped }] = await db.select({
+            oneTimeTipped: sql<number>`COALESCE(SUM(CAST(${tip.amountUsdc} AS numeric)), 0)`
+        })
+            .from(tip)
+
+        const amountTipped = Number(subscriptionTipped || 0) + Number(oneTimeTipped || 0)
 
         // Top articles (by likes implicitly through postVote, but we can just use the post table if tracking total)
         const topArticles = await db.select({
@@ -89,11 +95,18 @@ adminRoutes.get('/metrics/history', async (c) => {
         // In a real app we'd group by date from the DB. 
         // Here we generate realistic-looking mock data based on the current totals.
         const [{ totalUsers }] = await db.select({ totalUsers: count() }).from(user)
-        const [{ amountTipped }] = await db.select({
-            amountTipped: sql<number>`SUM(CAST(${subscription.amountUsdc} AS numeric))`
+        const [{ subscriptionTipped }] = await db.select({
+            subscriptionTipped: sql<number>`COALESCE(SUM(CAST(COALESCE(${subscription.amountUsdc}, '0') AS numeric)), 0)`
         })
-        .from(subscription)
-        .where(eq(subscription.status, 'active'))
+            .from(subscription)
+            .where(eq(subscription.status, 'active'))
+
+        const [{ oneTimeTipped }] = await db.select({
+            oneTimeTipped: sql<number>`COALESCE(SUM(CAST(${tip.amountUsdc} AS numeric)), 0)`
+        })
+            .from(tip)
+
+        const amountTipped = Number(subscriptionTipped || 0) + Number(oneTimeTipped || 0)
 
         const currentUsers = totalUsers || 0
         const currentVolume = Number(amountTipped) || 0

@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
     CheckCircle2, Shield, ArrowRight, Rocket, Clock,
-    Send, Loader2, X, AlertCircle, Trash2
+    Send, Loader2, X, AlertCircle, Trash2, HandCoins
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
+import { Switch } from '../components/ui/switch'
+import { TipModal } from '../components/TipModal'
 
 export default function LaunchNotesPage() {
-    const { user } = useAuth()
+    const { user, walletAddress, walletBalance } = useAuth()
     const [launches, setLaunches] = useState<any[]>([])
     const [myLaunches, setMyLaunches] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -22,9 +24,13 @@ export default function LaunchNotesPage() {
     const [summary, setSummary] = useState('')
     const [tagsInput, setTagsInput] = useState('')
     const [disclosure, setDisclosure] = useState('')
+    const [allowTips, setAllowTips] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
     const [submitSuccess, setSubmitSuccess] = useState(false)
+    const [tipTarget, setTipTarget] = useState<{ launchId: string; title: string; description: string } | null>(null)
+    const [tipping, setTipping] = useState(false)
+    const [tipError, setTipError] = useState('')
 
     // Admin review state
     const [reviewing, setReviewing] = useState<string | null>(null)
@@ -69,6 +75,7 @@ export default function LaunchNotesPage() {
                 summary,
                 tags: tags.length > 0 ? tags : undefined,
                 disclosure: disclosure.trim() || undefined,
+                allowTips,
             })
 
             setSubmitSuccess(true)
@@ -77,6 +84,7 @@ export default function LaunchNotesPage() {
             setSummary('')
             setTagsInput('')
             setDisclosure('')
+            setAllowTips(false)
             setTimeout(() => {
                 setSubmitSuccess(false)
                 setShowForm(false)
@@ -108,6 +116,26 @@ export default function LaunchNotesPage() {
             loadLaunches()
         } catch (err: any) {
             console.error('Delete failed', err)
+        }
+    }
+
+    const handleTip = async (amountUsdc: number) => {
+        if (!tipTarget) return
+
+        setTipping(true)
+        setTipError('')
+
+        try {
+            await api.tip({
+                amountUsdc,
+                launchNoteId: tipTarget.launchId,
+            })
+            setTipTarget(null)
+        } catch (err: any) {
+            console.error('Tip failed', err)
+            setTipError(err?.message || 'Tip failed. Please try again.')
+        } finally {
+            setTipping(false)
         }
     }
 
@@ -260,6 +288,16 @@ export default function LaunchNotesPage() {
                                     />
                                 </div>
 
+                                <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/10 p-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground">Allow tips</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Let readers send one-time tips to this launch after approval.
+                                        </p>
+                                    </div>
+                                    <Switch checked={allowTips} onCheckedChange={setAllowTips} />
+                                </div>
+
                                 <button
                                     type="submit"
                                     disabled={submitting}
@@ -363,6 +401,34 @@ export default function LaunchNotesPage() {
                                     </div>
                                     {statusBadge(launch.status)}
                                 </div>
+                                {launch.allowTips && (
+                                    <div className="mt-4 flex justify-end">
+                                        {user ? (
+                                            <button
+                                                onClick={() => {
+                                                    setTipError('')
+                                                    setTipTarget({
+                                                        launchId: launch.id,
+                                                        title: launch.name,
+                                                        description: `Send a one-time tip for "${launch.name}".`,
+                                                    })
+                                                }}
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
+                                            >
+                                                <HandCoins size={12} />
+                                                Tip launch
+                                            </button>
+                                        ) : (
+                                            <Link
+                                                to="/login"
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
+                                            >
+                                                <HandCoins size={12} />
+                                                Tip launch
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
                                 {launch.tags && launch.tags.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-4">
                                         {launch.tags.map((tag: string) => (
@@ -409,6 +475,20 @@ export default function LaunchNotesPage() {
                         )}
                     </div>
                 )}
+
+                <TipModal
+                    isOpen={!!tipTarget}
+                    onClose={() => {
+                        setTipTarget(null)
+                        setTipError('')
+                    }}
+                    onConfirm={handleTip}
+                    isSubmitting={tipping}
+                    title={tipTarget ? `Tip ${tipTarget.title}` : 'Tip launch'}
+                    description={tipTarget?.description || 'Send a one-time tip from your embedded wallet.'}
+                    balance={walletAddress ? walletBalance : undefined}
+                    error={tipError}
+                />
 
                 {/* Submission requirements */}
                 <div className="mt-10 p-6 rounded-xl border border-border bg-muted/20">

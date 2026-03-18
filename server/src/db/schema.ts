@@ -101,6 +101,7 @@ export const post = pgTable('post', {
     verticalId: uuid('vertical_id').notNull().references(() => vertical.id),
     isPublished: boolean('is_published').notNull().default(true),
     isFree: boolean('is_free').notNull().default(false),
+    allowTips: boolean('allow_tips').notNull().default(false),
     isPinned: boolean('is_pinned').notNull().default(false),
     moderationStatus: text('moderation_status').notNull().default('published'), // 'published' | 'under_review' | 'removed'
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -239,9 +240,23 @@ export const launchNote = pgTable('launch_note', {
     summary: text('summary').notNull(), // product summary
     tags: text('tags').notNull().default('[]'), // JSON array of tag strings
     disclosure: text('disclosure'),      // conflict-of-interest disclosure
+    allowTips: boolean('allow_tips').notNull().default(false),
     status: text('status').notNull().default('pending'), // 'pending' | 'approved' | 'rejected'
     reviewedBy: text('reviewed_by').references(() => user.id), // admin who reviewed
     reviewNote: text('review_note'),    // admin note on rejection/approval
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const tip = pgTable('tip', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tipperUserId: text('tipper_user_id').notNull().references(() => user.id),
+    recipientUserId: text('recipient_user_id').notNull().references(() => user.id),
+    targetType: text('target_type').notNull(), // 'creator' | 'post' | 'launch'
+    creatorProfileId: uuid('creator_profile_id').references(() => creatorProfile.id),
+    postId: uuid('post_id').references(() => post.id),
+    launchNoteId: uuid('launch_note_id').references(() => launchNote.id),
+    amountUsdc: text('amount_usdc').notNull(),
+    txSignature: text('tx_signature'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
 })

@@ -30,6 +30,7 @@ launchRoutes.get('/', optionalAuth, async (c) => {
                 summary: launchNote.summary,
                 tags: launchNote.tags,
                 disclosure: launchNote.disclosure,
+                allowTips: launchNote.allowTips,
                 status: launchNote.status,
                 reviewNote: launchNote.reviewNote,
                 createdAt: launchNote.createdAt,
@@ -56,6 +57,7 @@ launchRoutes.get('/', optionalAuth, async (c) => {
             company: launchNote.company,
             summary: launchNote.summary,
             tags: launchNote.tags,
+            allowTips: launchNote.allowTips,
             status: launchNote.status,
             createdAt: launchNote.createdAt,
             authorName: user.name,
@@ -92,11 +94,12 @@ const createLaunchSchema = z.object({
     summary: z.string().min(10).max(2000),
     tags: z.array(z.string().max(50)).max(5).optional(),
     disclosure: z.string().max(2000).optional(),
+    allowTips: z.boolean().optional(),
 })
 
 launchRoutes.post('/', requireAuth, zValidator('json', createLaunchSchema), async (c) => {
     const userFromSession = c.get('user')
-    const { name, company, summary, tags, disclosure } = c.req.valid('json')
+    const { name, company, summary, tags, disclosure, allowTips } = c.req.valid('json')
 
     const [newLaunch] = await db.insert(launchNote).values({
         userId: userFromSession.id,
@@ -105,6 +108,7 @@ launchRoutes.post('/', requireAuth, zValidator('json', createLaunchSchema), asyn
         summary,
         tags: JSON.stringify(tags || []),
         disclosure: disclosure?.trim() || null,
+        allowTips: allowTips ?? false,
         status: 'pending', // always pending until admin approves
     }).returning()
 

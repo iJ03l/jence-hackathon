@@ -1,3 +1,4 @@
+import { api } from '../lib/api'
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 
 interface User {
@@ -12,6 +13,7 @@ interface User {
 interface AuthContextType {
     user: User | null
     walletAddress: string | null
+    walletBalance: number
     loading: boolean
     signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error?: string }>
     signUp: (username: string, email: string, password: string, role: string) => Promise<{ error?: string }>
@@ -28,6 +30,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [walletAddress, setWalletAddress] = useState<string | null>(null)
+    const [walletBalance, setWalletBalance] = useState(0)
     const [loading, setLoading] = useState(true)
 
     const refreshSession = useCallback(async () => {
@@ -69,24 +72,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setUser(fetchedUser)
 
                     try {
-                        const walletRes = await fetch(`${API_URL}/api/wallet/me`, { credentials: 'include' })
-                        if (walletRes.ok) {
-                            const walletData = await walletRes.json()
-                            setWalletAddress(walletData?.address || null)
-                        }
+                        const walletData = await api.getWalletMe()
+                        setWalletAddress(walletData?.address || null)
+                        setWalletBalance(Number(walletData?.usdcBalance || 0))
                     } catch (e) {
                         console.error('Failed to fetch wallet address', e)
+                        setWalletBalance(0)
                     }
                 } else {
                     setWalletAddress(null)
+                    setWalletBalance(0)
                 }
             } else {
                 setUser(null)
                 setWalletAddress(null)
+                setWalletBalance(0)
             }
         } catch {
             setUser(null)
             setWalletAddress(null)
+            setWalletBalance(0)
         } finally {
             setLoading(false)
         }
@@ -149,10 +154,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setUser(null)
         setWalletAddress(null)
+        setWalletBalance(0)
     }
 
     return (
-        <AuthContext.Provider value={{ user, walletAddress, loading, signIn, signUp, signOut: handleSignOut, refreshSession }}>
+        <AuthContext.Provider value={{ user, walletAddress, walletBalance, loading, signIn, signUp, signOut: handleSignOut, refreshSession }}>
             {children}
         </AuthContext.Provider>
     )

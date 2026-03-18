@@ -21,7 +21,7 @@ export default function TermsPage() {
                         <section>
                             <h2 className="text-lg font-semibold text-foreground mb-3">2. Description of Service</h2>
                             <p>
-                                Jence is a robotics and hardware engineering publication. Authors publish credited technical articles, labs, teardowns, and research notes. Subscribers pay to access premium content, and a free community forum supports discussion and Q&A.
+                                Jence is a robotics and hardware engineering publication. Authors publish credited technical articles, labs, teardowns, and research notes. Subscribers pay to access premium content, and the community forum supports discussion and Q&A.
                             </p>
                         </section>
 
