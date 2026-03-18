@@ -487,17 +487,12 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
 
         setUploadingImage(true)
         try {
-            const formData = new FormData()
-            formData.append('file', file)
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
-                method: 'POST',
-                body: formData
-            })
-
-            if (!response.ok) throw new Error('Upload failed')
-
-            const data = await response.json()
-            setImageUrl(data.url)
+            const data = await api.uploadImage(file)
+            if (data?.url) {
+                setImageUrl(data.url)
+            } else {
+                throw new Error('Upload failed')
+            }
         } catch (err: any) {
             console.error('Image upload failed:', err)
             alert('Failed to upload image. Please try again.')
