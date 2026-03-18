@@ -510,7 +510,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             return
         }
         if (!disclosure.trim()) {
-            alert('Please add a conflict-of-interest disclosure.')
+            alert('Please add a credit.')
             return
         }
         if (!creatorId || !selectedVerticalId) {
@@ -629,15 +629,15 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Conflict of interest disclosure</label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Credit</label>
                     <textarea
                         value={disclosure}
                         onChange={(e) => setDisclosure(e.target.value)}
                         className="input-field min-h-[120px]"
-                        placeholder="List any sponsor ties, vendor relationships, or state 'No conflicts declared.'"
+                        placeholder="Add article credit, sponsor ties, vendor relationships, or state 'No external support.'"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                        Disclosures are required on every article and shown publicly.
+                        Credits are shown publicly on every article.
                     </p>
                 </div>
 

@@ -34,6 +34,7 @@ export default function LaunchNotesPage() {
 
     // Admin review state
     const [reviewing, setReviewing] = useState<string | null>(null)
+    const ownLaunchIds = new Set(myLaunches.map((launch) => launch.id))
 
     useEffect(() => {
         loadLaunches()
@@ -403,7 +404,15 @@ export default function LaunchNotesPage() {
                                 </div>
                                 {launch.allowTips && (
                                     <div className="mt-4 flex justify-end">
-                                        {user ? (
+                                        {!user ? (
+                                            <Link
+                                                to="/login"
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
+                                            >
+                                                <HandCoins size={12} />
+                                                Tip launch
+                                            </Link>
+                                        ) : !ownLaunchIds.has(launch.id) ? (
                                             <button
                                                 onClick={() => {
                                                     setTipError('')
@@ -418,15 +427,7 @@ export default function LaunchNotesPage() {
                                                 <HandCoins size={12} />
                                                 Tip launch
                                             </button>
-                                        ) : (
-                                            <Link
-                                                to="/login"
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold hover:bg-jence-gold/10 transition-colors"
-                                            >
-                                                <HandCoins size={12} />
-                                                Tip launch
-                                            </Link>
-                                        )}
+                                        ) : null}
                                     </div>
                                 )}
                                 {launch.tags && launch.tags.length > 0 && (

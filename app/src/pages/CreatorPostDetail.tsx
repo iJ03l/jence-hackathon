@@ -272,24 +272,23 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                 <MessageCircle size={18} />
                                 <span>{comments.length}</span>
                             </div>
-                            {post.allowTips && (
-                                user && user.id !== post.creatorUserId ? (
-                                    <button
-                                        onClick={() => {
-                                            setTipError('')
-                                            setTipOpen(true)
-                                        }}
-                                        className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors"
-                                    >
-                                        <HandCoins size={18} />
-                                        Tip creator
-                                    </button>
-                                ) : (
-                                    <Link to="/login" className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors">
-                                        <HandCoins size={18} />
-                                        Tip creator
-                                    </Link>
-                                )
+                            {post.allowTips && !user && (
+                                <Link to="/login" className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors">
+                                    <HandCoins size={18} />
+                                    Tip creator
+                                </Link>
+                            )}
+                            {post.allowTips && user && user.id !== post.creatorUserId && (
+                                <button
+                                    onClick={() => {
+                                        setTipError('')
+                                        setTipOpen(true)
+                                    }}
+                                    className="inline-flex items-center gap-2 text-sm font-medium text-jence-gold hover:text-jence-gold/80 transition-colors"
+                                >
+                                    <HandCoins size={18} />
+                                    Tip creator
+                                </button>
                             )}
                             <button
                                 onClick={async () => {

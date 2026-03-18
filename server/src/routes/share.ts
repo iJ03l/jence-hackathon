@@ -25,11 +25,11 @@ function normalizeText(value?: string | null, limit = 160) {
     return `${cleaned.slice(0, limit - 3).trimEnd()}...`
 }
 
-function renderPreviewPage(params: {
+export function renderPreviewPage(params: {
     title: string
     description: string
     image: string
-    canonicalUrl: string
+    shareUrl: string
     redirectUrl: string
     author?: string
     type?: 'article' | 'website'
@@ -37,7 +37,7 @@ function renderPreviewPage(params: {
     const title = escapeHtml(params.title)
     const description = escapeHtml(params.description)
     const image = escapeHtml(params.image || DEFAULT_IMAGE)
-    const canonicalUrl = escapeHtml(params.canonicalUrl)
+    const shareUrl = escapeHtml(params.shareUrl)
     const redirectUrl = escapeHtml(params.redirectUrl)
     const author = params.author ? escapeHtml(params.author) : ''
     const type = params.type || 'article'
@@ -50,16 +50,15 @@ function renderPreviewPage(params: {
   <title>${title} | ${SITE_NAME}</title>
   <meta name="description" content="${description}" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="canonical" href="${canonicalUrl}" />
-  <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
 
   <meta property="og:site_name" content="${SITE_NAME}" />
   <meta property="og:type" content="${type}" />
   <meta property="og:title" content="${title} | ${SITE_NAME}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${image}" />
+  <meta property="og:image:secure_url" content="${image}" />
   <meta property="og:image:alt" content="${title}" />
-  <meta property="og:url" content="${canonicalUrl}" />
+  <meta property="og:url" content="${shareUrl}" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title} | ${SITE_NAME}" />
@@ -85,7 +84,7 @@ function renderPreviewPage(params: {
   <main class="shell">
     <div class="eyebrow">Jence Preview</div>
     <h1>${title}</h1>
-    <p>${description || 'Redirecting to Jence...'}</p>
+    <p>${description || 'Opening this Jence page...'}</p>
     <a href="${redirectUrl}">Continue</a>
   </main>
 </body>
@@ -117,24 +116,25 @@ shareRoutes.get('/post/:id', async (c) => {
             title: 'Article not found',
             description: 'This Jence article is unavailable or has been removed.',
             image: DEFAULT_IMAGE,
-            canonicalUrl: `${FRONTEND_URL}/`,
+            shareUrl: c.req.url,
             redirectUrl: `${FRONTEND_URL}/`,
             type: 'website',
         }), 404)
     }
 
-    const canonicalUrl = `${FRONTEND_URL}/post/${postData.id}`
+    const redirectUrl = `${FRONTEND_URL}/post/${postData.id}`
     const description = normalizeText(postData.excerpt || postData.content, 160) || `Read ${postData.title} on Jence.`
     const image = postData.imageUrl || postData.creatorImage || DEFAULT_IMAGE
     const author = postData.creatorPseudonym || postData.creatorUsername || 'Jence'
 
+    c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
     c.header('X-Robots-Tag', 'noindex, nofollow')
     return c.html(renderPreviewPage({
         title: postData.title,
         description,
         image,
-        canonicalUrl,
-        redirectUrl: canonicalUrl,
+        shareUrl: c.req.url,
+        redirectUrl,
         author,
         type: 'article',
     }))
@@ -163,23 +163,24 @@ shareRoutes.get('/community/post/:id', async (c) => {
             title: 'Discussion not found',
             description: 'This Jence discussion is unavailable or has been removed.',
             image: DEFAULT_IMAGE,
-            canonicalUrl: `${FRONTEND_URL}/community`,
+            shareUrl: c.req.url,
             redirectUrl: `${FRONTEND_URL}/community`,
             type: 'website',
         }), 404)
     }
 
-    const canonicalUrl = `${FRONTEND_URL}/community/post/${postData.id}`
+    const redirectUrl = `${FRONTEND_URL}/community/post/${postData.id}`
     const author = postData.pseudonym || postData.username || postData.name || 'Jence'
     const description = normalizeText(postData.content, 160) || `Read the discussion by ${author} on Jence.`
 
+    c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
     c.header('X-Robots-Tag', 'noindex, nofollow')
     return c.html(renderPreviewPage({
         title: `Discussion by @${postData.username || author}`,
         description,
         image: postData.image || DEFAULT_IMAGE,
-        canonicalUrl,
-        redirectUrl: canonicalUrl,
+        shareUrl: c.req.url,
+        redirectUrl,
         author,
         type: 'article',
     }))
