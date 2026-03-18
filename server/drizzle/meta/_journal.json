@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1771506338079,
+      "tag": "0000_pink_ghost_rider",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771506486811,
+      "tag": "0001_light_apocalypse",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771911629053,
+      "tag": "0002_flat_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771912084264,
+      "tag": "0003_easy_wind_dancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773687278323,
+      "tag": "0004_glamorous_invaders",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773757006132,
+      "tag": "0005_steep_mystique",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773824283761,
+      "tag": "0006_steady_harbor",
+      "breakpoints": true
+    }
+  ]
+}
