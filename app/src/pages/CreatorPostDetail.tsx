@@ -152,7 +152,7 @@ export default function CreatorPostDetail() {
         )
     }
 
-    const disclosureText = post.disclosure?.trim() || 'No conflicts of interest were declared for this article.'
+    const disclosureText = post.disclosure?.trim() || 'No article credit was provided for this article.'
 
     return (
         <section className="pt-20 sm:pt-24 pb-16 px-3 sm:px-6 lg:px-8 bg-background min-h-screen">
@@ -202,7 +202,7 @@ export default function CreatorPostDetail() {
 
                     <div className="mt-5 sm:mt-6 space-y-5">
                         <div className="p-4 rounded-xl border border-border bg-muted/30">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Conflict of interest</p>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Article credit</p>
                             <p className="text-sm text-muted-foreground">{disclosureText}</p>
                         </div>
 

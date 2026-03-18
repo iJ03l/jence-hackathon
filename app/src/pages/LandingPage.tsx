@@ -36,8 +36,8 @@ export default function LandingPage() {
 
             {/* ─── Latest Articles ─── */}
             <section className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 xl:px-12">
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="max-w-[52rem] mx-auto">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
                             <span className="label-mono mb-1.5 block">Latest</span>
                             <h2 className="heading-md text-foreground">
@@ -56,7 +56,7 @@ export default function LandingPage() {
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="card-plug p-5 animate-pulse min-h-[250px]">
+                                <div key={i} className="card-plug p-4 animate-pulse min-h-[180px]">
                                     <div className="h-4 bg-muted rounded w-20 mb-3" />
                                     <div className="h-5 bg-muted rounded w-4/5 mb-2" />
                                     <div className="h-3 bg-muted rounded w-full mb-1" />
@@ -66,7 +66,7 @@ export default function LandingPage() {
                         </div>
                     ) : latestPosts.length > 0 ? (
                         <div className="flex flex-col gap-6">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                                 {latestPosts.map((post, index) => {
                                     const isFeaturePost = index === 0;
 
@@ -74,16 +74,16 @@ export default function LandingPage() {
                                         <Link
                                             key={post.id}
                                             to={`/post/${post.id}`}
-                                            className={`group relative overflow-hidden transition-all duration-500 rounded-2xl border border-border/40 bg-card/20 backdrop-blur-sm hover:bg-card/40 hover:border-jence-gold/30 hover:shadow-[0_0_30px_rgba(212,175,55,0.05)] flex flex-col ${
+                                            className={`group relative overflow-hidden transition-all duration-500 rounded-xl border border-border/40 bg-card/20 backdrop-blur-sm hover:bg-card/40 hover:border-jence-gold/30 hover:shadow-[0_0_30px_rgba(212,175,55,0.05)] flex flex-col ${
                                                 isFeaturePost
                                                     ? 'md:col-span-12 lg:col-span-8'
                                                     : 'md:col-span-6 lg:col-span-4'
                                             }`}
                                         >
-                                            <div className="relative z-10 flex flex-col h-full p-6 sm:p-8">
-                                                <div className="flex flex-wrap items-center gap-2 mb-4">
+                                            <div className="relative z-10 flex flex-col h-full p-4 sm:p-5">
+                                                <div className="flex flex-wrap items-center gap-2 mb-3">
                                                     {post.verticalName && (
-                                                        <span className="px-2.5 py-1 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-[10px] font-semibold uppercase tracking-widest backdrop-blur-md">
+                                                        <span className="px-2 py-0.5 rounded-full border border-jence-gold/20 bg-jence-gold/5 text-jence-gold text-[9px] font-semibold uppercase tracking-widest backdrop-blur-md">
                                                             {post.verticalName}
                                                         </span>
                                                     )}
@@ -91,35 +91,35 @@ export default function LandingPage() {
 
                                                 <h3 className={`font-medium text-foreground transition-colors group-hover:text-jence-gold mb-3 ${
                                                     isFeaturePost 
-                                                        ? 'text-2xl sm:text-3xl lg:text-4xl leading-[1.15] tracking-tight' 
-                                                        : 'text-xl leading-snug tracking-tight line-clamp-2'
+                                                        ? 'text-xl sm:text-2xl lg:text-[2rem] leading-[1.15] tracking-tight' 
+                                                        : 'text-lg leading-snug tracking-tight line-clamp-2'
                                                 }`}>
                                                     {post.title}
                                                 </h3>
 
                                                 <p className={`text-muted-foreground/80 font-light ${
                                                     isFeaturePost 
-                                                        ? 'text-base sm:text-lg line-clamp-2 sm:line-clamp-3 max-w-2xl mb-6' 
-                                                        : 'text-sm line-clamp-2 mb-5'
+                                                        ? 'text-sm sm:text-base line-clamp-2 sm:line-clamp-3 max-w-xl mb-5' 
+                                                        : 'text-xs line-clamp-2 mb-4'
                                                 }`}>
                                                     {post.excerpt || ''}
                                                 </p>
 
-                                                <div className="flex items-center gap-3 pt-4 border-t border-border/30">
-                                                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
+                                                <div className="flex items-center gap-2.5 pt-3 border-t border-border/30">
+                                                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-foreground">
                                                         {(post.creatorPseudonym || 'A')[0].toUpperCase()}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-semibold text-foreground/90 leading-none mb-1">
+                                                        <span className="text-[11px] font-semibold text-foreground/90 leading-none mb-1">
                                                             {post.creatorPseudonym || 'Jence Author'}
                                                         </span>
-                                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                                                             {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                <div className={`mt-5 overflow-hidden rounded-2xl border border-border/40 bg-muted/20 ${isFeaturePost ? 'aspect-[16/10]' : 'aspect-[4/3]'}`}>
+                                                <div className="mt-4 overflow-hidden rounded-xl border border-border/40 bg-muted/20 aspect-[3/1]">
                                                     {post.imageUrl ? (
                                                         <img
                                                             src={post.imageUrl}
