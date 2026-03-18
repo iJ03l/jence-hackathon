@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Building2, CalendarDays, HandCoins, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowBigUp, ArrowRight, Building2, CalendarDays, HandCoins, ShieldCheck, UserRound } from 'lucide-react'
 
 type LaunchPreviewCardProps = {
     launch: any
@@ -44,102 +44,115 @@ export default function LaunchPreviewCard({ launch, to, authorTo, actions, class
     const author = launch.authorPseudonym || launch.authorUsername || launch.authorName || 'Jence author'
     const statusMeta = getLaunchStatusMeta(launch.status)
     const companyMark = getMonogram(launch.company || launch.name || 'JN')
+    const upvotes = Number(launch.upvotes || 0)
 
     return (
         <article
             className={joinClassNames(
-                'group relative overflow-hidden rounded-[28px] border border-border/60 bg-gradient-to-br from-background via-card to-muted/20 p-5 sm:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:border-jence-gold/30 hover:shadow-[0_26px_90px_rgba(212,175,55,0.12)] dark:shadow-[0_28px_90px_rgba(0,0,0,0.35)]',
+                'group rounded-[26px] border border-border/70 bg-background/90 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:border-jence-gold/25 hover:shadow-[0_20px_54px_rgba(15,23,42,0.08)] dark:shadow-[0_18px_48px_rgba(0,0,0,0.24)] sm:p-6',
                 className,
             )}
         >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.12),transparent_32%),linear-gradient(180deg,transparent,rgba(212,175,55,0.06))]" />
-            <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-jence-gold/8 blur-3xl" />
-
-            <div className="relative flex h-full flex-col">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 min-w-0">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-jence-gold/20 bg-gradient-to-br from-jence-gold/20 via-jence-gold/10 to-transparent text-sm font-black tracking-[0.2em] text-jence-gold">
-                            {companyMark}
-                        </div>
-                        <div className="min-w-0">
-                            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                                <span className="inline-flex items-center gap-1 rounded-full border border-jence-gold/20 bg-jence-gold/5 px-2.5 py-1 font-semibold text-jence-gold">
-                                    <ShieldCheck size={12} />
-                                    Launch Note
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                    <CalendarDays size={12} />
-                                    {new Date(launch.createdAt).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                    })}
-                                </span>
-                            </div>
-
-                            <Link to={to} className="block">
-                                <h3 className="text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-jence-gold sm:text-2xl">
-                                    {launch.name}
-                                </h3>
-                            </Link>
-
-                            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                <span className="inline-flex items-center gap-1.5">
-                                    <Building2 size={14} />
-                                    {launch.company}
-                                </span>
-                                {authorTo ? (
-                                    <Link to={authorTo} className="inline-flex items-center gap-1.5 text-jence-gold transition-colors hover:text-jence-gold/80">
-                                        <UserRound size={14} />
-                                        {author}
-                                    </Link>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <UserRound size={14} />
-                                        {author}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+            <div className="flex h-full flex-col">
+                <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-border/80 bg-muted/20 text-xs font-black tracking-[0.18em] text-foreground sm:h-16 sm:w-16">
+                        {launch.logoUrl ? (
+                            <img
+                                src={launch.logoUrl}
+                                alt={`${launch.company || launch.name} logo`}
+                                className="h-full w-full bg-white object-contain p-2.5"
+                            />
+                        ) : (
+                            companyMark
+                        )}
                     </div>
 
-                    <span className={joinClassNames('shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]', statusMeta.className)}>
-                        {statusMeta.label}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-jence-gold/20 bg-jence-gold/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-jence-gold">
+                                <ShieldCheck size={12} />
+                                Launch Note
+                            </span>
+                            <span className={joinClassNames('rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]', statusMeta.className)}>
+                                {statusMeta.label}
+                            </span>
+                        </div>
+
+                        <Link to={to} className="mt-3 block">
+                            <h3 className="text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-jence-gold sm:text-[1.7rem]">
+                                {launch.name}
+                            </h3>
+                        </Link>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5">
+                                <Building2 size={14} />
+                                {launch.company}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                                <CalendarDays size={14} />
+                                {new Date(launch.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                })}
+                            </span>
+                            {authorTo ? (
+                                <Link to={authorTo} className="inline-flex items-center gap-1.5 text-jence-gold transition-colors hover:text-jence-gold/80">
+                                    <UserRound size={14} />
+                                    {author}
+                                </Link>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <UserRound size={14} />
+                                    {author}
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <p className="mt-5 text-sm leading-7 text-muted-foreground sm:text-[15px]">
+                <p className="mt-5 line-clamp-4 text-sm leading-7 text-muted-foreground sm:text-[15px]">
                     {launch.summary}
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2">
-                    {(launch.tags || []).map((tag: string) => (
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${launch.userHasUpvoted ? 'border-jence-gold/20 bg-jence-gold/5 text-jence-gold' : 'border-border/60 bg-background text-muted-foreground'}`}>
+                        <ArrowBigUp size={12} className={launch.userHasUpvoted ? 'fill-current' : ''} />
+                        {upvotes} upvote{upvotes === 1 ? '' : 's'}
+                    </span>
+                    {(launch.tags || []).slice(0, 3).map((tag: string) => (
                         <span
                             key={tag}
-                            className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
+                            className="rounded-full border border-border/60 bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
                         >
                             {tag}
                         </span>
                     ))}
+                    {launch.tags?.length > 3 && (
+                        <span className="rounded-full border border-border/60 bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                            +{launch.tags.length - 3}
+                        </span>
+                    )}
                     {launch.disclosure && (
-                        <span className="rounded-full border border-jence-gold/20 bg-jence-gold/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-jence-gold">
-                            Disclosure included
+                        <span className="rounded-full border border-jence-gold/20 bg-jence-gold/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-jence-gold">
+                            Credit included
                         </span>
                     )}
                     {launch.allowTips && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
                             <HandCoins size={12} />
-                            {launch.status === 'approved' ? 'Tips enabled' : 'Tips requested'}
+                            Tips
                         </span>
                     )}
                 </div>
 
-                <div className="mt-6 flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-5 flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
                     <Link
                         to={to}
                         className="inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-jence-gold"
                     >
-                        Open launch note
+                        Read launch note
                         <ArrowRight size={16} />
                     </Link>
 

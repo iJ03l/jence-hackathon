@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, CalendarDays, HandCoins, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowBigUp, Building2, CalendarDays, HandCoins, ShieldCheck, UserRound } from 'lucide-react'
 import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +17,7 @@ export default function LaunchDetailPage() {
     const [tipOpen, setTipOpen] = useState(false)
     const [tipping, setTipping] = useState(false)
     const [tipError, setTipError] = useState('')
+    const trackedViewRef = useRef<string | null>(null)
 
     useEffect(() => {
         if (!id) return
@@ -27,7 +28,15 @@ export default function LaunchDetailPage() {
             setLoading(true)
             try {
                 const data = await api.getLaunch(id)
-                if (!cancelled) setLaunch(data)
+                if (!cancelled) {
+                    setLaunch(data)
+                    if (trackedViewRef.current !== id) {
+                        trackedViewRef.current = id
+                        api.trackLaunchView(id).catch((viewError) => {
+                            console.error('Failed to track launch view', viewError)
+                        })
+                    }
+                }
             } catch (error) {
                 console.error('Failed to load launch', error)
                 if (!cancelled) setLaunch(null)
@@ -41,7 +50,7 @@ export default function LaunchDetailPage() {
         return () => {
             cancelled = true
         }
-    }, [id])
+    }, [id, user?.id])
 
     const handleTip = async (amountUsdc: number) => {
         if (!launch) return
@@ -60,6 +69,44 @@ export default function LaunchDetailPage() {
             setTipError(err?.message || 'Tip failed. Please try again.')
         } finally {
             setTipping(false)
+        }
+    }
+
+    const handleUpvote = async () => {
+        if (!launch) return
+
+        if (!user) {
+            navigate('/login')
+            return
+        }
+
+        if (user.id === launch.userId) {
+            return
+        }
+
+        const previousUpvoted = !!launch.userHasUpvoted
+        const previousUpvotes = Number(launch.upvotes || 0)
+        const nextUpvoted = !previousUpvoted
+
+        setLaunch((prev: any) => ({
+            ...prev,
+            userHasUpvoted: nextUpvoted,
+            upvotes: previousUpvotes + (nextUpvoted ? 1 : -1),
+        }))
+
+        try {
+            if (nextUpvoted) {
+                await api.upvoteLaunch(launch.id)
+            } else {
+                await api.removeLaunchUpvote(launch.id)
+            }
+        } catch (error) {
+            console.error('Failed to update launch upvote', error)
+            setLaunch((prev: any) => ({
+                ...prev,
+                userHasUpvoted: previousUpvoted,
+                upvotes: previousUpvotes,
+            }))
         }
     }
 
@@ -100,6 +147,7 @@ export default function LaunchDetailPage() {
     const statusMeta = getLaunchStatusMeta(launch.status)
     const disclosureText = launch.disclosure?.trim() || 'No additional credit or disclosure was provided for this launch note.'
     const tipsLive = launch.allowTips && launch.status === 'approved'
+    const canUpvote = launch.status === 'approved' && user?.id !== launch.userId
 
     return (
         <section className="bg-background px-4 pb-16 pt-20 sm:px-6 lg:px-8 xl:px-12 sm:pt-24">
@@ -134,43 +182,92 @@ export default function LaunchDetailPage() {
                             </span>
                         </div>
 
-                        <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-                            {launch.name}
-                        </h1>
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+                            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-jence-gold/20 bg-gradient-to-br from-jence-gold/20 via-jence-gold/10 to-transparent text-lg font-black tracking-[0.2em] text-jence-gold shadow-[0_22px_40px_rgba(212,175,55,0.12)] sm:h-24 sm:w-24">
+                                {launch.logoUrl ? (
+                                    <img
+                                        src={launch.logoUrl}
+                                        alt={`${launch.company || launch.name} logo`}
+                                        className="h-full w-full bg-white/90 object-contain p-4"
+                                    />
+                                ) : (
+                                    (launch.company || launch.name || 'JN')
+                                        .split(/\s+/)
+                                        .filter(Boolean)
+                                        .slice(0, 2)
+                                        .map((part: string) => part[0]?.toUpperCase() || '')
+                                        .join('')
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                                    {launch.name}
+                                </h1>
 
-                        <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span className="inline-flex items-center gap-1.5">
-                                <Building2 size={15} />
-                                {launch.company}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5">
-                                <CalendarDays size={15} />
-                                {new Date(launch.createdAt).toLocaleDateString('en-US', {
-                                    month: 'long',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                })}
-                            </span>
-                            {authorPath ? (
-                                <Link to={authorPath} className="inline-flex items-center gap-1.5 text-jence-gold transition-colors hover:text-jence-gold/80">
-                                    <UserRound size={15} />
-                                    {author}
-                                </Link>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5">
-                                    <UserRound size={15} />
-                                    {author}
-                                </span>
-                            )}
+                                <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Building2 size={15} />
+                                        {launch.company}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <CalendarDays size={15} />
+                                        {new Date(launch.createdAt).toLocaleDateString('en-US', {
+                                            month: 'long',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                        })}
+                                    </span>
+                                    {authorPath ? (
+                                        <Link to={authorPath} className="inline-flex items-center gap-1.5 text-jence-gold transition-colors hover:text-jence-gold/80">
+                                            <UserRound size={15} />
+                                            {author}
+                                        </Link>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <UserRound size={15} />
+                                            {author}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <p className="mt-8 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
                             {launch.summary}
                         </p>
 
-                        {launch.allowTips && (
-                            <div className="mt-8 flex flex-wrap items-center gap-3">
-                                {!tipsLive ? (
+                        <div className="mt-8 flex flex-wrap items-center gap-3">
+                            {launch.status === 'approved' && (
+                                <>
+                                    <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm ${launch.userHasUpvoted ? 'border-jence-gold/30 bg-jence-gold/10 text-jence-gold' : 'border-border bg-background/80 text-muted-foreground'}`}>
+                                        <ArrowBigUp size={16} className={launch.userHasUpvoted ? 'fill-current' : ''} />
+                                        {Number(launch.upvotes || 0)} upvote{Number(launch.upvotes || 0) === 1 ? '' : 's'}
+                                    </span>
+
+                                    {!user ? (
+                                        <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-jence-gold/20 bg-jence-gold/5 px-4 py-2 text-sm font-medium text-jence-gold transition-colors hover:bg-jence-gold/10">
+                                            <ArrowBigUp size={16} />
+                                            Log in to upvote
+                                        </Link>
+                                    ) : canUpvote ? (
+                                        <button
+                                            onClick={handleUpvote}
+                                            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${launch.userHasUpvoted ? 'border-jence-gold/30 bg-jence-gold/10 text-jence-gold hover:bg-jence-gold/15' : 'border-border bg-background/80 text-foreground hover:border-jence-gold/30 hover:text-jence-gold'}`}
+                                        >
+                                            <ArrowBigUp size={16} className={launch.userHasUpvoted ? 'fill-current' : ''} />
+                                            {launch.userHasUpvoted ? 'Upvoted' : 'Upvote launch'}
+                                        </button>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-sm text-muted-foreground">
+                                            <ArrowBigUp size={15} />
+                                            Your launch note
+                                        </span>
+                                    )}
+                                </>
+                            )}
+
+                            {launch.allowTips && (
+                                !tipsLive ? (
                                     <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-sm text-muted-foreground">
                                         <HandCoins size={15} />
                                         Tips will unlock after approval
@@ -195,9 +292,9 @@ export default function LaunchDetailPage() {
                                         <HandCoins size={15} />
                                         Your launch is accepting community tips
                                     </span>
-                                )}
+                                )
+                            )}
                             </div>
-                        )}
                     </div>
                 </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -27,6 +27,7 @@ export default function PostDetail() {
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const trackedViewRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (id) loadData(id);
@@ -41,6 +42,12 @@ export default function PostDetail() {
       ]);
       setPost(postRes);
       setComments(commentsRes);
+      if (trackedViewRef.current !== postId) {
+        trackedViewRef.current = postId;
+        api.trackCommunityPostView(postId).catch((viewError) => {
+          console.error("Failed to track community post view", viewError);
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {

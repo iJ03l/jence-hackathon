@@ -50,6 +50,13 @@
       "when": 1773824283761,
       "tag": "0006_steady_harbor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773835200000,
+      "tag": "0007_amber_logomark",
+      "breakpoints": true
     }
   ]
 }

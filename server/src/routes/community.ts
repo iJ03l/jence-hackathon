@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { communityPost, tag, communityPostTag, user, communityPostLike, communityPostComment, creatorProfile, notification } from '../db/schema.js'
-import { eq, desc, sql, and, inArray, count, sum } from 'drizzle-orm'
+import { communityPost, tag, communityPostTag, user, communityPostLike, communityPostComment, creatorProfile, notification, communityPostDailyView } from '../db/schema.js'
+import { eq, desc, sql, and, count, sum } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
@@ -12,6 +12,39 @@ type Variables = {
 }
 
 const communityRoutes = new Hono<{ Variables: Variables }>()
+
+const communityPostTodayViews = db
+    .select({
+        postId: communityPostDailyView.postId,
+        todayViews: communityPostDailyView.viewCount,
+    })
+    .from(communityPostDailyView)
+    .where(sql`${communityPostDailyView.viewDate} = CURRENT_DATE`)
+    .as('community_post_today_views')
+
+const communityPostScores = db
+    .select({
+        postId: communityPostLike.postId,
+        score: sql<number>`coalesce(sum(${communityPostLike.value}), 0)`.as('score'),
+    })
+    .from(communityPostLike)
+    .groupBy(communityPostLike.postId)
+    .as('community_post_scores')
+
+const communityTodayViewsOrder = sql<number>`coalesce(${communityPostTodayViews.todayViews}, 0)`
+const communityScoreOrder = sql<number>`coalesce(${communityPostScores.score}, 0)`
+
+async function trackCommunityPostView(postId: string) {
+    await db.insert(communityPostDailyView)
+        .values({ postId })
+        .onConflictDoUpdate({
+            target: [communityPostDailyView.postId, communityPostDailyView.viewDate],
+            set: {
+                viewCount: sql`${communityPostDailyView.viewCount} + 1`,
+                updatedAt: sql`now()`,
+            },
+        })
+}
 
 // Helper to get formatted post data
 const getPostData = async (post: any, currentUserId?: string) => {
@@ -84,32 +117,35 @@ communityRoutes.get('/posts', optionalAuth, async (c) => {
 
     let posts
     if (tagFilter) {
-        const tagRecord = await db.query.tag.findFirst({
-            where: eq(tag.name, tagFilter.toLowerCase())
-        })
-
-        if (!tagRecord) return c.json([])
-
-        const postTags = await db
-            .select({ postId: communityPostTag.postId })
-            .from(communityPostTag)
-            .where(eq(communityPostTag.tagId, tagRecord.id))
-
-        const postIds = postTags.map(pt => pt.postId)
-
-        if (postIds.length === 0) return c.json([])
-
         posts = await db
-            .select()
+            .select({
+                id: communityPost.id,
+                userId: communityPost.userId,
+                content: communityPost.content,
+                createdAt: communityPost.createdAt,
+                updatedAt: communityPost.updatedAt,
+            })
             .from(communityPost)
-            .where(inArray(communityPost.id, postIds))
-            .orderBy(desc(communityPost.createdAt))
+            .innerJoin(communityPostTag, eq(communityPost.id, communityPostTag.postId))
+            .innerJoin(tag, eq(communityPostTag.tagId, tag.id))
+            .leftJoin(communityPostTodayViews, eq(communityPost.id, communityPostTodayViews.postId))
+            .leftJoin(communityPostScores, eq(communityPost.id, communityPostScores.postId))
+            .where(eq(tag.name, tagFilter.toLowerCase()))
+            .orderBy(desc(communityTodayViewsOrder), desc(communityScoreOrder), desc(communityPost.createdAt))
             .limit(50)
     } else {
         posts = await db
-            .select()
+            .select({
+                id: communityPost.id,
+                userId: communityPost.userId,
+                content: communityPost.content,
+                createdAt: communityPost.createdAt,
+                updatedAt: communityPost.updatedAt,
+            })
             .from(communityPost)
-            .orderBy(desc(communityPost.createdAt))
+            .leftJoin(communityPostTodayViews, eq(communityPost.id, communityPostTodayViews.postId))
+            .leftJoin(communityPostScores, eq(communityPost.id, communityPostScores.postId))
+            .orderBy(desc(communityTodayViewsOrder), desc(communityScoreOrder), desc(communityPost.createdAt))
             .limit(50)
     }
 
@@ -133,6 +169,24 @@ communityRoutes.get('/posts/:id', optionalAuth, async (c) => {
     return c.json(formattedPost)
 })
 
+// POST /api/community/posts/:id/view
+communityRoutes.post('/posts/:id/view', async (c) => {
+    const id = c.req.param('id')
+
+    const existingPost = await db.query.communityPost.findFirst({
+        where: eq(communityPost.id, id),
+        columns: { id: true },
+    })
+
+    if (!existingPost) {
+        return c.json({ error: 'Post not found' }, 404)
+    }
+
+    await trackCommunityPostView(id)
+
+    return c.json({ success: true })
+})
+
 // DELETE /api/community/posts/:id
 communityRoutes.delete('/posts/:id', requireAuth, async (c) => {
     const id = c.req.param('id')
@@ -148,6 +202,7 @@ communityRoutes.delete('/posts/:id', requireAuth, async (c) => {
 
     // Manual cascade delete
     await db.transaction(async (tx) => {
+        await tx.delete(communityPostDailyView).where(eq(communityPostDailyView.postId, id))
         await tx.delete(communityPostTag).where(eq(communityPostTag.postId, id))
         await tx.delete(communityPostLike).where(eq(communityPostLike.postId, id))
         await tx.delete(communityPostComment).where(eq(communityPostComment.postId, id))

@@ -53,6 +53,8 @@ export const api = {
         request<any[]>(userId ? `/posts?userId=${userId}` : '/posts'),
     getMyPosts: (creatorProfileId: string) => request<any[]>(`/posts/my?creatorProfileId=${creatorProfileId}`),
     getPost: (id: string, userId?: string) => request<any>(`/posts/${id}${userId ? `?userId=${userId}` : ''}`),
+    trackPostView: (id: string) =>
+        request<any>(`/posts/${id}/view`, { method: 'POST' }),
     createPost: (data: any) =>
         request<any>('/posts', { method: 'POST', body: JSON.stringify(data) }),
     deletePost: (id: string) =>
@@ -104,6 +106,8 @@ export const api = {
         request<any[]>(`/community/posts?${tag ? `tag=${tag}&` : ''}${userId ? `userId=${userId}` : ''}`),
     getCommunityPost: (id: string, userId?: string) =>
         request<any>(`/community/posts/${id}${userId ? `?userId=${userId}` : ''}`),
+    trackCommunityPostView: (id: string) =>
+        request<any>(`/community/posts/${id}/view`, { method: 'POST' }),
     getTrendingTags: () => request<any[]>('/community/tags'),
     createCommunityPost: (data: { content: string, userId: string }) =>
         request<any>('/community/posts', { method: 'POST', body: JSON.stringify(data) }),
@@ -150,10 +154,16 @@ export const api = {
         request<any[]>(`/launches${status ? `?status=${status}` : ''}`),
     getLaunch: (id: string) =>
         request<any>(`/launches/${id}`),
+    trackLaunchView: (id: string) =>
+        request<any>(`/launches/${id}/view`, { method: 'POST' }),
     getMyLaunches: () =>
         request<any[]>('/launches/my'),
-    submitLaunch: (data: { name: string; company: string; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>
+    submitLaunch: (data: { name: string; company: string; logoUrl?: string; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>
         request<any>('/launches', { method: 'POST', body: JSON.stringify(data) }),
+    upvoteLaunch: (id: string) =>
+        request<any>(`/launches/${id}/upvote`, { method: 'POST' }),
+    removeLaunchUpvote: (id: string) =>
+        request<any>(`/launches/${id}/upvote`, { method: 'DELETE' }),
     reviewLaunch: (id: string, status: 'approved' | 'rejected', reviewNote?: string) =>
         request<any>(`/launches/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, reviewNote }) }),
     deleteLaunch: (id: string) =>

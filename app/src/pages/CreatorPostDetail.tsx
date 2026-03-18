@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -42,6 +42,7 @@ export default function CreatorPostDetail() {
     const [tipOpen, setTipOpen] = useState(false)
     const [tipping, setTipping] = useState(false)
     const [tipError, setTipError] = useState('')
+    const trackedViewRef = useRef<string | null>(null)
 
     useEffect(() => {
         if (id) loadData(id)
@@ -56,6 +57,12 @@ export default function CreatorPostDetail() {
             ])
             setPost(postRes)
             setComments(commentsRes)
+            if (trackedViewRef.current !== postId) {
+                trackedViewRef.current = postId
+                api.trackPostView(postId).catch((viewError) => {
+                    console.error('Failed to track post view', viewError)
+                })
+            }
         } catch (error) {
             console.error(error)
         } finally {

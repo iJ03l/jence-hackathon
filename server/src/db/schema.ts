@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, unique, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, unique, jsonb, date } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // ===== Better Auth Tables =====
 
@@ -179,6 +180,16 @@ export const communityPostLike = pgTable('community_post_like', {
     primaryKey({ columns: [t.postId, t.userId] })
 ])
 
+export const communityPostDailyView = pgTable('community_post_daily_view', {
+    postId: uuid('post_id').notNull().references(() => communityPost.id),
+    viewDate: date('view_date').notNull().default(sql`CURRENT_DATE`),
+    viewCount: integer('view_count').notNull().default(1),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+    primaryKey({ columns: [t.postId, t.viewDate] })
+])
+
 export const postComment = pgTable('post_comment', {
     id: uuid('id').defaultRandom().primaryKey(),
     postId: uuid('post_id').notNull().references(() => post.id),
@@ -195,6 +206,16 @@ export const postVote = pgTable('post_vote', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (t) => [
     primaryKey({ columns: [t.postId, t.userId] })
+])
+
+export const postDailyView = pgTable('post_daily_view', {
+    postId: uuid('post_id').notNull().references(() => post.id),
+    viewDate: date('view_date').notNull().default(sql`CURRENT_DATE`),
+    viewCount: integer('view_count').notNull().default(1),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+    primaryKey({ columns: [t.postId, t.viewDate] })
 ])
 
 export const communityPostComment = pgTable('community_post_comment', {
@@ -237,6 +258,7 @@ export const launchNote = pgTable('launch_note', {
     userId: text('user_id').notNull().references(() => user.id), // who submitted
     name: text('name').notNull(),       // product name
     company: text('company').notNull(), // company name
+    logoUrl: text('logo_url'),
     summary: text('summary').notNull(), // product summary
     tags: text('tags').notNull().default('[]'), // JSON array of tag strings
     disclosure: text('disclosure'),      // conflict-of-interest disclosure
@@ -247,6 +269,24 @@ export const launchNote = pgTable('launch_note', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+export const launchNoteDailyView = pgTable('launch_note_daily_view', {
+    launchNoteId: uuid('launch_note_id').notNull().references(() => launchNote.id),
+    viewDate: date('view_date').notNull().default(sql`CURRENT_DATE`),
+    viewCount: integer('view_count').notNull().default(1),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+    primaryKey({ columns: [t.launchNoteId, t.viewDate] })
+])
+
+export const launchNoteUpvote = pgTable('launch_note_upvote', {
+    launchNoteId: uuid('launch_note_id').notNull().references(() => launchNote.id),
+    userId: text('user_id').notNull().references(() => user.id),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+    primaryKey({ columns: [t.launchNoteId, t.userId] })
+])
 
 export const tip = pgTable('tip', {
     id: uuid('id').defaultRandom().primaryKey(),

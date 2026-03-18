@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { post, creatorProfile, subscription, postVote, postComment, user, vertical, strike, notification } from '../db/schema.js'
+import { post, creatorProfile, subscription, postVote, postComment, user, vertical, strike, notification, postDailyView, tip } from '../db/schema.js'
 import { eq, inArray, desc, sql, and, count, sum } from 'drizzle-orm'
 import { notifySubscribersOfNewPost } from '../services/notify.js'
 import { z } from 'zod'
@@ -14,10 +14,42 @@ type Variables = {
 
 const postsRoutes = new Hono<{ Variables: Variables }>()
 
+const postTodayViews = db
+    .select({
+        postId: postDailyView.postId,
+        todayViews: postDailyView.viewCount,
+    })
+    .from(postDailyView)
+    .where(sql`${postDailyView.viewDate} = CURRENT_DATE`)
+    .as('post_today_views')
+
+const postScores = db
+    .select({
+        postId: postVote.postId,
+        score: sql<number>`coalesce(sum(${postVote.value}), 0)`.as('score'),
+    })
+    .from(postVote)
+    .groupBy(postVote.postId)
+    .as('post_scores')
+
+const postTodayViewsOrder = sql<number>`coalesce(${postTodayViews.todayViews}, 0)`
+const postScoreOrder = sql<number>`coalesce(${postScores.score}, 0)`
+
+async function trackPostView(postId: string) {
+    await db.insert(postDailyView)
+        .values({ postId })
+        .onConflictDoUpdate({
+            target: [postDailyView.postId, postDailyView.viewDate],
+            set: {
+                viewCount: sql`${postDailyView.viewCount} + 1`,
+                updatedAt: sql`now()`,
+            },
+        })
+}
+
 // GET /api/posts — feed (latest posts, optionally filtered by subscriber's subscriptions)
 postsRoutes.get('/', optionalAuth, async (c) => {
-    const userFromSession = c.get('user')
-    const userId = userFromSession?.id || c.req.query('userId')
+    const userId = c.req.query('userId')
 
     if (userId) {
         // Get subscribed creator IDs
@@ -48,8 +80,13 @@ postsRoutes.get('/', optionalAuth, async (c) => {
             .from(post)
             .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
             .leftJoin(vertical, eq(post.verticalId, vertical.id))
-            .where(inArray(post.creatorId, creatorIds))
-            .orderBy(desc(post.createdAt))
+            .leftJoin(postTodayViews, eq(post.id, postTodayViews.postId))
+            .leftJoin(postScores, eq(post.id, postScores.postId))
+            .where(and(
+                inArray(post.creatorId, creatorIds),
+                eq(post.isPublished, true)
+            ))
+            .orderBy(desc(postTodayViewsOrder), desc(postScoreOrder), desc(post.createdAt))
             .limit(50)
 
         return c.json(feedPosts)
@@ -73,8 +110,10 @@ postsRoutes.get('/', optionalAuth, async (c) => {
         .from(post)
         .innerJoin(creatorProfile, eq(post.creatorId, creatorProfile.id))
         .leftJoin(vertical, eq(post.verticalId, vertical.id))
+        .leftJoin(postTodayViews, eq(post.id, postTodayViews.postId))
+        .leftJoin(postScores, eq(post.id, postScores.postId))
         .where(eq(post.isPublished, true))
-        .orderBy(desc(post.createdAt))
+        .orderBy(desc(postTodayViewsOrder), desc(postScoreOrder), desc(post.createdAt))
         .limit(50)
 
     return c.json(latestPosts)
@@ -154,10 +193,12 @@ postsRoutes.delete('/:id', requireAuth, async (c) => {
 
     // Perform cascading deletes manually to avoid foreign key errors
     await db.transaction(async (tx) => {
+        await tx.delete(postDailyView).where(eq(postDailyView.postId, id))
         await tx.delete(postVote).where(eq(postVote.postId, id))
         await tx.delete(postComment).where(eq(postComment.postId, id))
         await tx.delete(notification).where(eq(notification.postId, id))
         await tx.delete(strike).where(eq(strike.postId, id))
+        await tx.delete(tip).where(eq(tip.postId, id))
         await tx.delete(post).where(eq(post.id, id))
     })
 
@@ -247,10 +288,16 @@ postsRoutes.get('/stats', async (c) => {
         .from(subscription)
         .where(eq(subscription.creatorProfileId, creatorProfileId))
 
+    const [{ totalViews }] = await db
+        .select({ totalViews: sql<number>`coalesce(sum(${postDailyView.viewCount}), 0)` })
+        .from(postDailyView)
+        .innerJoin(post, eq(postDailyView.postId, post.id))
+        .where(eq(post.creatorId, creatorProfileId))
+
     return c.json({
         totalPosts,
         totalSubscribers,
-        totalViews: 0,       // placeholder — add view tracking later
+        totalViews,
         totalEarnings: 0,    // placeholder — add payment tracking later
     })
 })
@@ -352,6 +399,24 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
         userVote,
         hasAccess: canViewFullContent
     })
+})
+
+// POST /api/posts/:id/view
+postsRoutes.post('/:id/view', async (c) => {
+    const id = c.req.param('id')
+
+    const existingPost = await db.query.post.findFirst({
+        where: and(eq(post.id, id), eq(post.isPublished, true)),
+        columns: { id: true },
+    })
+
+    if (!existingPost) {
+        return c.json({ error: 'Post not found' }, 404)
+    }
+
+    await trackPostView(id)
+
+    return c.json({ success: true })
 })
 
 

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { launchNote, user, creatorProfile } from '../db/schema.js'
-import { eq, desc } from 'drizzle-orm'
+import { launchNote, user, creatorProfile, launchNoteUpvote, launchNoteDailyView, tip } from '../db/schema.js'
+import { eq, desc, and, sql, count, asc } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
@@ -15,9 +15,57 @@ type Variables = {
 
 const launchRoutes = new Hono<{ Variables: Variables }>()
 
+const launchTodayViews = db
+    .select({
+        launchNoteId: launchNoteDailyView.launchNoteId,
+        todayViews: launchNoteDailyView.viewCount,
+    })
+    .from(launchNoteDailyView)
+    .where(sql`${launchNoteDailyView.viewDate} = CURRENT_DATE`)
+    .as('launch_today_views')
+
+const launchUpvoteCounts = db
+    .select({
+        launchNoteId: launchNoteUpvote.launchNoteId,
+        upvotes: count(launchNoteUpvote.userId).as('upvotes'),
+    })
+    .from(launchNoteUpvote)
+    .groupBy(launchNoteUpvote.launchNoteId)
+    .as('launch_upvote_counts')
+
+const launchTodayViewsOrder = sql<number>`coalesce(${launchTodayViews.todayViews}, 0)`
+const launchUpvoteOrder = sql<number>`coalesce(${launchUpvoteCounts.upvotes}, 0)`
+const launchAdminStatusOrder = sql<number>`case
+    when ${launchNote.status} = 'pending' then 0
+    when ${launchNote.status} = 'approved' then 1
+    else 2
+end`
+
+async function trackLaunchView(launchNoteId: string) {
+    await db.insert(launchNoteDailyView)
+        .values({ launchNoteId })
+        .onConflictDoUpdate({
+            target: [launchNoteDailyView.launchNoteId, launchNoteDailyView.viewDate],
+            set: {
+                viewCount: sql`${launchNoteDailyView.viewCount} + 1`,
+                updatedAt: sql`now()`,
+            },
+        })
+}
+
+function formatLaunch(launch: any, upvotedLaunchIds: Set<string>) {
+    return {
+        ...launch,
+        tags: JSON.parse(launch.tags),
+        upvotes: Number(launch.upvotes ?? 0),
+        userHasUpvoted: upvotedLaunchIds.has(launch.id),
+    }
+}
+
 // GET /api/launches — public list (only approved), or all for admin
 launchRoutes.get('/', optionalAuth, async (c) => {
     const userFromSession = c.get('user')
+    const currentUserId = userFromSession?.id
     const status = c.req.query('status') // admin can filter by status
 
     // Admin sees all (with optional status filter)
@@ -28,6 +76,7 @@ launchRoutes.get('/', optionalAuth, async (c) => {
                 id: launchNote.id,
                 name: launchNote.name,
                 company: launchNote.company,
+                logoUrl: launchNote.logoUrl,
                 summary: launchNote.summary,
                 tags: launchNote.tags,
                 disclosure: launchNote.disclosure,
@@ -36,6 +85,7 @@ launchRoutes.get('/', optionalAuth, async (c) => {
                 reviewNote: launchNote.reviewNote,
                 createdAt: launchNote.createdAt,
                 userId: launchNote.userId,
+                upvotes: launchUpvoteOrder,
                 authorName: user.name,
                 authorUsername: user.username,
                 authorPseudonym: creatorProfile.pseudonym,
@@ -43,11 +93,27 @@ launchRoutes.get('/', optionalAuth, async (c) => {
             .from(launchNote)
             .leftJoin(user, eq(launchNote.userId, user.id))
             .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
+            .leftJoin(launchTodayViews, eq(launchNote.id, launchTodayViews.launchNoteId))
+            .leftJoin(launchUpvoteCounts, eq(launchNote.id, launchUpvoteCounts.launchNoteId))
             .where(filter)
-            .orderBy(desc(launchNote.createdAt))
+            .orderBy(
+                ...(status ? [] : [asc(launchAdminStatusOrder)]),
+                desc(launchTodayViewsOrder),
+                desc(launchUpvoteOrder),
+                desc(launchNote.createdAt)
+            )
             .limit(50)
 
-        return c.json(launches.map(l => ({ ...l, tags: JSON.parse(l.tags) })))
+        const upvotedLaunchIds = currentUserId
+            ? new Set(
+                (await db.select({ launchNoteId: launchNoteUpvote.launchNoteId })
+                    .from(launchNoteUpvote)
+                    .where(eq(launchNoteUpvote.userId, currentUserId)))
+                    .map((row) => row.launchNoteId)
+            )
+            : new Set<string>()
+
+        return c.json(launches.map((launch) => formatLaunch(launch, upvotedLaunchIds)))
     }
 
     // Public: only approved launches
@@ -56,11 +122,14 @@ launchRoutes.get('/', optionalAuth, async (c) => {
             id: launchNote.id,
             name: launchNote.name,
             company: launchNote.company,
+            logoUrl: launchNote.logoUrl,
             summary: launchNote.summary,
             tags: launchNote.tags,
+            disclosure: launchNote.disclosure,
             allowTips: launchNote.allowTips,
             status: launchNote.status,
             createdAt: launchNote.createdAt,
+            upvotes: launchUpvoteOrder,
             authorName: user.name,
             authorUsername: user.username,
             authorPseudonym: creatorProfile.pseudonym,
@@ -68,11 +137,22 @@ launchRoutes.get('/', optionalAuth, async (c) => {
         .from(launchNote)
         .leftJoin(user, eq(launchNote.userId, user.id))
         .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
+        .leftJoin(launchTodayViews, eq(launchNote.id, launchTodayViews.launchNoteId))
+        .leftJoin(launchUpvoteCounts, eq(launchNote.id, launchUpvoteCounts.launchNoteId))
         .where(eq(launchNote.status, 'approved'))
-        .orderBy(desc(launchNote.createdAt))
+        .orderBy(desc(launchTodayViewsOrder), desc(launchUpvoteOrder), desc(launchNote.createdAt))
         .limit(50)
 
-    return c.json(launches.map(l => ({ ...l, tags: JSON.parse(l.tags) })))
+    const upvotedLaunchIds = currentUserId
+        ? new Set(
+            (await db.select({ launchNoteId: launchNoteUpvote.launchNoteId })
+                .from(launchNoteUpvote)
+                .where(eq(launchNoteUpvote.userId, currentUserId)))
+                .map((row) => row.launchNoteId)
+        )
+        : new Set<string>()
+
+    return c.json(launches.map((launch) => formatLaunch(launch, upvotedLaunchIds)))
 })
 
 // GET /api/launches/my — user's own submissions
@@ -98,6 +178,7 @@ launchRoutes.get('/:id', optionalAuth, async (c) => {
             id: launchNote.id,
             name: launchNote.name,
             company: launchNote.company,
+            logoUrl: launchNote.logoUrl,
             summary: launchNote.summary,
             tags: launchNote.tags,
             disclosure: launchNote.disclosure,
@@ -107,6 +188,7 @@ launchRoutes.get('/:id', optionalAuth, async (c) => {
             createdAt: launchNote.createdAt,
             updatedAt: launchNote.updatedAt,
             userId: launchNote.userId,
+            upvotes: launchUpvoteOrder,
             authorName: user.name,
             authorUsername: user.username,
             authorPseudonym: creatorProfile.pseudonym,
@@ -114,6 +196,7 @@ launchRoutes.get('/:id', optionalAuth, async (c) => {
         .from(launchNote)
         .leftJoin(user, eq(launchNote.userId, user.id))
         .leftJoin(creatorProfile, eq(launchNote.userId, creatorProfile.userId))
+        .leftJoin(launchUpvoteCounts, eq(launchNote.id, launchUpvoteCounts.launchNoteId))
         .where(eq(launchNote.id, id))
         .limit(1)
 
@@ -130,16 +213,63 @@ launchRoutes.get('/:id', optionalAuth, async (c) => {
         return c.json({ error: 'Launch not found' }, 404)
     }
 
+    const currentUserUpvote = userFromSession?.id
+        ? await db.query.launchNoteUpvote.findFirst({
+            where: and(
+                eq(launchNoteUpvote.launchNoteId, id),
+                eq(launchNoteUpvote.userId, userFromSession.id)
+            ),
+            columns: { launchNoteId: true },
+        })
+        : null
+
     return c.json({
         ...launch,
         tags: JSON.parse(launch.tags),
+        upvotes: Number(launch.upvotes ?? 0),
+        userHasUpvoted: !!currentUserUpvote,
     })
+})
+
+// POST /api/launches/:id/view
+launchRoutes.post('/:id/view', optionalAuth, async (c) => {
+    const id = c.req.param('id')
+    const userFromSession = c.get('user')
+
+    const existing = await db.query.launchNote.findFirst({
+        where: eq(launchNote.id, id),
+        columns: {
+            id: true,
+            userId: true,
+            status: true,
+        },
+    })
+
+    if (!existing) {
+        return c.json({ error: 'Launch not found' }, 404)
+    }
+
+    const canView =
+        existing.status === 'approved' ||
+        userFromSession?.role === 'admin' ||
+        userFromSession?.id === existing.userId
+
+    if (!canView) {
+        return c.json({ error: 'Launch not found' }, 404)
+    }
+
+    if (existing.status === 'approved') {
+        await trackLaunchView(id)
+    }
+
+    return c.json({ success: true })
 })
 
 // POST /api/launches — submit a new launch (any logged-in user)
 const createLaunchSchema = z.object({
     name: z.string().min(1).max(200),
     company: z.string().min(1).max(200),
+    logoUrl: z.string().url().optional(),
     summary: z.string().min(10).max(2000),
     tags: z.array(z.string().max(50)).max(5).optional(),
     disclosure: z.string().max(2000).optional(),
@@ -148,12 +278,13 @@ const createLaunchSchema = z.object({
 
 launchRoutes.post('/', requireAuth, zValidator('json', createLaunchSchema), async (c) => {
     const userFromSession = c.get('user')
-    const { name, company, summary, tags, disclosure, allowTips } = c.req.valid('json')
+    const { name, company, logoUrl, summary, tags, disclosure, allowTips } = c.req.valid('json')
 
     const [newLaunch] = await db.insert(launchNote).values({
         userId: userFromSession.id,
         name,
         company,
+        logoUrl: logoUrl || null,
         summary,
         tags: JSON.stringify(tags || []),
         disclosure: disclosure?.trim() || null,
@@ -162,6 +293,52 @@ launchRoutes.post('/', requireAuth, zValidator('json', createLaunchSchema), asyn
     }).returning()
 
     return c.json({ success: true, launch: { ...newLaunch, tags: JSON.parse(newLaunch.tags) } }, 201)
+})
+
+// POST /api/launches/:id/upvote
+launchRoutes.post('/:id/upvote', requireAuth, async (c) => {
+    const id = c.req.param('id')
+    const userFromSession = c.get('user')
+
+    const existing = await db.query.launchNote.findFirst({
+        where: eq(launchNote.id, id),
+        columns: {
+            id: true,
+            userId: true,
+            status: true,
+        },
+    })
+
+    if (!existing || existing.status !== 'approved') {
+        return c.json({ error: 'Launch not found' }, 404)
+    }
+
+    if (existing.userId === userFromSession.id) {
+        return c.json({ error: 'You cannot upvote your own launch note' }, 400)
+    }
+
+    await db.insert(launchNoteUpvote)
+        .values({
+            launchNoteId: id,
+            userId: userFromSession.id,
+        })
+        .onConflictDoNothing()
+
+    return c.json({ success: true })
+})
+
+// DELETE /api/launches/:id/upvote
+launchRoutes.delete('/:id/upvote', requireAuth, async (c) => {
+    const id = c.req.param('id')
+    const userFromSession = c.get('user')
+
+    await db.delete(launchNoteUpvote)
+        .where(and(
+            eq(launchNoteUpvote.launchNoteId, id),
+            eq(launchNoteUpvote.userId, userFromSession.id)
+        ))
+
+    return c.json({ success: true })
 })
 
 // PUT /api/launches/:id/review — admin approve/reject
@@ -295,7 +472,13 @@ launchRoutes.delete('/:id', requireAuth, async (c) => {
         return c.json({ error: 'Unauthorized' }, 403)
     }
 
-    await db.delete(launchNote).where(eq(launchNote.id, id))
+    await db.transaction(async (tx) => {
+        await tx.delete(launchNoteUpvote).where(eq(launchNoteUpvote.launchNoteId, id))
+        await tx.delete(launchNoteDailyView).where(eq(launchNoteDailyView.launchNoteId, id))
+        await tx.delete(tip).where(eq(tip.launchNoteId, id))
+        await tx.delete(launchNote).where(eq(launchNote.id, id))
+    })
+
     return c.json({ success: true })
 })
 

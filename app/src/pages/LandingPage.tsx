@@ -14,6 +14,12 @@ export default function LandingPage() {
     const [creators, setCreators] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
+    const getLaunchStackClass = (index: number) => {
+        if (index % 3 === 1) return 'w-full sm:max-w-[88%] sm:self-end'
+        if (index % 3 === 2) return 'w-full sm:max-w-[94%] sm:ml-4 lg:ml-10'
+        return 'w-full sm:max-w-[92%]'
+    }
+
     useEffect(() => {
         Promise.allSettled([
             api.getLatestPosts(),
@@ -186,14 +192,14 @@ export default function LandingPage() {
                             ))}
                         </div>
                     ) : launches.length > 0 ? (
-                        <div className="grid gap-5 lg:grid-cols-3">
-                            {launches.map(launch => (
+                        <div className="flex flex-col gap-4">
+                            {launches.map((launch, index) => (
                                 <LaunchPreviewCard
                                     key={launch.id}
                                     launch={launch}
                                     to={`/launches/${launch.id}`}
                                     authorTo={launch.authorPseudonym || launch.authorUsername ? `/${launch.authorPseudonym || launch.authorUsername}` : undefined}
-                                    className="h-full"
+                                    className={getLaunchStackClass(index)}
                                 />
                             ))}
                         </div>
