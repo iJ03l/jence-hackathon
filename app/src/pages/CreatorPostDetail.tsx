@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check } from 'lucide-react'
 import { linkifyText } from '../lib/linkify'
+import SEO from '../components/SEO'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -128,6 +129,13 @@ export default function CreatorPostDetail() {
 
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
+            <SEO 
+                title={post.title}
+                description={post.excerpt || post.content?.substring(0, 160) + (post.content?.length > 160 ? "..." : "")}
+                image={post.imageUrl}
+                url={`/post/${post.id}`}
+                type="article"
+            />
             <div className="max-w-3xl mx-auto">
                 <button onClick={() => navigate(-1)} className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
                     <ArrowLeft size={16} className="mr-2" />

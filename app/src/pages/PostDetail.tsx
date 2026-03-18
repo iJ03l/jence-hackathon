@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { linkifyText } from "../lib/linkify";
+import SEO from "../components/SEO";
 
 export default function PostDetail() {
   const { id } = useParams();
@@ -141,6 +142,12 @@ export default function PostDetail() {
 
   return (
     <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
+      <SEO 
+        title={`Discussion by @${post.author?.username || 'user'}`}
+        description={post.content?.substring(0, 160) + (post.content?.length > 160 ? "..." : "")}
+        url={`/community/post/${post.id}`}
+        type="article"
+      />
       <div className="max-w-3xl mx-auto">
         <button
           onClick={() => navigate(-1)}
