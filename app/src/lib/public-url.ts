@@ -26,6 +26,12 @@ export function getShareBaseUrl() {
     const apiUrl = import.meta.env.VITE_API_URL
     if (apiUrl) return normalizeUrlOrigin(apiUrl)
 
+    // On Railway/Static hosts without rewrites, we MUST use the API domain for SEO previews to work.
+    // Defaulting to the API domain for jence.xyz production.
+    if (typeof window !== 'undefined' && window.location.host === 'jence.xyz') {
+        return 'https://api.jence.xyz'
+    }
+
     return getSiteBaseUrl()
 }
 

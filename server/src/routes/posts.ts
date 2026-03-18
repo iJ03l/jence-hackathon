@@ -132,7 +132,12 @@ const createPostSchema = z.object({
 })
 
 // POST /api/posts — create a new post (creator only)
-postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema), async (c) => {
+postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema, (result, c) => {
+    if (!result.success) {
+        console.error('Post Creation Validation Error:', JSON.stringify(result.error.flatten(), null, 2))
+        return c.json({ error: 'Validation failed', details: result.error.flatten() }, 400)
+    }
+}), async (c) => {
     const userFromSession = c.get('user')
     const { title, content, excerpt, disclosure, imageUrl, creatorId, verticalId, isFree, allowTips } = c.req.valid('json')
 

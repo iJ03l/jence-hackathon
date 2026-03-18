@@ -112,9 +112,7 @@ export default function LaunchPreviewCard({ launch, to, authorTo, actions, class
                     </div>
                 </div>
 
-                <p className="mt-5 line-clamp-4 text-sm leading-7 text-muted-foreground sm:text-[15px]">
-                    {launch.summary}
-                </p>
+
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${launch.userHasUpvoted ? 'border-jence-gold/20 bg-jence-gold/5 text-jence-gold' : 'border-border/60 bg-background text-muted-foreground'}`}>
