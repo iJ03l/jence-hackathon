@@ -9,6 +9,9 @@ dist/
 .env.local
 .env.production
 
+# Drizzle
+drizzle/
+
 # OS
 .DS_Store
 
