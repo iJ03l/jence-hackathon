@@ -18,7 +18,7 @@ export async function notifySubscribersOfNewPost(postData: {
     title: string
     excerpt: string | null
     creatorId: string
-    verticalId: string
+    verticalId: string | null
 }) {
     try {
         // Get creator info
@@ -33,10 +33,12 @@ export async function notifySubscribersOfNewPost(postData: {
         if (!creator) return
 
         // Get vertical name
-        const [vert] = await db
-            .select({ name: vertical.name })
-            .from(vertical)
-            .where(eq(vertical.id, postData.verticalId))
+        const [vert] = postData.verticalId 
+            ? await db
+                .select({ name: vertical.name })
+                .from(vertical)
+                .where(eq(vertical.id, postData.verticalId))
+            : [null]
 
         // Get all active subscribers
         const subs = await db
