@@ -43,7 +43,7 @@ export function renderPreviewPage(params: {
     const type = params.type || 'article'
 
     return `<!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: http://ogp.me/ns#">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -64,11 +64,14 @@ export function renderPreviewPage(params: {
   <meta property="og:url" content="${redirectUrl}" />
 
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@jence_io" />
+  <meta name="twitter:creator" content="@jence_io" />
   <meta name="twitter:title" content="${title} | ${SITE_NAME}" />
   <meta name="twitter:description" content="${description}" />
   <meta name="twitter:image" content="${image}" />
   <meta name="twitter:image:alt" content="${title}" />
   ${author ? `<meta name="author" content="${author}" />` : ''}
+  <meta http-equiv="refresh" content="0;url=${redirectUrl}">
   <script>
     window.location.replace(${JSON.stringify(params.redirectUrl)});
   </script>
@@ -96,6 +99,7 @@ export function renderPreviewPage(params: {
 
 shareRoutes.get('/post/:id', async (c) => {
     const id = c.req.param('id')
+    console.log(`[Share] Generating preview for post ${id}`)
 
     const [postData] = await db
         .select({
@@ -115,6 +119,7 @@ shareRoutes.get('/post/:id', async (c) => {
         .where(eq(post.id, id))
 
     if (!postData) {
+        console.warn(`[Share] Post ${id} not found`)
         return c.html(renderPreviewPage({
             title: 'Article not found',
             description: 'This Jence article is unavailable or has been removed.',
@@ -130,6 +135,8 @@ shareRoutes.get('/post/:id', async (c) => {
     const image = postData.imageUrl || postData.creatorImage || DEFAULT_IMAGE
     const author = postData.creatorPseudonym || postData.creatorUsername || 'Jence'
 
+    console.log(`[Share] Serving preview for: ${postData.title} by ${author}`)
+
     c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
     return c.html(renderPreviewPage({
         title: postData.title,
@@ -144,6 +151,7 @@ shareRoutes.get('/post/:id', async (c) => {
 
 shareRoutes.get('/community/post/:id', async (c) => {
     const id = c.req.param('id')
+    console.log(`[Share] Generating preview for community post ${id}`)
 
     const [postData] = await db
         .select({
@@ -161,6 +169,7 @@ shareRoutes.get('/community/post/:id', async (c) => {
         .where(eq(communityPost.id, id))
 
     if (!postData) {
+        console.warn(`[Share] Community post ${id} not found`)
         return c.html(renderPreviewPage({
             title: 'Discussion not found',
             description: 'This Jence discussion is unavailable or has been removed.',
@@ -174,6 +183,7 @@ shareRoutes.get('/community/post/:id', async (c) => {
     const redirectUrl = `${FRONTEND_URL}/community/post/${postData.id}`
     const author = postData.pseudonym || postData.username || postData.name || 'Jence'
     const description = normalizeText(postData.content, 160) || `Read the discussion by ${author} on Jence.`
+    console.log(`[Share] Serving community preview for: ${author}'s post`)
 
     c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
     return c.html(renderPreviewPage({

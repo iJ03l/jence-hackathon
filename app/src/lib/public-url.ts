@@ -27,9 +27,12 @@ export function getShareBaseUrl() {
     if (apiUrl) return normalizeUrlOrigin(apiUrl)
 
     // On Railway/Static hosts without rewrites, we MUST use the API domain for SEO previews to work.
-    // Defaulting to the API domain for jence.xyz production.
-    if (typeof window !== 'undefined' && window.location.host === 'jence.xyz') {
-        return 'https://api.jence.xyz'
+    // Defaulting to the API domain for jence.xyz and its www subdomain production.
+    if (typeof window !== 'undefined') {
+        const host = window.location.host.toLowerCase()
+        if (host === 'jence.xyz' || host === 'www.jence.xyz') {
+            return 'https://api.jence.xyz'
+        }
     }
 
     return getSiteBaseUrl()
