@@ -1,0 +1,15 @@
+name = "jence-post-route-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-03-19"
+
+[vars]
+API_ORIGIN = "https://api.jence.xyz"
+
+routes = [
+  { pattern = "jence.xyz/post/*", zone_name = "jence.xyz" },
+  { pattern = "www.jence.xyz/post/*", zone_name = "jence.xyz" },
+  { pattern = "jence.xyz/community/post/*", zone_name = "jence.xyz" },
+  { pattern = "www.jence.xyz/community/post/*", zone_name = "jence.xyz" },
+  { pattern = "jence.xyz/share/*", zone_name = "jence.xyz" },
+  { pattern = "www.jence.xyz/share/*", zone_name = "jence.xyz" }
+]
