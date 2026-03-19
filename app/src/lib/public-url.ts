@@ -49,9 +49,9 @@ export function buildShareUrl(path: string) {
 }
 
 export function buildArticleShareUrl(id: string) {
-    return buildShareUrl(`/share/post/${id}`)
+    return buildSiteUrl(`/post/${id}`)
 }
 
 export function buildCommunityPostShareUrl(id: string) {
-    return buildShareUrl(`/share/community/post/${id}`)
+    return buildSiteUrl(`/community/post/${id}`)
 }

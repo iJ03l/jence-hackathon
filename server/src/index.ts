@@ -1,9 +1,12 @@
 import 'dotenv/config'
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { secureHeaders } from 'hono/secure-headers'
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { setGlobalDispatcher, Agent } from 'undici'
 
 // Fix Node.js 18+ fetch ETIMEDOUT bug — autoSelectFamily tries both IPv4/IPv6
@@ -32,6 +35,8 @@ import shareRoutes from './routes/share.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
 
 const app = new Hono()
+const SPA_STATIC_ROOT = existsSync(path.resolve(process.cwd(), '../app/dist/index.html')) ? '../app/dist' : 'app/dist'
+const serveSpaStatic = serveStatic({ root: SPA_STATIC_ROOT })
 
 // Middleware
 app.use('*', secureHeaders())
@@ -79,6 +84,17 @@ app.route('/api/stats', statsRoutes)
 app.route('/api/launches', launchRoutes)
 app.route('/api/admin', adminRoutes)
 app.route('/share', shareRoutes)
+app.route('/', shareRoutes)
+
+app.use('/assets/*', serveSpaStatic)
+app.get('/:asset', async (c, next) => {
+    const asset = c.req.param('asset')
+    if (!asset.includes('.')) {
+        return next()
+    }
+
+    return serveSpaStatic(c, next)
+})
 
 // Start server
 const shouldStartServer = process.env.NODE_ENV !== 'test' && !process.env.VITEST

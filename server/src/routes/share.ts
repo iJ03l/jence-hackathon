@@ -1,4 +1,6 @@
-import { Hono } from 'hono'
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { Hono, type Context } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { creatorProfile, user, post, communityPost } from '../db/schema.js'
@@ -8,6 +10,30 @@ const shareRoutes = new Hono()
 const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.PUBLIC_URL || 'https://jence.xyz').replace(/\/+$/, '')
 const SITE_NAME = 'Jence'
 const DEFAULT_IMAGE = `${FRONTEND_URL}/og-image.png`
+const SPA_TEMPLATE_PATH = fileURLToPath(new URL('../../../app/dist/index.html', import.meta.url))
+
+let spaTemplatePromise: Promise<string> | null = null
+
+type SocialCardType = 'article' | 'website'
+
+type MetadataParams = {
+    title: string
+    description: string
+    image: string
+    url: string
+    author?: string
+    type?: SocialCardType
+    robots?: string
+}
+
+type SocialPageData = {
+    title: string
+    description: string
+    image: string
+    directUrl: string
+    author?: string
+    type?: SocialCardType
+}
 
 function escapeHtml(value: string) {
     return value
@@ -23,6 +49,71 @@ function normalizeText(value?: string | null, limit = 160) {
     if (!cleaned) return ''
     if (cleaned.length <= limit) return cleaned
     return `${cleaned.slice(0, limit - 3).trimEnd()}...`
+}
+
+function buildSeoBlock(params: MetadataParams) {
+    const title = escapeHtml(params.title)
+    const description = escapeHtml(params.description)
+    const image = escapeHtml(params.image || DEFAULT_IMAGE)
+    const url = escapeHtml(params.url)
+    const author = escapeHtml(params.author || SITE_NAME)
+    const type = params.type || 'article'
+    const robots = escapeHtml(params.robots || 'index, follow')
+
+    return `  <!-- SEO -->
+  <title>${title} | ${SITE_NAME}</title>
+  <meta name="description" content="${description}" />
+  <link rel="canonical" href="${url}" />
+  <meta name="robots" content="${robots}" />
+  <meta name="author" content="${author}" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="${title} | ${SITE_NAME}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:type" content="${type}" />
+  <meta property="og:url" content="${url}" />
+  <meta property="og:site_name" content="${SITE_NAME}" />
+  <meta property="og:image" content="${image}" />
+  <meta property="og:image:secure_url" content="${image}" />
+  <meta property="og:image:alt" content="${title}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@jence_io" />
+  <meta name="twitter:creator" content="@jence_io" />
+  <meta name="twitter:title" content="${title} | ${SITE_NAME}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${image}" />
+  <meta name="twitter:image:alt" content="${title}" />
+
+  <!-- PWA / App-like behavior meta tags -->`
+}
+
+export function renderAppPage(template: string, params: MetadataParams) {
+    const withBase = /<base\s+href=["']\/["']\s*\/?>/i.test(template)
+        ? template
+        : template.replace('<head>', '<head>\n  <base href="/" />')
+
+    const seoBlock = buildSeoBlock(params)
+
+    if (/<!-- SEO -->[\s\S]*?<!-- PWA \/ App-like behavior meta tags -->/.test(withBase)) {
+        return withBase.replace(/<!-- SEO -->[\s\S]*?<!-- PWA \/ App-like behavior meta tags -->/, seoBlock)
+    }
+
+    return withBase.replace('</head>', `${seoBlock}\n</head>`)
+}
+
+async function getSpaTemplate() {
+    spaTemplatePromise ||= readFile(SPA_TEMPLATE_PATH, 'utf8')
+
+    try {
+        return await spaTemplatePromise
+    } catch (error) {
+        spaTemplatePromise = null
+        throw error
+    }
 }
 
 export function renderPreviewPage(params: {
@@ -61,7 +152,7 @@ export function renderPreviewPage(params: {
   <meta property="og:image:alt" content="${title}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="${redirectUrl}" />
+  <meta property="og:url" content="${shareUrl}" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@jence_io" />
@@ -71,7 +162,6 @@ export function renderPreviewPage(params: {
   <meta name="twitter:image" content="${image}" />
   <meta name="twitter:image:alt" content="${title}" />
   ${author ? `<meta name="author" content="${author}" />` : ''}
-  <meta http-equiv="refresh" content="0;url=${redirectUrl}">
   <script>
     window.location.replace(${JSON.stringify(params.redirectUrl)});
   </script>
@@ -97,10 +187,7 @@ export function renderPreviewPage(params: {
 </html>`
 }
 
-shareRoutes.get('/post/:id', async (c) => {
-    const id = c.req.param('id')
-    console.log(`[Share] Generating preview for post ${id}`)
-
+async function getArticlePageData(id: string): Promise<SocialPageData | null> {
     const [postData] = await db
         .select({
             id: post.id,
@@ -118,41 +205,20 @@ shareRoutes.get('/post/:id', async (c) => {
         .innerJoin(user, eq(creatorProfile.userId, user.id))
         .where(eq(post.id, id))
 
-    if (!postData) {
-        console.warn(`[Share] Post ${id} not found`)
-        return c.html(renderPreviewPage({
-            title: 'Article not found',
-            description: 'This Jence article is unavailable or has been removed.',
-            image: DEFAULT_IMAGE,
-            shareUrl: c.req.url,
-            redirectUrl: `${FRONTEND_URL}/`,
-            type: 'website',
-        }), 404)
-    }
+    if (!postData) return null
 
-    const redirectUrl = `${FRONTEND_URL}/post/${postData.id}`
     const description = normalizeText(postData.excerpt || postData.content, 160) || `Read ${postData.title} on Jence.`
-    const image = postData.imageUrl || postData.creatorImage || DEFAULT_IMAGE
-    const author = postData.creatorPseudonym || postData.creatorUsername || 'Jence'
-
-    console.log(`[Share] Serving preview for: ${postData.title} by ${author}`)
-
-    c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
-    return c.html(renderPreviewPage({
+    return {
         title: postData.title,
         description,
-        image,
-        shareUrl: c.req.url,
-        redirectUrl,
-        author,
+        image: postData.imageUrl || postData.creatorImage || DEFAULT_IMAGE,
+        author: postData.creatorPseudonym || postData.creatorUsername || SITE_NAME,
+        directUrl: `${FRONTEND_URL}/post/${postData.id}`,
         type: 'article',
-    }))
-})
+    }
+}
 
-shareRoutes.get('/community/post/:id', async (c) => {
-    const id = c.req.param('id')
-    console.log(`[Share] Generating preview for community post ${id}`)
-
+async function getCommunityPageData(id: string): Promise<SocialPageData | null> {
     const [postData] = await db
         .select({
             id: communityPost.id,
@@ -168,33 +234,99 @@ shareRoutes.get('/community/post/:id', async (c) => {
         .leftJoin(creatorProfile, eq(user.id, creatorProfile.userId))
         .where(eq(communityPost.id, id))
 
-    if (!postData) {
-        console.warn(`[Share] Community post ${id} not found`)
+    if (!postData) return null
+
+    const author = postData.pseudonym || postData.username || postData.name || SITE_NAME
+    return {
+        title: `Discussion by @${postData.username || author}`,
+        description: normalizeText(postData.content, 160) || `Read the discussion by ${author} on Jence.`,
+        image: postData.image || DEFAULT_IMAGE,
+        author,
+        directUrl: `${FRONTEND_URL}/community/post/${postData.id}`,
+        type: 'article',
+    }
+}
+
+async function respondWithSocialPage(
+    c: Context,
+    pageData: SocialPageData | null,
+    notFound: {
+        title: string
+        description: string
+        directUrl: string
+    }
+) {
+    const isShareRoute = c.req.path.startsWith('/share/')
+    const status = pageData ? 200 : 404
+    const title = pageData?.title || notFound.title
+    const description = pageData?.description || notFound.description
+    const image = pageData?.image || DEFAULT_IMAGE
+    const directUrl = pageData?.directUrl || notFound.directUrl
+    const author = pageData?.author
+    const type = pageData?.type || 'website'
+
+    c.header('Cache-Control', pageData ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60, s-maxage=60')
+
+    if (isShareRoute) {
         return c.html(renderPreviewPage({
-            title: 'Discussion not found',
-            description: 'This Jence discussion is unavailable or has been removed.',
-            image: DEFAULT_IMAGE,
+            title,
+            description,
+            image,
             shareUrl: c.req.url,
-            redirectUrl: `${FRONTEND_URL}/community`,
-            type: 'website',
-        }), 404)
+            redirectUrl: directUrl,
+            author,
+            type,
+        }), status)
     }
 
-    const redirectUrl = `${FRONTEND_URL}/community/post/${postData.id}`
-    const author = postData.pseudonym || postData.username || postData.name || 'Jence'
-    const description = normalizeText(postData.content, 160) || `Read the discussion by ${author} on Jence.`
-    console.log(`[Share] Serving community preview for: ${author}'s post`)
-
-    c.header('Cache-Control', 'public, max-age=300, s-maxage=300')
-    return c.html(renderPreviewPage({
-        title: `Discussion by @${postData.username || author}`,
+    const template = await getSpaTemplate()
+    return c.html(renderAppPage(template, {
+        title,
         description,
-        image: postData.image || DEFAULT_IMAGE,
-        shareUrl: c.req.url,
-        redirectUrl,
+        image,
+        url: directUrl,
         author,
-        type: 'article',
-    }))
+        type,
+        robots: pageData ? 'index, follow' : 'noindex, nofollow',
+    }), status)
+}
+
+shareRoutes.get('/post/:id', async (c) => {
+    const id = c.req.param('id')
+    console.log(`[Share] Resolving article ${id} for ${c.req.path}`)
+
+    const pageData = await getArticlePageData(id)
+
+    if (!pageData) {
+        console.warn(`[Share] Post ${id} not found`)
+    } else {
+        console.log(`[Share] Serving article metadata for: ${pageData.title} by ${pageData.author}`)
+    }
+
+    return respondWithSocialPage(c, pageData, {
+        title: 'Article not found',
+        description: 'This Jence article is unavailable or has been removed.',
+        directUrl: `${FRONTEND_URL}/post/${id}`,
+    })
+})
+
+shareRoutes.get('/community/post/:id', async (c) => {
+    const id = c.req.param('id')
+    console.log(`[Share] Resolving community post ${id} for ${c.req.path}`)
+
+    const pageData = await getCommunityPageData(id)
+
+    if (!pageData) {
+        console.warn(`[Share] Community post ${id} not found`)
+    } else {
+        console.log(`[Share] Serving community metadata for: ${pageData.title}`)
+    }
+
+    return respondWithSocialPage(c, pageData, {
+        title: 'Discussion not found',
+        description: 'This Jence discussion is unavailable or has been removed.',
+        directUrl: `${FRONTEND_URL}/community/post/${id}`,
+    })
 })
 
 export default shareRoutes
