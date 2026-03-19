@@ -8,6 +8,7 @@ import { creatorProfile, user, post, communityPost } from '../db/schema.js'
 const shareRoutes = new Hono()
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.PUBLIC_URL || 'https://jence.xyz').replace(/\/+$/, '')
+const SHARE_BASE_URL = (process.env.SHARE_BASE_URL || process.env.API_PUBLIC_URL || process.env.API_URL || '').replace(/\/+$/, '')
 const SITE_NAME = 'Jence'
 const DEFAULT_IMAGE = `${FRONTEND_URL}/og-image.png`
 const SPA_TEMPLATE_PATH = fileURLToPath(new URL('../../../app/dist/index.html', import.meta.url))
@@ -49,6 +50,28 @@ function normalizeText(value?: string | null, limit = 160) {
     if (!cleaned) return ''
     if (cleaned.length <= limit) return cleaned
     return `${cleaned.slice(0, limit - 3).trimEnd()}...`
+}
+
+function normalizeOrigin(value: string) {
+    try {
+        return new URL(value).origin.replace(/\/+$/, '')
+    } catch {
+        return value.replace(/\/+$/, '')
+    }
+}
+
+function buildPublicShareUrl(c: Context) {
+    if (SHARE_BASE_URL) {
+        return `${normalizeOrigin(SHARE_BASE_URL)}${c.req.path}`
+    }
+
+    const forwardedProto = c.req.header('x-forwarded-proto')?.split(',')[0]?.trim()
+    const forwardedHost = c.req.header('x-forwarded-host')?.split(',')[0]?.trim()
+    const host = forwardedHost || c.req.header('host') || new URL(c.req.url).host
+    const protocol = forwardedProto
+        || (host === 'localhost:8080' || host.startsWith('127.0.0.1') ? 'http' : 'https')
+
+    return `${protocol}://${host}${c.req.path}`
 }
 
 function buildSeoBlock(params: MetadataParams) {
@@ -268,11 +291,12 @@ async function respondWithSocialPage(
     c.header('Cache-Control', pageData ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60, s-maxage=60')
 
     if (isShareRoute) {
+        const shareUrl = buildPublicShareUrl(c)
         return c.html(renderPreviewPage({
             title,
             description,
             image,
-            shareUrl: c.req.url,
+            shareUrl,
             redirectUrl: directUrl,
             author,
             type,
