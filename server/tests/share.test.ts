@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { renderAppPage, renderPreviewPage } from '../src/routes/share.js'
 
 describe('share preview rendering', () => {
-    it('binds social metadata to the share URL instead of the redirect target', () => {
+    it('binds social metadata to the redirect target for better canonical identity', () => {
         const html = renderPreviewPage({
             title: 'Torque Benchmarks',
             description: 'Field-tested results from a new actuator sweep.',
@@ -11,12 +11,29 @@ describe('share preview rendering', () => {
             redirectUrl: 'https://jence.xyz/post/123',
             type: 'article',
             author: 'Ada',
+            isBot: false,
         })
 
-        expect(html).toContain('property="og:url" content="https://api.jence.xyz/share/post/123"')
+        expect(html).toContain('property="og:url" content="https://jence.xyz/post/123"')
         expect(html).toContain('property="og:image:secure_url" content="https://cdn.jence.xyz/torque-bench.png"')
-        expect(html).not.toContain('http-equiv="refresh"')
+        expect(html).toContain('http-equiv="refresh" content="0; url=https://jence.xyz/post/123"')
         expect(html).toContain('window.location.replace("https://jence.xyz/post/123")')
+    })
+
+    it('omits redirect scripts and meta refresh for bots', () => {
+        const html = renderPreviewPage({
+            title: 'Torque Benchmarks',
+            description: 'Field-tested results from a new actuator sweep.',
+            image: 'https://cdn.jence.xyz/torque-bench.png',
+            shareUrl: 'https://api.jence.xyz/share/post/123',
+            redirectUrl: 'https://jence.xyz/post/123',
+            type: 'article',
+            isBot: true,
+        })
+
+        expect(html).toContain('property="og:url" content="https://jence.xyz/post/123"')
+        expect(html).not.toContain('http-equiv="refresh"')
+        expect(html).not.toContain('window.location.replace')
     })
 
     it('keeps the canonical URL pointed at the frontend article', () => {

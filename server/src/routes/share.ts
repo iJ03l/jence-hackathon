@@ -147,6 +147,7 @@ export function renderPreviewPage(params: {
     redirectUrl: string
     author?: string
     type?: 'article' | 'website'
+    isBot?: boolean
 }) {
     const title = escapeHtml(params.title)
     const description = escapeHtml(params.description)
@@ -175,8 +176,7 @@ export function renderPreviewPage(params: {
   <meta property="og:image:alt" content="${title}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="${shareUrl}" />
-
+  <meta property="og:url" content="${redirectUrl}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@jence_io" />
   <meta name="twitter:creator" content="@jence_io" />
@@ -185,9 +185,11 @@ export function renderPreviewPage(params: {
   <meta name="twitter:image" content="${image}" />
   <meta name="twitter:image:alt" content="${title}" />
   ${author ? `<meta name="author" content="${author}" />` : ''}
+  ${!params.isBot ? `
+  <meta http-equiv="refresh" content="0; url=${redirectUrl}" />
   <script>
     window.location.replace(${JSON.stringify(params.redirectUrl)});
-  </script>
+  </script>` : ''}
   <style>
     :root { color-scheme: dark; }
     html, body { margin: 0; min-height: 100%; background: #090909; color: #e5e5e5; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -291,7 +293,10 @@ async function respondWithSocialPage(
     c.header('Cache-Control', pageData ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60, s-maxage=60')
 
     if (isShareRoute) {
+        const ua = c.req.header('user-agent') || ''
+        const isBot = /Twitterbot|facebookexternalhit|TelegramBot|Slackbot|Discordbot/i.test(ua)
         const shareUrl = buildPublicShareUrl(c)
+
         return c.html(renderPreviewPage({
             title,
             description,
@@ -300,6 +305,7 @@ async function respondWithSocialPage(
             redirectUrl: directUrl,
             author,
             type,
+            isBot,
         }), status)
     }
 
