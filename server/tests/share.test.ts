@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { renderAppPage, renderPreviewPage } from '../src/routes/share.js'
+import { isSocialCrawler, renderAppPage, renderPreviewPage } from '../src/routes/share.js'
 
 describe('share preview rendering', () => {
+    it('treats common social scrapers as preview bots', () => {
+        expect(isSocialCrawler('LinkedInBot/1.0')).toBe(true)
+        expect(isSocialCrawler('WhatsApp/2.24.5 i')).toBe(true)
+        expect(isSocialCrawler('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15')).toBe(false)
+    })
+
     it('binds social metadata to the redirect target for better canonical identity', () => {
         const html = renderPreviewPage({
             title: 'Torque Benchmarks',

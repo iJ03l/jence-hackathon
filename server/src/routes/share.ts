@@ -35,6 +35,27 @@ type SocialPageData = {
     type?: SocialCardType
 }
 
+const SOCIAL_CRAWLER_TOKENS = [
+    'twitterbot',
+    'xbot',
+    'facebookexternalhit',
+    'facebot',
+    'linkedinbot',
+    'slackbot',
+    'discordbot',
+    'telegrambot',
+    'whatsapp',
+    'skypeuripreview',
+    'applebot',
+    'googleother',
+    'embedly',
+    'pinterest',
+    'vkshare',
+    'preview',
+    'crawler',
+    'spider',
+]
+
 function escapeHtml(value: string) {
     return value
         .replace(/&/g, '&amp;')
@@ -49,6 +70,11 @@ function normalizeText(value?: string | null, limit = 160) {
     if (!cleaned) return ''
     if (cleaned.length <= limit) return cleaned
     return `${cleaned.slice(0, limit - 3).trimEnd()}...`
+}
+
+export function isSocialCrawler(userAgent: string) {
+    const normalized = userAgent.toLowerCase()
+    return SOCIAL_CRAWLER_TOKENS.some((token) => normalized.includes(token))
 }
 
 function normalizeOrigin(value: string) {
@@ -293,7 +319,7 @@ async function respondWithSocialPage(
 
     if (isShareRoute) {
         const ua = c.req.header('user-agent') || ''
-        const isBot = /Twitterbot|facebookexternalhit|TelegramBot|Slackbot|Discordbot/i.test(ua)
+        const isBot = isSocialCrawler(ua)
         const shareUrl = buildPublicShareUrl(c)
 
         return c.html(renderPreviewPage({
