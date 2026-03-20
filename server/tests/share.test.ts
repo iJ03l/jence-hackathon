@@ -20,7 +20,7 @@ describe('share preview rendering', () => {
             isBot: false,
         })
 
-        expect(html).toContain('property="og:url" content="https://jence.xyz/post/123"')
+        expect(html).toContain('property="og:url" content="https://api.jence.xyz/share/post/123"')
         expect(html).toContain('property="og:image:secure_url" content="https://cdn.jence.xyz/torque-bench.png"')
         expect(html).toContain('http-equiv="refresh" content="0; url=https://jence.xyz/post/123"')
         expect(html).toContain('window.location.replace("https://jence.xyz/post/123")')
@@ -37,7 +37,7 @@ describe('share preview rendering', () => {
             isBot: true,
         })
 
-        expect(html).toContain('property="og:url" content="https://jence.xyz/post/123"')
+        expect(html).toContain('property="og:url" content="https://api.jence.xyz/share/post/123"')
         expect(html).not.toContain('http-equiv="refresh"')
         expect(html).not.toContain('window.location.replace')
     })

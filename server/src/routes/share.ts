@@ -201,7 +201,7 @@ export function renderPreviewPage(params: {
   <meta property="og:image:alt" content="${title}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="${redirectUrl}" />
+  <meta property="og:url" content="${shareUrl}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@jence_io" />
   <meta name="twitter:creator" content="@jence_io" />
