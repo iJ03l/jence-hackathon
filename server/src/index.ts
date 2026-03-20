@@ -1,6 +1,4 @@
 import 'dotenv/config'
-import { existsSync } from 'node:fs'
-import path from 'node:path'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
@@ -33,9 +31,10 @@ import launchRoutes from './routes/launches.js'
 import adminRoutes from './routes/admin.js'
 import shareRoutes from './routes/share.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
+import { resolveSpaStaticRoot } from './lib/spa.js'
 
 const app = new Hono()
-const SPA_STATIC_ROOT = existsSync(path.resolve(process.cwd(), '../app/dist/index.html')) ? '../app/dist' : 'app/dist'
+const SPA_STATIC_ROOT = resolveSpaStaticRoot()
 const serveSpaStatic = serveStatic({ root: SPA_STATIC_ROOT })
 
 // Middleware

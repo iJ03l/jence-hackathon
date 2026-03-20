@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { Hono, type Context } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { creatorProfile, user, post, communityPost } from '../db/schema.js'
+import { resolveSpaTemplatePath } from '../lib/spa.js'
 
 const shareRoutes = new Hono()
 
@@ -11,7 +11,6 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.PUBLIC_URL || 'htt
 const SHARE_BASE_URL = (process.env.SHARE_BASE_URL || process.env.API_PUBLIC_URL || process.env.API_URL || '').replace(/\/+$/, '')
 const SITE_NAME = 'Jence'
 const DEFAULT_IMAGE = `${FRONTEND_URL}/og-image.png`
-const SPA_TEMPLATE_PATH = fileURLToPath(new URL('../../../app/dist/index.html', import.meta.url))
 
 let spaTemplatePromise: Promise<string> | null = null
 
@@ -129,7 +128,7 @@ export function renderAppPage(template: string, params: MetadataParams) {
 }
 
 async function getSpaTemplate() {
-    spaTemplatePromise ||= readFile(SPA_TEMPLATE_PATH, 'utf8')
+    spaTemplatePromise ||= readFile(resolveSpaTemplatePath(), 'utf8')
 
     try {
         return await spaTemplatePromise
