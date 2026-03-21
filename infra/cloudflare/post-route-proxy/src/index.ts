@@ -1,7 +1,3 @@
-interface Env {
-    API_ORIGIN: string
-}
-
 const ROUTED_PREFIXES = ['/post/', '/community/post/', '/share/']
 
 const SOCIAL_CRAWLER_TOKENS = [
@@ -25,27 +21,23 @@ const SOCIAL_CRAWLER_TOKENS = [
     'spider',
 ]
 
-function isBot(userAgent: string) {
+function isBot(userAgent) {
     const normalized = userAgent.toLowerCase()
     return SOCIAL_CRAWLER_TOKENS.some((token) => normalized.includes(token))
 }
 
-function shouldProxy(pathname: string, userAgent: string) {
-    // Always proxy /share/ correctly
+function shouldProxy(pathname, userAgent) {
     if (pathname.startsWith('/share/')) {
         return true
     }
-    
-    // Only proxy /post/ or /community/post/ if the user agent is a bot
     const isPostRoute = pathname.startsWith('/post/') || pathname.startsWith('/community/post/')
     if (isPostRoute && isBot(userAgent)) {
         return true
     }
-
     return false
 }
 
-function buildForwardedFor(request: Request) {
+function buildForwardedFor(request) {
     const existing = request.headers.get('x-forwarded-for')?.trim()
     const clientIp = request.headers.get('cf-connecting-ip')?.trim()
 
@@ -54,19 +46,17 @@ function buildForwardedFor(request: Request) {
 }
 
 export default {
-    async fetch(request: Request, env: any): Promise<Response> {
+    async fetch(request, env) {
         const incomingUrl = new URL(request.url)
         const userAgent = request.headers.get('user-agent') || ''
 
         if (!shouldProxy(incomingUrl.pathname, userAgent)) {
-            // Pass through to Cloudflare Pages (returns the React app index.html)
             return fetch(request)
         }
 
         const targetBase = new URL(env.API_ORIGIN || 'https://api.jence.xyz')
         
         let proxyPathname = incomingUrl.pathname
-        // If it's a bot hitting /post/ or /community/post/, rewrite to /share/ so the backend returns bot HTML
         if (!proxyPathname.startsWith('/share/')) {
             proxyPathname = `/share${proxyPathname}`
         }

@@ -327,7 +327,7 @@ async function respondWithSocialPage(
             title,
             description,
             image,
-            shareUrl,
+            shareUrl: directUrl,
             redirectUrl: directUrl,
             author,
             type,
