@@ -2,46 +2,56 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://jence.xyz/</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://jence.xyz/explore</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://jence.xyz/community</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://jence.xyz/launches</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://jence.xyz/guidelines</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://jence.xyz/login</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jence.xyz/register</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://jence.xyz/terms</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://jence.xyz/privacy</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://jence.xyz/about</loc>
+    <lastmod>2026-03-21T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
