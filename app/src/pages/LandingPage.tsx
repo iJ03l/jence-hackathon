@@ -252,23 +252,38 @@ export default function LandingPage() {
                                     to={`/${creator.pseudonym || creator.username || '#'}`}
                                     className="card-plug p-4 text-center group hover:border-jence-gold/30 transition-all"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center mx-auto mb-2 text-jence-gold font-bold group-hover:scale-110 transition-transform">
-                                        {(creator.pseudonym || creator.name || '?')[0].toUpperCase()}
-                                    </div>
-                                    <p className="text-sm font-medium text-foreground truncate group-hover:text-jence-gold transition-colors">
-                                        {creator.pseudonym || creator.name}
-                                    </p>
-                                    {creator.vertical && (
-                                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                                            {creator.vertical}
-                                        </p>
-                                    )}
-                                    {creator.rating && (
-                                        <div className="flex items-center justify-center gap-1 mt-1">
-                                            <Star size={10} className="text-jence-gold" />
-                                            <span className="text-[10px] text-muted-foreground">{creator.rating}</span>
+                                    {creator.image ? (
+                                        <img 
+                                            src={creator.image} 
+                                            alt={creator.pseudonym || creator.username} 
+                                            className="w-12 h-12 rounded-full object-cover mx-auto mb-2 border border-border group-hover:scale-110 transition-transform" 
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jence-gold/20 to-jence-gold/5 flex items-center justify-center mx-auto mb-2 text-jence-gold font-bold group-hover:scale-110 transition-transform">
+                                            {(creator.pseudonym || creator.username || '?')[0].toUpperCase()}
                                         </div>
                                     )}
+                                    <p className="text-sm font-medium text-foreground truncate group-hover:text-jence-gold transition-colors">
+                                        {creator.pseudonym || creator.username}
+                                    </p>
+                                    {creator.verticalName && (
+                                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                            {creator.verticalName}
+                                        </p>
+                                    )}
+                                    <div className="flex items-center justify-center gap-2 mt-1">
+                                        {creator.rating ? (
+                                            <div className="flex items-center gap-1">
+                                                <Star size={10} className="text-jence-gold" />
+                                                <span className="text-[10px] text-muted-foreground">{creator.rating}</span>
+                                            </div>
+                                        ) : null}
+                                        {creator.postCount > 0 && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                                {creator.postCount} {creator.postCount === 1 ? 'post' : 'posts'}
+                                            </span>
+                                        )}
+                                    </div>
                                 </Link>
                             ))}
                         </div>

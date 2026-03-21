@@ -232,9 +232,6 @@ export default function SettingsPage() {
         )
     }
 
-    const creatorShare = import.meta.env.VITE_CREATOR_PAYOUT_PERCENT || '80'
-    const platformShare = 100 - parseInt(creatorShare)
-
     return (
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="max-w-4xl mx-auto">
@@ -405,12 +402,6 @@ export default function SettingsPage() {
                                             Configure how much your subscribers tip each month to access your premium work. Earnings are sent zero-fee to your wallet.
                                         </p>
 
-                                        <div className="p-3 rounded-lg bg-jence-gold/5 border border-jence-gold/20 mb-6 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium text-jence-gold">Revenue Split:</p>
-                                                <p className="text-sm text-foreground"><span className="font-bold">{creatorShare}%</span> Creator / <span className="font-bold">{platformShare}%</span> Platform</p>
-                                            </div>
-                                        </div>
 
                                         <div className="space-y-4 mb-8">
                                             <div className="flex items-center gap-2 h-8">
@@ -471,6 +462,30 @@ export default function SettingsPage() {
                                     <p className="text-xs text-muted-foreground mt-1">
                                         Subscribe to creators to see them here
                                     </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'notifications' && (
+                            <div className="card-plug p-6">
+                                <h2 className="font-semibold text-foreground mb-4">Notifications</h2>
+                                <p className="text-sm text-muted-foreground mb-6">
+                                    Manage your email and push notification preferences.
+                                </p>
+                                <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
+                                    <p className="text-muted-foreground text-sm">Notification settings coming soon</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'privacy' && (
+                            <div className="card-plug p-6">
+                                <h2 className="font-semibold text-foreground mb-4">Privacy & Data</h2>
+                                <p className="text-sm text-muted-foreground mb-6">
+                                    Manage your data and privacy settings.
+                                </p>
+                                <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
+                                    <p className="text-muted-foreground text-sm">Privacy settings coming soon</p>
                                 </div>
                             </div>
                         )}

@@ -47,10 +47,16 @@ creatorsRoutes.get('/', async (c) => {
             verticalName: vertical.name,
             verticalSlug: vertical.slug,
             createdAt: creatorProfile.createdAt,
+            image: user.image,
+            username: user.username,
+            postCount: count(post.id),
         })
         .from(creatorProfile)
         .leftJoin(vertical, eq(creatorProfile.verticalId, vertical.id))
+        .innerJoin(user, eq(creatorProfile.userId, user.id))
+        .leftJoin(post, eq(post.creatorId, creatorProfile.id))
         .where(eq(creatorProfile.isBanned, false))
+        .groupBy(creatorProfile.id, vertical.name, vertical.slug, user.image, user.username)
 
     return c.json(creators)
 })
