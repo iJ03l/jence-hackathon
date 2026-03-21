@@ -333,6 +333,7 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
             creatorUserId: user.id,
             creatorImage: user.image, // helpful for UI
             creatorUsername: user.username, // helpful for linking
+            creatorIsOg: user.isOg,
             verticalId: post.verticalId,
             verticalName: vertical.name,
             verticalSlug: vertical.slug,
@@ -486,6 +487,7 @@ postsRoutes.get('/:id/comments', async (c) => {
                 username: user.username,
                 image: user.image,
                 role: user.role,
+                isOg: user.isOg,
                 pseudonym: creatorProfile.pseudonym,
             }
         })

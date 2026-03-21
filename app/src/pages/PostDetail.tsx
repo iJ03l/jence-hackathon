@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { linkifyText } from "../lib/linkify";
 import SEO from "../components/SEO";
+import { OGBadge } from "../components/OGBadge";
 import { buildCommunityPostShareUrl } from "../lib/public-url";
 
 export default function PostDetail() {
@@ -190,6 +191,7 @@ export default function PostDetail() {
                   to={`/${post.author?.pseudonym || post.author?.username || '#'}`} className="font-semibold text-foreground hover:underline">
                   {post.author?.displayName}
                 </Link>
+                {post.author?.isOg && <OGBadge />}
                 {post.author?.isCreator && (
                   <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                     Creator
@@ -357,6 +359,7 @@ export default function PostDetail() {
                       to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="font-semibold text-sm text-foreground hover:underline">
                       {comment.user?.displayName}
                     </Link>
+                    {comment.user?.isOg && <OGBadge />}
                     {comment.user?.isCreator && (
                       <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                         Creator

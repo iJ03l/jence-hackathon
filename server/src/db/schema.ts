@@ -12,6 +12,7 @@ export const user = pgTable('user', {
     image: text('image'),
     role: text('role').notNull().default('subscriber'), // 'subscriber' | 'creator' | 'admin'
     onboardingVerticals: jsonb('onboarding_verticals').$type<string[]>().default([]),
+    isOg: boolean('is_og').notNull().default(false),
     isBanned: boolean('is_banned').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),

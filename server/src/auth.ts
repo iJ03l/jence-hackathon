@@ -91,6 +91,11 @@ export const auth = betterAuth({
                 required: false,
                 input: true,
             },
+            isOg: {
+                type: 'boolean',
+                required: false,
+                defaultValue: process.env.ENABLE_OG_STATUS === 'true',
+            },
         },
     },
 })

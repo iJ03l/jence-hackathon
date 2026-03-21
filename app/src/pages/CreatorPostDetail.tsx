@@ -6,6 +6,7 @@ import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDo
 import { linkifyText } from '../lib/linkify'
 import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
+import { OGBadge } from '../components/OGBadge'
 import { buildArticleShareUrl } from '../lib/public-url'
 
 // Skeleton Component
@@ -183,13 +184,18 @@ export default function CreatorPostDetail() {
                             to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent"
                         >
-                            {post.creatorPseudonym?.[0]}
+                            {post.creatorImage ? (
+                                <img src={post.creatorImage} className="w-full h-full object-cover" />
+                            ) : (
+                                post.creatorPseudonym?.[0]
+                            )}
                         </Link>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="font-semibold text-foreground hover:underline">
                                     {post.creatorPseudonym || post.creatorUsername}
                                 </Link>
+                                {post.creatorIsOg && <OGBadge />}
                                 {post.verticalName && (
                                     <Link to={`/verticals/${post.verticalSlug}`} className="text-xs px-2 py-0.5 rounded-full bg-muted hover:bg-muted/80 transition-colors">
                                         {post.verticalName}
@@ -373,13 +379,18 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                         <div key={comment.id} className="p-4 rounded-xl border border-border/50 bg-background/50">
                             <div className="flex gap-3">
                                 <Link to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-xs text-muted-foreground">
-                                    {(comment.user?.displayName || '?')[0].toUpperCase()}
+                                    {comment.user?.image ? (
+                                        <img src={comment.user.image} className="w-full h-full object-cover" />
+                                    ) : (
+                                        (comment.user?.displayName || '?')[0].toUpperCase()
+                                    )}
                                 </Link>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <Link to={`/${comment.user?.pseudonym || comment.user?.username || '#'}`} className="font-semibold text-sm text-foreground hover:underline">
                                             {comment.user?.displayName}
                                         </Link>
+                                        {comment.user?.isOg && <OGBadge />}
                                         {comment.user?.isCreator && (
                                             <span className="bg-jence-gold/10 text-jence-gold text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                                                 Creator

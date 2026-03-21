@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
+import { OGBadge } from '../components/OGBadge'
 
 export default function CreatorProfilePage() {
     const { username } = useParams<{ username: string }>()
@@ -239,8 +240,9 @@ export default function CreatorProfilePage() {
                                 )}
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
                                     <h1 className="text-xl font-bold text-foreground">{creator.pseudonym}</h1>
+                                    {creator.isOg && <OGBadge />}
                                     {creator.kycStatus === 'verified' && (
                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-jence-green/10 text-jence-green text-xs font-medium">
                                             <ShieldCheck size={12} />

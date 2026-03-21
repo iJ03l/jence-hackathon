@@ -56,6 +56,7 @@ const getPostData = async (post: any, currentUserId?: string) => {
             username: user.username,
             image: user.image,
             role: user.role,
+            isOg: user.isOg,
             pseudonym: creatorProfile.pseudonym,
         })
         .from(user)
@@ -269,6 +270,7 @@ communityRoutes.get('/posts/:id/comments', async (c) => {
                 username: user.username,
                 image: user.image,
                 role: user.role,
+                isOg: user.isOg,
                 pseudonym: creatorProfile.pseudonym,
             }
         })

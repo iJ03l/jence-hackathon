@@ -49,6 +49,7 @@ creatorsRoutes.get('/', async (c) => {
             createdAt: creatorProfile.createdAt,
             image: user.image,
             username: user.username,
+            isOg: user.isOg,
             postCount: count(post.id),
         })
         .from(creatorProfile)
@@ -56,7 +57,7 @@ creatorsRoutes.get('/', async (c) => {
         .innerJoin(user, eq(creatorProfile.userId, user.id))
         .leftJoin(post, eq(post.creatorId, creatorProfile.id))
         .where(eq(creatorProfile.isBanned, false))
-        .groupBy(creatorProfile.id, vertical.name, vertical.slug, user.image, user.username)
+        .groupBy(creatorProfile.id, vertical.name, vertical.slug, user.image, user.username, user.isOg)
 
     return c.json(creators)
 })
@@ -167,6 +168,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
             // We can also return user data if needed
             username: user.username,
             image: user.image,
+            isOg: user.isOg,
             userId: creatorProfile.userId,
         })
         .from(creatorProfile)
@@ -280,6 +282,7 @@ creatorsRoutes.get('/user/:userId', async (c) => {
             createdAt: creatorProfile.createdAt,
             username: user.username,
             image: user.image,
+            isOg: user.isOg,
             userId: creatorProfile.userId,
         })
         .from(creatorProfile)
