@@ -4,8 +4,45 @@ interface Env {
 
 const ROUTED_PREFIXES = ['/post/', '/community/post/', '/share/']
 
-function shouldProxy(pathname: string) {
-    return ROUTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+const SOCIAL_CRAWLER_TOKENS = [
+    'twitterbot',
+    'xbot',
+    'facebookexternalhit',
+    'facebot',
+    'linkedinbot',
+    'slackbot',
+    'discordbot',
+    'telegrambot',
+    'whatsapp',
+    'skypeuripreview',
+    'applebot',
+    'googleother',
+    'embedly',
+    'pinterest',
+    'vkshare',
+    'preview',
+    'crawler',
+    'spider',
+]
+
+function isBot(userAgent: string) {
+    const normalized = userAgent.toLowerCase()
+    return SOCIAL_CRAWLER_TOKENS.some((token) => normalized.includes(token))
+}
+
+function shouldProxy(pathname: string, userAgent: string) {
+    // Always proxy /share/ correctly
+    if (pathname.startsWith('/share/')) {
+        return true
+    }
+    
+    // Only proxy /post/ or /community/post/ if the user agent is a bot
+    const isPostRoute = pathname.startsWith('/post/') || pathname.startsWith('/community/post/')
+    if (isPostRoute && isBot(userAgent)) {
+        return true
+    }
+
+    return false
 }
 
 function buildForwardedFor(request: Request) {
@@ -17,15 +54,24 @@ function buildForwardedFor(request: Request) {
 }
 
 export default {
-    async fetch(request: Request, env: Env): Promise<Response> {
+    async fetch(request: Request, env: any): Promise<Response> {
         const incomingUrl = new URL(request.url)
+        const userAgent = request.headers.get('user-agent') || ''
 
-        if (!shouldProxy(incomingUrl.pathname)) {
+        if (!shouldProxy(incomingUrl.pathname, userAgent)) {
+            // Pass through to Cloudflare Pages (returns the React app index.html)
             return fetch(request)
         }
 
-        const targetBase = new URL(env.API_ORIGIN)
-        const targetUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, targetBase)
+        const targetBase = new URL(env.API_ORIGIN || 'https://api.jence.xyz')
+        
+        let proxyPathname = incomingUrl.pathname
+        // If it's a bot hitting /post/ or /community/post/, rewrite to /share/ so the backend returns bot HTML
+        if (!proxyPathname.startsWith('/share/')) {
+            proxyPathname = `/share${proxyPathname}`
+        }
+        
+        const targetUrl = new URL(`${proxyPathname}${incomingUrl.search}`, targetBase)
 
         const headers = new Headers(request.headers)
         headers.set('x-forwarded-host', incomingUrl.host)

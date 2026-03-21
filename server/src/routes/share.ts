@@ -317,9 +317,10 @@ async function respondWithSocialPage(
 
     c.header('Cache-Control', pageData ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60, s-maxage=60')
 
-    if (isShareRoute) {
-        const ua = c.req.header('user-agent') || ''
-        const isBot = isSocialCrawler(ua)
+    const ua = c.req.header('user-agent') || ''
+    const isBot = isSocialCrawler(ua)
+
+    if (isShareRoute || isBot) {
         const shareUrl = buildPublicShareUrl(c)
 
         return c.html(renderPreviewPage({
