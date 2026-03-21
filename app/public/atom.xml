@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Jence</title>
+  <subtitle>Jence is a robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure.</subtitle>
+  <link href="https://jence.xyz/atom.xml" rel="self"/>
+  <link href="https://jence.xyz/"/>
+  <id>https://jence.xyz/</id>
+  <updated>2026-03-21T00:00:00Z</updated>
+  <author>
+    <name>Jence</name>
+  </author>
+</feed>

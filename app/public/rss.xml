@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Jence</title>
+  <link>https://jence.xyz</link>
+  <description>Jence is a robotics and hardware engineering publication with credited authors, verified credentials, and rigorous disclosure.</description>
+  <atom:link href="https://jence.xyz/rss.xml" rel="self" type="application/rss+xml" />
+  <language>en-us</language>
+  <lastBuildDate>Sat, 21 Mar 2026 00:00:00 GMT</lastBuildDate>
+</channel>
+</rss>
