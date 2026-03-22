@@ -460,6 +460,9 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
     const [imageUrl, setImageUrl] = useState('')
     const [allowTips, setAllowTips] = useState(false)
     const [selectedVerticalId, setSelectedVerticalId] = useState(initialVerticalId || '')
+    const [bomStructure, setBomStructure] = useState('')
+    const [mediaAssets, setMediaAssets] = useState<string[]>([])
+    const [uploadingImages, setUploadingImages] = useState(false)
     const [verticals, setVerticals] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)
@@ -504,6 +507,45 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         }
     }
 
+    const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || [])
+        if (!files.length) return
+
+        if (mediaAssets.length + files.length > 5) {
+            alert('You can only upload up to 5 media assets.')
+            return
+        }
+
+        const validFiles = files.filter(file => {
+            const isSupported = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(file.name)
+            if (!isSupported) alert(`Unsupported file type: ${file.name}`)
+            const isSmallEnough = file.size <= 5 * 1024 * 1024
+            if (!isSmallEnough) alert(`File too large (max 5MB): ${file.name}`)
+            return isSupported && isSmallEnough
+        })
+
+        if (!validFiles.length) return
+
+        setUploadingImages(true)
+        try {
+            const urls = await Promise.all(validFiles.map(async file => {
+                const data = await api.uploadImage(file)
+                if (data?.url) return data.url
+                throw new Error('Upload failed')
+            }))
+            setMediaAssets(prev => [...prev, ...urls.filter(Boolean) as string[]])
+        } catch (err: any) {
+            console.error('Media upload failed:', err)
+            alert(err?.message || 'Failed to upload one or more media assets.')
+        } finally {
+            setUploadingImages(false)
+        }
+    }
+
+    const handleRemoveMedia = (index: number) => {
+        setMediaAssets(prev => prev.filter((_, i) => i !== index))
+    }
+
     const handleSubmit = async () => {
         if (!title || !content) {
             alert('Please fill in all fields')
@@ -525,6 +567,8 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 content,
                 disclosure,
                 imageUrl: imageUrl || undefined,
+                bomStructure: bomStructure || undefined,
+                mediaAssets: mediaAssets.length > 0 ? mediaAssets : undefined,
                 creatorId,
                 verticalId: selectedVerticalId === 'none' ? undefined : selectedVerticalId,
                 isFree: true,
@@ -627,6 +671,62 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                         className="input-field min-h-[200px]"
                         placeholder="Write your article here..."
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">BOM Structure / Specifications (Optional)</label>
+                    <textarea
+                        value={bomStructure}
+                        onChange={(e) => setBomStructure(e.target.value)}
+                        className="input-field min-h-[120px] font-mono text-sm"
+                        placeholder="Detail the Bill of Materials or technical structure..."
+                    />
+                </div>
+
+                <div className="rounded-[24px] border border-border/70 bg-background/50 p-4 sm:p-5">
+                    <div className="flex justify-between items-center mb-3">
+                        <label className="block text-sm font-medium text-foreground mb-1.5">Render Images, 3D Layouts & Schematics ({mediaAssets.length}/5)</label>
+                    </div>
+                    {mediaAssets.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                            {mediaAssets.map((url, i) => (
+                                <div key={i} className="relative group rounded-xl overflow-hidden border border-border/70 aspect-video bg-muted/30">
+                                    <img src={url} alt={`Asset ${i + 1}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveMedia(i)}
+                                        className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {mediaAssets.length < 5 && (
+                        <label className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 text-center transition-colors hover:border-jence-gold/50 hover:bg-muted/30 ${uploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif"
+                                multiple
+                                onChange={handleMediaUpload}
+                                disabled={uploadingImages}
+                                className="sr-only"
+                            />
+                            {uploadingImages ? (
+                                <>
+                                    <Loader2 size={24} className="mb-2 animate-spin text-jence-gold" />
+                                    <p className="text-sm font-medium text-foreground">Uploading...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <Upload size={24} className="mb-2 text-muted-foreground group-hover:text-jence-gold transition-colors" />
+                                    <p className="text-sm font-medium text-foreground">Click to upload assets</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Upload up to 5 high-res render or schematic images</p>
+                                </>
+                            )}
+                        </label>
+                    )}
                 </div>
 
                 <div>

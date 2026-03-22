@@ -23,6 +23,9 @@ export default function LaunchNotesPage() {
     const [name, setName] = useState('')
     const [company, setCompany] = useState('')
     const [logoUrl, setLogoUrl] = useState('')
+    const [videoUrl, setVideoUrl] = useState('')
+    const [imageAssets, setImageAssets] = useState<string[]>([])
+    const [uploadingImages, setUploadingImages] = useState(false)
     const [summary, setSummary] = useState('')
     const [tagsInput, setTagsInput] = useState('')
     const [disclosure, setDisclosure] = useState('')
@@ -83,6 +86,8 @@ export default function LaunchNotesPage() {
                 name,
                 company,
                 logoUrl: logoUrl || undefined,
+                videoUrl: videoUrl || undefined,
+                imageAssets: imageAssets.length > 0 ? imageAssets : undefined,
                 summary,
                 tags: tags.length > 0 ? tags : undefined,
                 disclosure: disclosure.trim() || undefined,
@@ -93,6 +98,8 @@ export default function LaunchNotesPage() {
             setName('')
             setCompany('')
             setLogoUrl('')
+            setVideoUrl('')
+            setImageAssets([])
             setSummary('')
             setTagsInput('')
             setDisclosure('')
@@ -150,6 +157,45 @@ export default function LaunchNotesPage() {
         } finally {
             setUploadingLogo(false)
         }
+    }
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || [])
+        if (!files.length) return
+
+        if (imageAssets.length + files.length > 5) {
+            alert('You can only upload up to 5 images.')
+            return
+        }
+
+        const validFiles = files.filter(file => {
+            const isSupported = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(file.name)
+            if (!isSupported) alert(`Unsupported file type: ${file.name}`)
+            const isSmallEnough = file.size <= 5 * 1024 * 1024
+            if (!isSmallEnough) alert(`File too large (max 5MB): ${file.name}`)
+            return isSupported && isSmallEnough
+        })
+
+        if (!validFiles.length) return
+
+        setUploadingImages(true)
+        try {
+            const urls = await Promise.all(validFiles.map(async file => {
+                const data = await api.uploadImage(file)
+                if (data?.url) return data.url
+                throw new Error('Upload failed')
+            }))
+            setImageAssets(prev => [...prev, ...urls.filter(Boolean) as string[]])
+        } catch (err: any) {
+            console.error('Image upload failed:', err)
+            alert(err?.message || 'Failed to upload one or more images.')
+        } finally {
+            setUploadingImages(false)
+        }
+    }
+
+    const handleRemoveImage = (index: number) => {
+        setImageAssets(prev => prev.filter((_, i) => i !== index))
     }
 
     const handleReview = async (id: string, status: 'approved' | 'rejected') => {
@@ -383,6 +429,17 @@ export default function LaunchNotesPage() {
                                         </div>
 
                                         <div>
+                                            <label className="block text-sm font-medium text-foreground mb-1">Video Link (optional)</label>
+                                            <input
+                                                type="url"
+                                                value={videoUrl}
+                                                onChange={e => setVideoUrl(e.target.value)}
+                                                className="input-field"
+                                                placeholder="e.g. YouTube, Vimeo, or MP4 URL"
+                                            />
+                                        </div>
+
+                                        <div>
                                             <label className="block text-sm font-medium text-foreground mb-1">Disclosure (optional)</label>
                                             <textarea
                                                 value={disclosure}
@@ -400,6 +457,51 @@ export default function LaunchNotesPage() {
                                                 </p>
                                             </div>
                                             <Switch checked={allowTips} onCheckedChange={setAllowTips} />
+                                        </div>
+
+                                        <div className="rounded-[24px] border border-border/70 bg-background/70 p-4 sm:p-5">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <p className="label-mono block">Image Assets ({imageAssets.length}/5)</p>
+                                            </div>
+                                            {imageAssets.length > 0 && (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                                                    {imageAssets.map((url, i) => (
+                                                        <div key={i} className="relative group rounded-xl overflow-hidden border border-border/70 aspect-video bg-muted/30">
+                                                            <img src={url} alt={`Asset ${i + 1}`} className="w-full h-full object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveImage(i)}
+                                                                className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {imageAssets.length < 5 && (
+                                                <label className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 text-center transition-colors hover:border-jence-gold/50 hover:bg-muted/30 ${uploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif"
+                                                        multiple
+                                                        onChange={handleImageUpload}
+                                                        disabled={uploadingImages}
+                                                        className="sr-only"
+                                                    />
+                                                    {uploadingImages ? (
+                                                        <>
+                                                            <Loader2 size={24} className="mb-2 animate-spin text-jence-gold" />
+                                                            <p className="text-sm font-medium text-foreground">Uploading...</p>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Upload size={24} className="mb-2 text-muted-foreground" />
+                                                            <p className="text-sm font-medium text-foreground">Upload images</p>
+                                                        </>
+                                                    )}
+                                                </label>
+                                            )}
                                         </div>
                                     </div>
 

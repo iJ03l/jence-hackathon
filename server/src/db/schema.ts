@@ -99,6 +99,8 @@ export const post = pgTable('post', {
     excerpt: text('excerpt'),
     disclosure: text('disclosure'),
     imageUrl: text('image_url'),
+    bomStructure: text('bom_structure'),
+    mediaAssets: jsonb('media_assets').$type<string[]>().default([]),
     creatorId: uuid('creator_id').notNull().references(() => creatorProfile.id),
     verticalId: uuid('vertical_id').references(() => vertical.id),
     isPublished: boolean('is_published').notNull().default(true),
@@ -260,6 +262,8 @@ export const launchNote = pgTable('launch_note', {
     name: text('name').notNull(),       // product name
     company: text('company').notNull(), // company name
     logoUrl: text('logo_url'),
+    videoUrl: text('video_url'),
+    imageAssets: jsonb('image_assets').$type<string[]>().default([]),
     summary: text('summary').notNull(), // product summary
     tags: text('tags').notNull().default('[]'), // JSON array of tag strings
     disclosure: text('disclosure'),      // conflict-of-interest disclosure

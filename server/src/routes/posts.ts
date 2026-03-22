@@ -129,6 +129,8 @@ const createPostSchema = z.object({
     excerpt: z.string().optional(),
     disclosure: z.string().optional(),
     imageUrl: z.string().url().optional(),
+    bomStructure: z.string().optional(),
+    mediaAssets: z.array(z.string().url()).max(5).optional(),
     creatorId: z.string().uuid(),
     verticalId: z.string().uuid().optional(),
     isFree: z.boolean().optional(),
@@ -143,7 +145,7 @@ postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema, (result,
     }
 }), async (c) => {
     const userFromSession = c.get('user')
-    const { title, content, excerpt, disclosure, imageUrl, creatorId, verticalId, isFree, allowTips } = c.req.valid('json')
+    const { title, content, excerpt, disclosure, imageUrl, bomStructure, mediaAssets, creatorId, verticalId, isFree, allowTips } = c.req.valid('json')
 
     // Verify user owns the creator profile
     const creatorUser = await db.query.creatorProfile.findFirst({
@@ -161,6 +163,8 @@ postsRoutes.post('/', requireAuth, zValidator('json', createPostSchema, (result,
         excerpt: excerpt || content.substring(0, 200),
         disclosure: disclosure?.trim() || null,
         imageUrl: imageUrl || null,
+        bomStructure: bomStructure?.trim() || null,
+        mediaAssets: mediaAssets?.length ? mediaAssets : undefined,
         creatorId,
         verticalId: verticalId || null,
         isFree: isFree ?? false,
@@ -325,6 +329,8 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
             excerpt: post.excerpt,
             disclosure: post.disclosure,
             imageUrl: post.imageUrl,
+            bomStructure: post.bomStructure,
+            mediaAssets: post.mediaAssets,
             isFree: post.isFree,
             allowTips: post.allowTips,
             createdAt: post.createdAt,
@@ -377,6 +383,10 @@ postsRoutes.get('/:id', optionalAuth, async (c) => {
     if (!canViewFullContent) {
         // Completely scrub content to prevent browser-level leaks
         postData.content = ""
+        // @ts-ignore
+        postData.bomStructure = null
+        // @ts-ignore
+        postData.mediaAssets = []
     }
 
     // Get stats

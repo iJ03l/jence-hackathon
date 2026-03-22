@@ -39,6 +39,7 @@ export default function CreatorPostDetail() {
     const [loading, setLoading] = useState(true)
     const [newComment, setNewComment] = useState('')
     const [submittingComment, setSubmittingComment] = useState(false)
+    const [activeTab, setActiveTab] = useState<'article' | 'bom' | 'assets'>('article')
     const [isCopied, setIsCopied] = useState(false)
     const [tipOpen, setTipOpen] = useState(false)
     const [tipping, setTipping] = useState(false)
@@ -213,54 +214,115 @@ export default function CreatorPostDetail() {
                         </div>
                     </div>
 
-                    <div className="mt-5 sm:mt-6 space-y-5">
-                        <div className="p-4 rounded-xl border border-border bg-muted/30">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Article credit</p>
-                            <p className="text-sm text-muted-foreground">{disclosureText}</p>
+                    <div className="mt-8 flex flex-col md:flex-row gap-6 md:gap-10">
+                        {/* Tabs Menu */}
+                        <div className="md:w-56 shrink-0 relative">
+                            <nav className="flex md:flex-col gap-3 overflow-x-auto pb-2 md:pb-0 md:sticky md:top-24 [&::-webkit-scrollbar]:hidden">
+                                <button
+                                    onClick={() => setActiveTab('article')}
+                                    className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                >
+                                    Article
+                                </button>
+                                {post.bomStructure && (
+                                    <button
+                                        onClick={() => setActiveTab('bom')}
+                                        className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    >
+                                        BOM & Specs
+                                    </button>
+                                )}
+                                {post.mediaAssets && post.mediaAssets.length > 0 && (
+                                    <button
+                                        onClick={() => setActiveTab('assets')}
+                                        className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    >
+                                        Media Assets
+                                    </button>
+                                )}
+                            </nav>
                         </div>
 
-                        {post.imageUrl && (
-                            <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/20 aspect-[16/9]">
-                                <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
-                            </div>
-                        )}
-
-                        <div className="relative">
-                            {post.isFree || post.hasAccess ? (
-                                <div className="text-foreground/90 whitespace-pre-wrap break-words text-sm sm:text-[15px] leading-6 sm:leading-7">
-                                    {linkifyText(post.content)}
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Dummy blurred text to indicate content length without leaking actual analysis */}
-                                    <div className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words text-sm sm:text-[15px] leading-6 sm:leading-7">
-                                        {linkifyText(post.excerpt || `This is a premium article prepared exclusively for subscribers. The article contains in-depth data, actionable insights, and field-tested takeaways.
-
-To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription helps the creator and gives you access to their complete library of premium insights.`)}
+                        {/* Tab Content */}
+                        <div className="flex-1 min-w-0">
+                            {activeTab === 'article' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="p-4 rounded-xl border border-border bg-muted/30">
+                                        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Article credit</p>
+                                        <p className="text-sm text-muted-foreground">{disclosureText}</p>
                                     </div>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center pointer-events-none">
-                                        <div className="bg-background/90 backdrop-blur-md px-5 py-6 sm:px-6 sm:py-4 w-full max-w-xs sm:max-w-sm rounded-xl border border-border/80 shadow-2xl pointer-events-auto flex flex-col items-center">
-                                            <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+
+                                    {post.imageUrl && (
+                                        <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/20 aspect-[16/9] shadow-sm">
+                                            <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+
+                                    <div className="relative">
+                                        {post.isFree || post.hasAccess ? (
+                                            <div className="text-foreground/90 whitespace-pre-wrap break-words text-sm sm:text-[15px] leading-7 sm:leading-8">
+                                                {linkifyText(post.content)}
                                             </div>
-                                            <h3 className="font-bold text-foreground mb-1">{post.creatorPseudonym || post.creatorUsername}</h3>
-                                            <p className="text-xs text-muted-foreground line-clamp-2">{post.creatorBio || 'Author on Jence'}</p>
-                                            <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t border-border/50">
-                                                {user && user.id !== post.creatorUserId ? (
-                                                    <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary flex-1 text-xs text-center">
-                                                        Subscribe
-                                                    </Link>
-                                                ) : (
-                                                    <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary w-full text-center">
-                                                        View Profile
-                                                    </Link>
-                                                )}
-                                            </div>
+                                        ) : (
+                                            <>
+                                                {/* Dummy blurred text to indicate content length without leaking actual analysis */}
+                                                <div className="text-foreground/90 whitespace-pre-wrap blur-sm select-none opacity-50 break-words text-sm sm:text-[15px] leading-7 sm:leading-8">
+                                                    {linkifyText(post.excerpt || `This is a premium article prepared exclusively for subscribers. The article contains in-depth data, actionable insights, and field-tested takeaways.
+
+            To view the full content of this post, please subscribe to ${post.creatorPseudonym}'s channel. Your subscription helps the creator and gives you access to their complete library of premium insights.`)}
+                                                </div>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center pointer-events-none">
+                                                    <div className="bg-background/90 backdrop-blur-md px-5 py-6 sm:px-6 sm:py-4 w-full max-w-xs sm:max-w-sm rounded-xl border border-border/80 shadow-2xl pointer-events-auto flex flex-col items-center">
+                                                        <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 text-jence-gold">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                        </div>
+                                                        <h3 className="font-bold text-foreground mb-1">{post.creatorPseudonym || post.creatorUsername}</h3>
+                                                        <p className="text-xs text-muted-foreground line-clamp-2">{post.creatorBio || 'Author on Jence'}</p>
+                                                        <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t border-border/50">
+                                                            {user && user.id !== post.creatorUserId ? (
+                                                                <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary flex-1 text-xs text-center">
+                                                                    Subscribe
+                                                                </Link>
+                                                            ) : (
+                                                                <Link to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`} className="btn-primary w-full text-center">
+                                                                    View Profile
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'bom' && post.bomStructure && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="p-6 sm:p-8 rounded-[24px] border border-border/60 bg-gradient-to-br from-muted/20 to-transparent shadow-sm">
+                                        <h3 className="text-lg font-bold text-foreground mb-4 font-mono">BOM & Specifications</h3>
+                                        <div className="text-foreground/90 whitespace-pre-wrap break-words font-mono text-sm leading-7">
+                                            {post.bomStructure}
                                         </div>
                                     </div>
-                                </>
+                                </div>
+                            )}
+
+                            {activeTab === 'assets' && post.mediaAssets && post.mediaAssets.length > 0 && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <h3 className="text-lg font-bold text-foreground mb-2">Schematics & Render Gallery</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {post.mediaAssets.map((url: string, idx: number) => (
+                                            <div key={idx} className="relative aspect-auto min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in" onClick={() => window.open(url, '_blank')}>
+                                                <img src={url} alt={`Media ${idx + 1}`} className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground text-center">Click an asset to view full resolution.</p>
+                                </div>
                             )}
                         </div>
+                    </div>
 
                         {/* Actions */}
                         <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-4 border-t border-border/50">
@@ -327,7 +389,6 @@ To view the full content of this post, please subscribe to ${post.creatorPseudon
                                 {isCopied ? <Check size={18} /> : <Share2 size={18} />}
                             </button>
                         </div>
-                    </div>
                 </div>
 
                 <TipModal

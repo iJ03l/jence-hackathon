@@ -77,6 +77,8 @@ launchRoutes.get('/', optionalAuth, async (c) => {
                 name: launchNote.name,
                 company: launchNote.company,
                 logoUrl: launchNote.logoUrl,
+                videoUrl: launchNote.videoUrl,
+                imageAssets: launchNote.imageAssets,
                 summary: launchNote.summary,
                 tags: launchNote.tags,
                 disclosure: launchNote.disclosure,
@@ -123,6 +125,8 @@ launchRoutes.get('/', optionalAuth, async (c) => {
             name: launchNote.name,
             company: launchNote.company,
             logoUrl: launchNote.logoUrl,
+            videoUrl: launchNote.videoUrl,
+            imageAssets: launchNote.imageAssets,
             summary: launchNote.summary,
             tags: launchNote.tags,
             disclosure: launchNote.disclosure,
@@ -179,6 +183,8 @@ launchRoutes.get('/:id', optionalAuth, async (c) => {
             name: launchNote.name,
             company: launchNote.company,
             logoUrl: launchNote.logoUrl,
+            videoUrl: launchNote.videoUrl,
+            imageAssets: launchNote.imageAssets,
             summary: launchNote.summary,
             tags: launchNote.tags,
             disclosure: launchNote.disclosure,
@@ -270,6 +276,8 @@ const createLaunchSchema = z.object({
     name: z.string().min(1).max(200),
     company: z.string().min(1).max(200),
     logoUrl: z.string().url().optional(),
+    videoUrl: z.string().url().optional(),
+    imageAssets: z.array(z.string().url()).max(5).optional(),
     summary: z.string().min(10).max(2000),
     tags: z.array(z.string().max(50)).max(5).optional(),
     disclosure: z.string().max(2000).optional(),
@@ -278,13 +286,15 @@ const createLaunchSchema = z.object({
 
 launchRoutes.post('/', requireAuth, zValidator('json', createLaunchSchema), async (c) => {
     const userFromSession = c.get('user')
-    const { name, company, logoUrl, summary, tags, disclosure, allowTips } = c.req.valid('json')
+    const { name, company, logoUrl, videoUrl, imageAssets, summary, tags, disclosure, allowTips } = c.req.valid('json')
 
     const [newLaunch] = await db.insert(launchNote).values({
         userId: userFromSession.id,
         name,
         company,
         logoUrl: logoUrl || null,
+        videoUrl: videoUrl || null,
+        imageAssets: imageAssets || [],
         summary,
         tags: JSON.stringify(tags || []),
         disclosure: disclosure?.trim() || null,

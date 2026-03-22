@@ -149,6 +149,36 @@ export default function LaunchDetailPage() {
     const tipsLive = launch.allowTips && launch.status === 'approved'
     const canUpvote = launch.status === 'approved' && user?.id !== launch.userId
 
+    const renderVideo = (url: string) => {
+        if (!url) return null;
+        let embedUrl = url;
+        try {
+            if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+                const videoId = url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : new URLSearchParams(new URL(url).search).get('v');
+                if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            } else if (url.includes('vimeo.com/')) {
+                const videoId = url.split('vimeo.com/')[1].split('/')[0];
+                if (videoId) embedUrl = `https://player.vimeo.com/video/${videoId}`;
+            }
+        } catch (e) {
+            // ignore parsing errors
+        }
+
+        if (embedUrl.includes('youtube.com/embed') || embedUrl.includes('player.vimeo.com')) {
+            return (
+                <div className="relative aspect-video w-full rounded-[24px] overflow-hidden border border-border/60 bg-muted/20 mb-8 sm:mb-10 shadow-sm">
+                    <iframe src={embedUrl} className="absolute inset-0 w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                </div>
+            );
+        }
+        
+        return (
+            <div className="relative aspect-video w-full rounded-[24px] overflow-hidden border border-border/60 bg-black mb-8 sm:mb-10 shadow-sm">
+                <video src={url} controls className="w-full h-full object-contain"></video>
+            </div>
+        );
+    }
+
     return (
         <section className="bg-background px-4 pb-16 pt-20 sm:px-6 lg:px-8 xl:px-12 sm:pt-24">
             <SEO
@@ -297,10 +327,27 @@ export default function LaunchDetailPage() {
                 </div>
 
                 <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-                    <article className="card-plug p-6 sm:p-8">
-                        <p className="label-mono mb-3 block">Launch Overview</p>
-                        <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90 sm:text-[15px]">
-                            {launch.summary}
+                    <article className="min-w-0">
+                        {launch.videoUrl && renderVideo(launch.videoUrl)}
+
+                        {launch.imageAssets && launch.imageAssets.length > 0 && (
+                            <div className="mb-8 sm:mb-10">
+                                <p className="label-mono mb-4 block">Product Assets</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {launch.imageAssets.map((url: string, idx: number) => (
+                                        <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden border border-border/60 bg-muted/20">
+                                            <img src={url} alt={`Asset ${idx + 1}`} className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="card-plug p-6 sm:p-8">
+                            <p className="label-mono mb-3 block">Launch Overview</p>
+                            <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90 sm:text-[15px]">
+                                {launch.summary}
+                            </div>
                         </div>
                     </article>
 

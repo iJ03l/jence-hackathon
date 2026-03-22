@@ -158,7 +158,7 @@ export const api = {
         request<any>(`/launches/${id}/view`, { method: 'POST' }),
     getMyLaunches: () =>
         request<any[]>('/launches/my'),
-    submitLaunch: (data: { name: string; company: string; logoUrl?: string; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>
+    submitLaunch: (data: { name: string; company: string; logoUrl?: string; videoUrl?: string; imageAssets?: string[]; summary: string; tags?: string[]; disclosure?: string; allowTips?: boolean }) =>
         request<any>('/launches', { method: 'POST', body: JSON.stringify(data) }),
     upvoteLaunch: (id: string) =>
         request<any>(`/launches/${id}/upvote`, { method: 'POST' }),
