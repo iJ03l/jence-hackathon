@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -49,6 +49,19 @@ export default function CreatorPostDetail() {
     useEffect(() => {
         if (id) loadData(id)
     }, [id, user?.id])
+
+    useEffect(() => {
+        if (post?.mediaAssets?.some((url: string) => url.match(/\.(glb|gltf|obj|stl|step|stp)($|[?#])/i))) {
+            const scriptId = 'model-viewer-script'
+            if (!document.getElementById(scriptId)) {
+                const script = document.createElement('script')
+                script.id = scriptId
+                script.type = 'module'
+                script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js'
+                document.head.appendChild(script)
+            }
+        }
+    }, [post?.mediaAssets])
 
     const loadData = async (postId: string) => {
         setLoading(true)
@@ -172,16 +185,48 @@ export default function CreatorPostDetail() {
                 url={`/post/${post.id}`}
                 type="article"
             />
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl lg:max-w-[1240px] mx-auto">
                 <button onClick={() => navigate(-1)} className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
                     <ArrowLeft size={16} className="mr-2" />
                     Back
                 </button>
 
-                {/* Main Post */}
-                <div className="card-plug p-4 sm:p-6 lg:p-8 mb-8">
-                    <div className="flex gap-3 sm:gap-4 items-start">
-                        <Link
+                <div className="flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
+                    
+                    {/* Tabs Menu (Outside the box) */}
+                    <div className="md:w-56 lg:w-[280px] shrink-0 md:sticky md:top-24 order-2 md:order-1 relative">
+                        <nav className="flex md:flex-col gap-3 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden">
+                            <button
+                                onClick={() => setActiveTab('article')}
+                                className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                            >
+                                Article
+                            </button>
+                            {post.bomStructure && (
+                                <button
+                                    onClick={() => setActiveTab('bom')}
+                                    className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                >
+                                    BOM & Specs
+                                </button>
+                            )}
+                            {post.mediaAssets && post.mediaAssets.length > 0 && (
+                                <button
+                                    onClick={() => setActiveTab('assets')}
+                                    className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                >
+                                    Media Assets
+                                </button>
+                            )}
+                        </nav>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 min-w-0 order-1 md:order-2 w-full">
+                        {/* Main Post */}
+                        <div className="card-plug p-4 sm:p-6 lg:p-10 mb-8">
+                            <div className="flex gap-3 sm:gap-4 items-start border-b border-border/40 pb-6 mb-6">
+                                <Link
                             to={`/${post.creatorUsername || post.creatorPseudonym || '#'}`}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted overflow-hidden shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center text-lg sm:text-xl font-bold text-muted-foreground bg-gradient-to-br from-jence-gold/20 to-transparent"
                         >
@@ -214,38 +259,9 @@ export default function CreatorPostDetail() {
                         </div>
                     </div>
 
-                    <div className="mt-8 flex flex-col md:flex-row gap-6 md:gap-10">
-                        {/* Tabs Menu */}
-                        <div className="md:w-56 shrink-0 relative">
-                            <nav className="flex md:flex-col gap-3 overflow-x-auto pb-2 md:pb-0 md:sticky md:top-24 [&::-webkit-scrollbar]:hidden">
-                                <button
-                                    onClick={() => setActiveTab('article')}
-                                    className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
-                                >
-                                    Article
-                                </button>
-                                {post.bomStructure && (
-                                    <button
-                                        onClick={() => setActiveTab('bom')}
-                                        className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
-                                    >
-                                        BOM & Specs
-                                    </button>
-                                )}
-                                {post.mediaAssets && post.mediaAssets.length > 0 && (
-                                    <button
-                                        onClick={() => setActiveTab('assets')}
-                                        className={`flex-none md:w-full text-center md:text-left px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
-                                    >
-                                        Media Assets
-                                    </button>
-                                )}
-                            </nav>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="flex-1 min-w-0">
-                            {activeTab === 'article' && (
+                    {/* Tab Content */}
+                    <div className="min-w-0 relative">
+                        {activeTab === 'article' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <div className="p-4 rounded-xl border border-border bg-muted/30">
                                         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Article credit</p>
@@ -311,21 +327,60 @@ export default function CreatorPostDetail() {
                             {activeTab === 'assets' && post.mediaAssets && post.mediaAssets.length > 0 && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <h3 className="text-lg font-bold text-foreground mb-2">Schematics & Render Gallery</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {post.mediaAssets.map((url: string, idx: number) => (
-                                            <div key={idx} className="relative aspect-auto min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in" onClick={() => window.open(url, '_blank')}>
-                                                <img src={url} alt={`Media ${idx + 1}`} className="w-full h-full object-cover" />
-                                            </div>
-                                        ))}
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {post.mediaAssets.map((url: string, idx: number) => {
+                                            const extMatch = url.match(/\.([^.?#]+)($|[?#])/)
+                                            const ext = extMatch ? extMatch[1].toLowerCase() : ''
+                                            const is3D = ['glb', 'gltf', 'obj', 'stl', 'step', 'stp'].includes(ext)
+                                            const isPDF = ext === 'pdf'
+                                            
+                                            if (is3D) {
+                                                return (
+                                                    <div key={idx} className="relative aspect-[4/3] sm:aspect-[16/9] min-h-[350px] w-full rounded-[20px] overflow-hidden border border-border/60 bg-muted/10 shadow-sm cursor-grab active:cursor-grabbing">
+                                                        <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-xs font-medium text-foreground flex items-center gap-2 pointer-events-none">
+                                                            <div className="w-2 h-2 rounded-full bg-jence-gold animate-pulse"></div>
+                                                            Interactive 3D Model
+                                                        </div>
+                                                        {React.createElement('model-viewer', {
+                                                            src: url,
+                                                            'camera-controls': true,
+                                                            'auto-rotate': true,
+                                                            ar: true,
+                                                            'shadow-intensity': "1",
+                                                            style: { width: '100%', height: '100%', backgroundColor: 'transparent' }
+                                                        })}
+                                                    </div>
+                                                )
+                                            }
+                                            
+                                            if (isPDF) {
+                                                return (
+                                                    <div key={idx} className="relative aspect-[3/4] sm:aspect-[16/9] w-full min-h-[500px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm">
+                                                        <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-transparent shadow-md text-xs font-medium text-foreground flex items-center gap-2 pointer-events-none">
+                                                            📄 Schematic PDF
+                                                        </div>
+                                                        <iframe src={url} className="w-full h-full border-none" title={`Schematic ${idx + 1}`} />
+                                                    </div>
+                                                )
+                                            }
+                                            
+                                            return (
+                                                <div key={idx} className="relative aspect-auto min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in group" onClick={() => window.open(url, '_blank')}>
+                                                    <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none">
+                                                        Click to expand
+                                                    </div>
+                                                    <img src={url} alt={`Media ${idx + 1}`} className="w-full h-full object-cover" />
+                                                </div>
+                                            )
+                                        })}
                                     </div>
-                                    <p className="text-xs text-muted-foreground text-center">Click an asset to view full resolution.</p>
+                                    <p className="text-xs text-muted-foreground text-center pt-2">Interact with 3D models or view schematics directly in your browser.</p>
                                 </div>
                             )}
                         </div>
-                    </div>
 
                         {/* Actions */}
-                        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-4 border-t border-border/50">
+                        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-6 border-t border-border/50 mt-8">
                             <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
                                 <button
                                     onClick={() => handleVote(1)}
@@ -470,7 +525,10 @@ export default function CreatorPostDetail() {
                         <p className="text-center text-muted-foreground py-8">No comments yet. Be the first to reply!</p>
                     )}
                 </div>
-            </div>
+
+                    </div> {/* End flex-1 min-w-0 */}
+                </div> {/* End flex flex-col md:flex-row gap-6 */}
+            </div> {/* End max-w-5xl lg:max-w-[1240px] */}
         </section>
     )
 }

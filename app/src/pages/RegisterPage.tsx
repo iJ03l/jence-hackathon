@@ -11,7 +11,7 @@ export default function RegisterPage() {
     const { signUp } = useAuth()
     
     // Read from localStorage if coming from onboarding
-    const initialRole = (localStorage.getItem('jence_role') as 'subscriber' | 'creator') || 'subscriber'
+    const initialRole = (localStorage.getItem('jence_role') as 'subscriber' | 'creator') || 'creator'
     
     const [role, setRole] = useState<'subscriber' | 'creator'>(initialRole)
     const [username, setUsername] = useState('')
@@ -20,6 +20,7 @@ export default function RegisterPage() {
 
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
+    const [successMsg, setSuccessMsg] = useState('')
     const [loading, setLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
@@ -33,6 +34,7 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+        setSuccessMsg('')
 
         if (!isPasswordValid) {
             setError('Please meet all password requirements')
@@ -68,8 +70,13 @@ export default function RegisterPage() {
                console.error("Failed to sync onboarding data:", err)
             }
             
-            navigate(role === 'creator' ? '/creator-onboarding' : '/dashboard')
+            setSuccessMsg("Account assembled successfully! All logic gates are GO. Rerouting to your configuration terminal...")
+            setTimeout(() => {
+                navigate('/settings')
+            }, 2500)
+            return // Skip turning off loading so redirect is smooth
         }
+        
         setLoading(false)
     }
 
@@ -93,6 +100,11 @@ export default function RegisterPage() {
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
                             {error}
+                        </div>
+                    )}
+                    {successMsg && (
+                        <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium animate-in fade-in">
+                            {successMsg}
                         </div>
                     )}
 

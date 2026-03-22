@@ -517,11 +517,21 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         }
 
         const validFiles = files.filter(file => {
-            const isSupported = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(file.name)
-            if (!isSupported) alert(`Unsupported file type: ${file.name}`)
-            const isSmallEnough = file.size <= 5 * 1024 * 1024
-            if (!isSmallEnough) alert(`File too large (max 5MB): ${file.name}`)
-            return isSupported && isSmallEnough
+            const isImage = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(file.name)
+            const isRaw = /\.(pdf|glb|gltf|obj|stl|step|stp)$/i.test(file.name)
+            
+            if (!isImage && !isRaw) {
+                alert(`Unsupported file type: ${file.name}`)
+                return false
+            }
+            
+            const maxSize = isRaw ? 25 * 1024 * 1024 : 5 * 1024 * 1024
+            if (file.size > maxSize) {
+                alert(`File too large (max ${isRaw ? 25 : 5}MB): ${file.name}`)
+                return false
+            }
+            
+            return true
         })
 
         if (!validFiles.length) return
@@ -707,7 +717,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                         <label className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 text-center transition-colors hover:border-jence-gold/50 hover:bg-muted/30 ${uploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <input
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif"
+                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif,.pdf,.glb,.gltf,.obj,.stl,.step,.stp"
                                 multiple
                                 onChange={handleMediaUpload}
                                 disabled={uploadingImages}
@@ -722,7 +732,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                                 <>
                                     <Upload size={24} className="mb-2 text-muted-foreground group-hover:text-jence-gold transition-colors" />
                                     <p className="text-sm font-medium text-foreground">Click to upload assets</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Upload up to 5 high-res render or schematic images</p>
+                                    <p className="text-xs text-muted-foreground mt-1 px-4 leading-tight">Upload up to 5 renders, 3D models (GLB, STL, STEP), or schematic PDFs.</p>
                                 </>
                             )}
                         </label>

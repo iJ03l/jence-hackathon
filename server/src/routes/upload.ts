@@ -19,28 +19,39 @@ uploadRoutes.post('/', requireAuth, async (c) => {
             return c.json({ error: 'No file provided' }, 400)
         }
 
-        // 5MB limit
-        if (file.size > 5 * 1024 * 1024) {
-            return c.json({ error: 'File size exceeds 5MB limit' }, 400)
-        }
-
-        const { buffer, filename } = await normalizeUploadImage(file)
-
+        const fileNameLow = file.name.toLowerCase()
+        const isRawFile = /\.(pdf|glb|gltf|obj|stl|step|stp)$/i.test(fileNameLow)
         let asset;
-        try {
-            asset = await sanityClient.assets.upload('image', buffer, {
-                filename,
+
+        if (isRawFile) {
+            // 25MB limit for raw 3D/PDF files
+            if (file.size > 25 * 1024 * 1024) {
+                return c.json({ error: 'File size exceeds 25MB limit' }, 400)
+            }
+            const buffer = Buffer.from(await file.arrayBuffer())
+            asset = await sanityClient.assets.upload('file', buffer, {
+                filename: file.name
             })
-        } catch (sanityError: any) {
-            const msg = sanityError.message || ''
-            // Under limited token roles (e.g. "create" but no "update"), Sanity throws an 
-            // update permission error if the image already exists (deduplication) because 
-            // it attempts to PATCH the existing asset with the new filename.
-            if (msg.includes('permission "update" required')) {
-                console.log('Sanity deduplication patch failed (token lacks update rights). Retrying without filename...')
-                asset = await sanityClient.assets.upload('image', buffer)
-            } else {
-                throw sanityError
+        } else {
+            // 5MB limit for images
+            if (file.size > 5 * 1024 * 1024) {
+                return c.json({ error: 'Image size exceeds 5MB limit' }, 400)
+            }
+
+            const { buffer, filename } = await normalizeUploadImage(file)
+            
+            try {
+                asset = await sanityClient.assets.upload('image', buffer, {
+                    filename,
+                })
+            } catch (sanityError: any) {
+                const msg = sanityError.message || ''
+                if (msg.includes('permission "update" required')) {
+                    console.log('Sanity deduplication patch failed (token lacks update rights). Retrying without filename...')
+                    asset = await sanityClient.assets.upload('image', buffer)
+                } else {
+                    throw sanityError
+                }
             }
         }
 
