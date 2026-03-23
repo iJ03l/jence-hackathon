@@ -134,12 +134,12 @@ export default function ContentHero() {
           className="body-lg max-w-xl mx-auto mb-10 text-muted-foreground"
         >
           Deep technical articles, hardware teardowns, and developer community
-          from credited engineers — firmware to manufacturing.
+          from credited engineers, firmware to manufacturing.
         </p>
 
         {/* Search Container with Floating Elements */}
         <div className="relative inline-block w-full max-w-2xl mx-auto z-30" ref={searchContainerRef}>
-          
+
           {/* Floating Aesthetic Elements */}
           <div ref={floatersRef} className="absolute inset-0 pointer-events-none perspective-1000">
             <div className="absolute -top-10 -left-12 text-jence-gold/60 opacity-0 transform-style-3d"><Bot size={40} strokeWidth={1.5} /></div>
@@ -150,7 +150,7 @@ export default function ContentHero() {
 
           {/* Search Bar Wrapper */}
           <div className={`relative flex items-stretch bg-card/80 backdrop-blur-xl border ${isFocused ? 'border-jence-gold/60 shadow-[0_0_20px_rgba(212,175,55,0.15)]' : 'border-border'} rounded-[2rem] transition-all duration-300 z-40 overflow-visible`}>
-            
+
             {/* Category Dropdown (Custom UI) */}
             <div className="relative flex-shrink-0">
               <button
@@ -207,7 +207,7 @@ export default function ContentHero() {
 
           {/* Results Modal */}
           {showModal && (
-            <div 
+            <div
               ref={modalRef}
               className="absolute top-full left-0 right-0 mt-4 bg-card border border-border/80 shadow-2xl rounded-3xl overflow-hidden z-50 text-left animate-in fade-in slide-in-from-top-4 duration-300 max-h-[60vh] overflow-y-auto"
             >

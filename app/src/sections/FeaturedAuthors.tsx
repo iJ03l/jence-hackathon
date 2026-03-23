@@ -107,7 +107,7 @@ export default function FeaturedAuthors() {
             </h2>
           </div>
           <Link
-            to="/explore"
+            to="/authors"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-jence-gold transition-colors"
           >
             See all authors
