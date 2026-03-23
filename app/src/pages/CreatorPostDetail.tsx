@@ -335,6 +335,8 @@ export default function CreatorPostDetail() {
                                     <h3 className="text-lg font-bold text-foreground mb-2">Schematics & Render Gallery</h3>
                                     <div className="grid grid-cols-1 gap-6">
                                         {post.mediaAssets.map((url: string, idx: number) => {
+                                            const extMatch = url.match(/\.([^.?#]+)($|[?#])/)
+                                            const ext = extMatch ? extMatch[1].toLowerCase() : ''
                                             const isGLB = ['glb', 'gltf'].includes(ext)
                                             const isOther3D = ['obj', 'stl', 'step', 'stp'].includes(ext)
                                             const isPDF = ext === 'pdf'
