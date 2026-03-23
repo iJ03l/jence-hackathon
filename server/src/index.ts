@@ -54,7 +54,7 @@ app.use('*', cors({
         }
         return allowedOrigins[1] // Default to production site
     },
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'x-admin-token'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
 }))
