@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             localStorage.removeItem('jence_verticals')
                             localStorage.removeItem('jence_role')
                             localStorage.removeItem('intendedRole')
-                            localStorage.removeItem('jence_onboarded')
                             
                             // Re-fetch to get updated role/data
                             const newRes = await fetch(`${API_URL}/api/auth/get-session`, { credentials: 'include' })

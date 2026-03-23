@@ -46,8 +46,8 @@ uploadRoutes.post('/', requireAuth, async (c) => {
                 })
             } catch (sanityError: any) {
                 const msg = sanityError.message || ''
-                if (msg.includes('permission "update" required')) {
-                    console.log('Sanity deduplication patch failed (token lacks update rights). Retrying without filename...')
+                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
+                    console.log('Sanity deduplication patch failed (token lacks update/create rights). Retrying without filename...')
                     asset = await sanityClient.assets.upload('image', buffer)
                 } else {
                     throw sanityError
@@ -64,7 +64,7 @@ uploadRoutes.post('/', requireAuth, async (c) => {
         console.error('Error uploading to Sanity:', error)
 
         const message = error instanceof Error ? error.message : ''
-        if (message.includes('permission "update" required')) {
+        if (message.includes('permission "update" required') || message.includes('permission "create" required')) {
             return c.json({
                 error: 'Sanity upload is not configured with write access. Check SANITY_WRITE_TOKEN.',
             }, 500)

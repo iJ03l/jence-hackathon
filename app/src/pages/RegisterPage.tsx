@@ -64,7 +64,6 @@ export default function RegisterPage() {
                     })
                     localStorage.removeItem('jence_verticals')
                     localStorage.removeItem('jence_role')
-                    localStorage.removeItem('jence_onboarded')
                 }
             } catch (err) {
                console.error("Failed to sync onboarding data:", err)
