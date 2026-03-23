@@ -2,6 +2,7 @@ import { useRef, useLayoutEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -93,14 +94,13 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
           <h2 className="heading-2 font-semibold text-jence-white">
             Featured authors
           </h2>
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="hidden sm:flex items-center gap-2 text-jence-gray transition-colors cursor-not-allowed opacity-50"
+          <Link
+            to="/authors"
+            className="hidden sm:flex items-center gap-2 text-jence-gray hover:text-jence-gold transition-colors"
           >
             <span className="text-sm">View all</span>
             <ArrowRight size={16} />
-          </a>
+          </Link>
         </div>
 
         {/* Cards Grid */}
@@ -142,14 +142,13 @@ export default function FeaturedCreators({ className = '' }: FeaturedCreatorsPro
 
         {/* Mobile View All */}
         <div className="mt-8 sm:hidden">
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="flex items-center justify-center gap-2 text-jence-gray transition-colors cursor-not-allowed opacity-50"
+          <Link
+            to="/authors"
+            className="flex items-center justify-center gap-2 text-jence-gray hover:text-jence-gold transition-colors"
           >
             <span className="text-sm">View all creators</span>
             <ArrowRight size={16} />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

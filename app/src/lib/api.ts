@@ -48,6 +48,9 @@ export const api = {
         request<any>(`/creators/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     getCreatorStats: (creatorProfileId: string) => request<any>(`/posts/stats?creatorProfileId=${creatorProfileId}`),
 
+    // Search
+    search: (query: string, type: string = 'all') => request(`/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`),
+
     // Posts
     getFeed: (userId?: string) =>
         request<any[]>(userId ? `/posts?userId=${userId}` : '/posts'),

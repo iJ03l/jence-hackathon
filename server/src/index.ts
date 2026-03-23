@@ -29,6 +29,7 @@ import walletRoutes from './routes/wallet.js'
 import statsRoutes from './routes/stats.js'
 import launchRoutes from './routes/launches.js'
 import adminRoutes from './routes/admin.js'
+import searchRoutes from './routes/search.js'
 import shareRoutes from './routes/share.js'
 import { startSubscriptionCron } from './cron/subscriptions.js'
 import { resolveSpaStaticRoot } from './lib/spa.js'
@@ -82,6 +83,7 @@ app.route('/api/wallet', walletRoutes)
 app.route('/api/stats', statsRoutes)
 app.route('/api/launches', launchRoutes)
 app.route('/api/admin', adminRoutes)
+app.route('/api/search', searchRoutes)
 app.route('/share', shareRoutes)
 app.route('/', shareRoutes)
 

@@ -23,6 +23,7 @@ import PrivacyPage from './pages/PrivacyPage'
 import AboutPage from './pages/AboutPage'
 import OnboardingPage from './pages/OnboardingPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import AuthorsPage from './pages/AuthorsPage'
 import './App.css'
 
 /** Redirect first-time visitors to /welcome */
@@ -54,6 +55,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/creator-onboarding" element={<CreatorOnboardingPage />} />
+          <Route path="/authors" element={<AuthorsPage />} />
           {/* Catch-all for creator profiles (e.g. jence.xyz/username) */}
           <Route path="/:username" element={<CreatorProfilePage />} />
         </Route>
