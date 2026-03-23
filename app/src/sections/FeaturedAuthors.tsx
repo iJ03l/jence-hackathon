@@ -179,7 +179,7 @@ export default function FeaturedAuthors() {
 
                 {/* CTA */}
                 <Link
-                  to="/explore"
+                  to="/authors"
                   className="block w-full btn-secondary py-2.5 text-sm text-center active:scale-[0.97] transition-all"
                 >
                   Read their work →
