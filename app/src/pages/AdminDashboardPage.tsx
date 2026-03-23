@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
 import { Users, Activity, Loader2, Search, ShieldAlert, ShieldCheck, DollarSign, FileText, LogOut, Rocket, CheckCircle, XCircle } from 'lucide-react'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
 import SEO from '../components/SEO'
