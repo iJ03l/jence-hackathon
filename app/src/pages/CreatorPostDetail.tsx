@@ -317,9 +317,15 @@ export default function CreatorPostDetail() {
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <div className="p-6 sm:p-8 rounded-[24px] border border-border/60 bg-gradient-to-br from-muted/20 to-transparent shadow-sm">
                                         <h3 className="text-lg font-bold text-foreground mb-4 font-mono">BOM & Specifications</h3>
-                                        <div className="text-foreground/90 whitespace-pre-wrap break-words font-mono text-sm leading-7">
-                                            {post.bomStructure}
-                                        </div>
+                                        {post.bomStructure.startsWith('http') && post.bomStructure.toLowerCase().includes('.svg') ? (
+                                            <div className="rounded-xl overflow-hidden border border-border/50 bg-white">
+                                                <img src={post.bomStructure} alt="BOM Schematic" className="w-full object-contain" />
+                                            </div>
+                                        ) : (
+                                            <div className="text-foreground/90 whitespace-pre-wrap break-words font-mono text-sm leading-7">
+                                                {post.bomStructure}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -333,6 +339,8 @@ export default function CreatorPostDetail() {
                                             const ext = extMatch ? extMatch[1].toLowerCase() : ''
                                             const is3D = ['glb', 'gltf', 'obj', 'stl', 'step', 'stp'].includes(ext)
                                             const isPDF = ext === 'pdf'
+                                            const isJSON = ext === 'json'
+                                            const isSVG = ext === 'svg'
                                             
                                             if (is3D) {
                                                 return (
@@ -363,13 +371,28 @@ export default function CreatorPostDetail() {
                                                     </div>
                                                 )
                                             }
+
+                                            if (isJSON) {
+                                                return (
+                                                    <div key={idx} className="relative w-full rounded-[20px] p-6 border border-border/60 bg-muted/20 shadow-sm flex flex-col items-center justify-center text-center">
+                                                        <div className="w-12 h-12 rounded-full bg-jence-gold/10 text-jence-gold flex items-center justify-center mb-4">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                                        </div>
+                                                        <h4 className="text-foreground font-semibold mb-2">JSON Schematic Data</h4>
+                                                        <p className="text-sm text-muted-foreground mb-4">This file contains raw JSON data representing a schematic or layout.</p>
+                                                        <a href={url} target="_blank" rel="noopener noreferrer" className="btn-secondary inline-flex items-center gap-2 text-sm">
+                                                            View / Download JSON
+                                                        </a>
+                                                    </div>
+                                                )
+                                            }
                                             
                                             return (
-                                                <div key={idx} className="relative aspect-auto min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in group" onClick={() => window.open(url, '_blank')}>
+                                                <div key={idx} className={`relative min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in group ${isSVG ? 'aspect-auto bg-white/5 p-4 flex items-center justify-center' : 'aspect-auto'}`} onClick={() => window.open(url, '_blank')}>
                                                     <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none">
                                                         Click to expand
                                                     </div>
-                                                    <img src={url} alt={`Media ${idx + 1}`} className="w-full h-full object-cover" />
+                                                    <img src={url} alt={`Media ${idx + 1}`} className={`w-full h-full ${isSVG ? 'object-contain' : 'object-cover'}`} />
                                                 </div>
                                             )
                                         })}

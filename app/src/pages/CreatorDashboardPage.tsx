@@ -517,8 +517,8 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         }
 
         const validFiles = files.filter(file => {
-            const isImage = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(file.name)
-            const isRaw = /\.(pdf|glb|gltf|obj|stl|step|stp)$/i.test(file.name)
+            const isImage = /\.(jpe?g|png|gif|webp|avif|heic|svg)$/i.test(file.name)
+            const isRaw = /\.(pdf|glb|gltf|obj|stl|step|stp|json)$/i.test(file.name)
             
             if (!isImage && !isRaw) {
                 alert(`Unsupported file type: ${file.name}`)
@@ -549,6 +549,29 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             alert(err?.message || 'Failed to upload one or more media assets.')
         } finally {
             setUploadingImages(false)
+        }
+    }
+
+    const handleBomSvgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        if (!file.name.toLowerCase().endsWith('.svg')) {
+            alert('Only SVG files are supported for BOM upload.')
+            return
+        }
+        setUploadingImage(true) // Reusing this generic state for loading UX
+        try {
+            const data = await api.uploadImage(file)
+            if (data?.url) {
+                setBomStructure(data.url)
+            } else {
+                throw new Error('Upload failed')
+            }
+        } catch (err: any) {
+            console.error('SVG upload failed:', err)
+            alert(err?.message || 'Failed to upload BOM SVG.')
+        } finally {
+            setUploadingImage(false)
         }
     }
 
@@ -684,13 +707,41 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">BOM Structure / Specifications (Optional)</label>
-                    <textarea
-                        value={bomStructure}
-                        onChange={(e) => setBomStructure(e.target.value)}
-                        className="input-field min-h-[120px] font-mono text-sm"
-                        placeholder="Detail the Bill of Materials or technical structure..."
-                    />
+                    <div className="flex justify-between items-center mb-1.5">
+                        <label className="block text-sm font-medium text-foreground">BOM Structure / Specifications (Optional)</label>
+                        <label className={`cursor-pointer text-xs text-jence-gold hover:underline flex items-center gap-1 ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {uploadingImage ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                            Upload SVG
+                            <input
+                                type="file"
+                                accept=".svg,image/svg+xml"
+                                onChange={handleBomSvgUpload}
+                                disabled={uploadingImage}
+                                className="sr-only"
+                            />
+                        </label>
+                    </div>
+                    {bomStructure.startsWith('http') && bomStructure.toLowerCase().includes('.svg') ? (
+                        <div className="relative rounded-xl overflow-hidden border border-border group bg-muted w-full h-48 sm:h-64 mb-2">
+                             <img src={bomStructure} alt="BOM Schematic" className="w-full h-full object-contain p-4 bg-white/5" />
+                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                 <button
+                                     onClick={(e) => { e.preventDefault(); setBomStructure(''); }}
+                                     className="p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2 text-sm font-medium"
+                                 >
+                                     <X size={16} />
+                                     Remove SVG
+                                 </button>
+                             </div>
+                        </div>
+                    ) : (
+                        <textarea
+                            value={bomStructure}
+                            onChange={(e) => setBomStructure(e.target.value)}
+                            className="input-field min-h-[120px] font-mono text-sm"
+                            placeholder="Detail the Bill of Materials or technical structure..."
+                        />
+                    )}
                 </div>
 
                 <div className="rounded-[24px] border border-border/70 bg-background/50 p-4 sm:p-5">
@@ -699,25 +750,41 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                     </div>
                     {mediaAssets.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                            {mediaAssets.map((url, i) => (
-                                <div key={i} className="relative group rounded-xl overflow-hidden border border-border/70 aspect-video bg-muted/30">
-                                    <img src={url} alt={`Asset ${i + 1}`} className="w-full h-full object-cover" />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveMedia(i)}
-                                        className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ))}
+                            {mediaAssets.map((url, i) => {
+                                const extMatch = url.match(/\.([^.?#]+)($|[?#])/)
+                                const ext = extMatch ? extMatch[1].toLowerCase() : ''
+                                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif', 'svg'].includes(ext)
+                                const isJSON = ext === 'json'
+                                const isPDF = ext === 'pdf'
+                                const label = isImage ? 'Image' : isJSON ? 'JSON' : isPDF ? 'PDF' : '3D Model'
+
+                                return (
+                                    <div key={i} className={`relative group rounded-xl overflow-hidden border border-border/70 aspect-video bg-muted/30 flex items-center justify-center ${isImage && ext === 'svg' ? 'bg-white/5 p-2' : ''}`}>
+                                        {isImage ? (
+                                            <img src={url} alt={`Asset ${i + 1}`} className={`w-full h-full ${ext === 'svg' ? 'object-contain' : 'object-cover'}`} />
+                                        ) : (
+                                            <div className="flex flex-col items-center text-muted-foreground gap-2">
+                                                <div className="px-3 py-1 bg-muted/50 rounded text-xs font-bold uppercase tracking-wider">{label}</div>
+                                                <span className="text-[10px] truncate max-w-[80px] opacity-50">File {i+1}</span>
+                                            </div>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveMedia(i)}
+                                            className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                     {mediaAssets.length < 5 && (
                         <label className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 text-center transition-colors hover:border-jence-gold/50 hover:bg-muted/30 ${uploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <input
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif,.pdf,.glb,.gltf,.obj,.stl,.step,.stp"
+                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,image/svg+xml,application/json,.jpg,.jpeg,.png,.gif,.webp,.avif,.heic,.heif,.svg,.json,.pdf,.glb,.gltf,.obj,.stl,.step,.stp"
                                 multiple
                                 onChange={handleMediaUpload}
                                 disabled={uploadingImages}

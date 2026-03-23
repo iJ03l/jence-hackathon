@@ -20,7 +20,7 @@ uploadRoutes.post('/', requireAuth, async (c) => {
         }
 
         const fileNameLow = file.name.toLowerCase()
-        const isRawFile = /\.(pdf|glb|gltf|obj|stl|step|stp)$/i.test(fileNameLow)
+        const isRawFile = /\.(pdf|glb|gltf|obj|stl|step|stp|svg|json)$/i.test(fileNameLow)
         let asset;
 
         if (isRawFile) {
@@ -29,9 +29,19 @@ uploadRoutes.post('/', requireAuth, async (c) => {
                 return c.json({ error: 'File size exceeds 25MB limit' }, 400)
             }
             const buffer = Buffer.from(await file.arrayBuffer())
-            asset = await sanityClient.assets.upload('file', buffer, {
-                filename: file.name
-            })
+            try {
+                asset = await sanityClient.assets.upload('file', buffer, {
+                    filename: file.name
+                })
+            } catch (sanityError: any) {
+                const msg = sanityError.message || ''
+                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
+                    console.log('Sanity deduplication patch failed for raw file. Retrying without filename...')
+                    asset = await sanityClient.assets.upload('file', buffer)
+                } else {
+                    throw sanityError
+                }
+            }
         } else {
             // 5MB limit for images
             if (file.size > 5 * 1024 * 1024) {
