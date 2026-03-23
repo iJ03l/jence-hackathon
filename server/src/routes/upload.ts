@@ -20,11 +20,12 @@ uploadRoutes.post('/', requireAuth, async (c) => {
         }
 
         const fileNameLow = file.name.toLowerCase()
-        const isRawFile = /\.(pdf|glb|gltf|obj|stl|step|stp|svg|json)$/i.test(fileNameLow)
+        const isSvg = fileNameLow.endsWith('.svg')
+        const isRawFile = /\.(pdf|glb|gltf|obj|stl|step|stp|json)$/i.test(fileNameLow)
         let asset;
 
         if (isRawFile) {
-            // 25MB limit for raw 3D/PDF files
+            // 25MB limit for raw 3D/PDF/JSON files
             if (file.size > 25 * 1024 * 1024) {
                 return c.json({ error: 'File size exceeds 25MB limit' }, 400)
             }
@@ -42,8 +43,27 @@ uploadRoutes.post('/', requireAuth, async (c) => {
                     throw sanityError
                 }
             }
+        } else if (isSvg) {
+            // 5MB limit for SVGs
+            if (file.size > 5 * 1024 * 1024) {
+                return c.json({ error: 'Image size exceeds 5MB limit' }, 400)
+            }
+            const buffer = Buffer.from(await file.arrayBuffer())
+            try {
+                asset = await sanityClient.assets.upload('image', buffer, {
+                    filename: file.name
+                })
+            } catch (sanityError: any) {
+                const msg = sanityError.message || ''
+                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
+                    console.log('Sanity deduplication patch failed for SVG. Retrying without filename...')
+                    asset = await sanityClient.assets.upload('image', buffer)
+                } else {
+                    throw sanityError
+                }
+            }
         } else {
-            // 5MB limit for images
+            // 5MB limit for heavily processed images
             if (file.size > 5 * 1024 * 1024) {
                 return c.json({ error: 'Image size exceeds 5MB limit' }, 400)
             }

@@ -335,14 +335,13 @@ export default function CreatorPostDetail() {
                                     <h3 className="text-lg font-bold text-foreground mb-2">Schematics & Render Gallery</h3>
                                     <div className="grid grid-cols-1 gap-6">
                                         {post.mediaAssets.map((url: string, idx: number) => {
-                                            const extMatch = url.match(/\.([^.?#]+)($|[?#])/)
-                                            const ext = extMatch ? extMatch[1].toLowerCase() : ''
-                                            const is3D = ['glb', 'gltf', 'obj', 'stl', 'step', 'stp'].includes(ext)
+                                            const isGLB = ['glb', 'gltf'].includes(ext)
+                                            const isOther3D = ['obj', 'stl', 'step', 'stp'].includes(ext)
                                             const isPDF = ext === 'pdf'
                                             const isJSON = ext === 'json'
                                             const isSVG = ext === 'svg'
                                             
-                                            if (is3D) {
+                                            if (isGLB) {
                                                 return (
                                                     <div key={idx} className="relative aspect-[4/3] sm:aspect-[16/9] min-h-[350px] w-full rounded-[20px] overflow-hidden border border-border/60 bg-muted/10 shadow-sm cursor-grab active:cursor-grabbing">
                                                         <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-xs font-medium text-foreground flex items-center gap-2 pointer-events-none">
@@ -372,16 +371,18 @@ export default function CreatorPostDetail() {
                                                 )
                                             }
 
-                                            if (isJSON) {
+                                            if (isJSON || isOther3D) {
                                                 return (
                                                     <div key={idx} className="relative w-full rounded-[20px] p-6 border border-border/60 bg-muted/20 shadow-sm flex flex-col items-center justify-center text-center">
                                                         <div className="w-12 h-12 rounded-full bg-jence-gold/10 text-jence-gold flex items-center justify-center mb-4">
                                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                                         </div>
-                                                        <h4 className="text-foreground font-semibold mb-2">JSON Schematic Data</h4>
-                                                        <p className="text-sm text-muted-foreground mb-4">This file contains raw JSON data representing a schematic or layout.</p>
+                                                        <h4 className="text-foreground font-semibold mb-2">{isJSON ? 'JSON Schematic Data' : 'Raw CAD File'}</h4>
+                                                        <p className="text-sm text-muted-foreground mb-4">
+                                                            {isJSON ? 'This file contains raw JSON data representing a schematic or layout.' : `This is a downloadable ${ext.toUpperCase()} 3D model file.`}
+                                                        </p>
                                                         <a href={url} target="_blank" rel="noopener noreferrer" className="btn-secondary inline-flex items-center gap-2 text-sm">
-                                                            View / Download JSON
+                                                            {isJSON ? 'View / Download JSON' : 'Download CAD File'}
                                                         </a>
                                                     </div>
                                                 )
