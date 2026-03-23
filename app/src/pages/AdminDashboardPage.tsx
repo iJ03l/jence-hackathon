@@ -8,12 +8,22 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 
 export default function AdminDashboardPage() {
-    const { user, loading: authLoading, signIn, signOut } = useAuth()
     const { theme } = useTheme()
     const [loginUsername, setLoginUsername] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
     const [loginError, setLoginError] = useState('')
     const [loggingIn, setLoggingIn] = useState(false)
+    const [adminUser, setAdminUser] = useState<any>(null)
+    const [authLoading, setAuthLoading] = useState(true)
+
+    useEffect(() => {
+        const token = localStorage.getItem('jence_admin_token')
+        // We assume token presence = active intent. The API will reject bad tokens.
+        if (token) {
+            setAdminUser({ role: 'admin', name: 'Yakoob (Admin)', email: 'yorxsm@gmail.com' })
+        }
+        setAuthLoading(false)
+    }, [])
 
     // Admin state
     const [metrics, setMetrics] = useState<any>(null)
@@ -71,27 +81,29 @@ export default function AdminDashboardPage() {
     // Login logic
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (loginUsername !== 'yakoob') {
-            setLoginError('Invalid access attempt logged.')
-            return
-        }
         
         setLoggingIn(true)
         setLoginError('')
 
         try {
-            // Map the username to the email it was seeded with
-            await signIn('yorxsm@gmail.com', loginPassword)
+            const { token } = await api.verifyAdmin(loginUsername, loginPassword)
+            localStorage.setItem('jence_admin_token', token)
+            setAdminUser({ role: 'admin', name: 'Yakoob (Admin)', email: 'yorxsm@gmail.com' })
         } catch (err: any) {
-            setLoginError(err.message || 'Access Denied')
+            setLoginError('Access Denied: Invalid identifier or keyphrase.')
         } finally {
             setLoggingIn(false)
         }
     }
 
+    const handleLogout = () => {
+        localStorage.removeItem('jence_admin_token')
+        setAdminUser(null)
+    }
+
     // Fetch data if admin
     useEffect(() => {
-        if (!user || user.role !== 'admin') return
+        if (!adminUser || adminUser.role !== 'admin') return
 
         const fetchData = async () => {
             setLoadingData(true)
@@ -119,11 +131,11 @@ export default function AdminDashboardPage() {
         const timeoutId = setTimeout(fetchData, 300)
         return () => clearTimeout(timeoutId)
 
-    }, [user, searchQuery])
+    }, [adminUser, searchQuery])
 
     // Fetch history when interval changes
     useEffect(() => {
-        if (!user || user.role !== 'admin') return
+        if (!adminUser || adminUser.role !== 'admin') return
         const fetchHistory = async () => {
             setLoadingHistory(true)
             try {
@@ -136,7 +148,7 @@ export default function AdminDashboardPage() {
             }
         }
         fetchHistory()
-    }, [user, chartInterval])
+    }, [adminUser, chartInterval])
 
     // Toggle ban
     const handleToggleBan = async (userId: string, currentStatus: boolean) => {
@@ -177,7 +189,7 @@ export default function AdminDashboardPage() {
         )
     }
 
-    if (!user || user.role !== 'admin') {
+    if (!adminUser || adminUser.role !== 'admin') {
         return (
             <div className={`min-h-screen flex items-center justify-center px-4 relative overflow-hidden ${isDark ? 'bg-black' : 'bg-stone-100'}`}>
                 <SEO title="System Terminal // 0x000" noIndex />
@@ -259,11 +271,11 @@ export default function AdminDashboardPage() {
                                 0x000 OVERSEER
                                 <span className="px-2 py-0.5 rounded bg-red-500 text-black text-[10px] uppercase font-black tracking-widest">Live</span>
                             </h1>
-                            <p className={`text-xs font-mono mt-1 ${mutedTextClass}`}>Authorized as {user.name} ({user.email})</p>
+                            <p className={`text-xs font-mono mt-1 ${mutedTextClass}`}>Authorized as {adminUser.name} ({adminUser.email})</p>
                         </div>
                     </div>
                     <button 
-                        onClick={() => signOut()} 
+                        onClick={handleLogout} 
                         className={`flex items-center justify-center sm:justify-start gap-2 text-xs font-mono transition-colors px-4 py-2 rounded-lg border hover:border-red-500/50 ${mutedTextClass} hover:text-red-500 ${panelMutedClass}`}
                     >
                         <LogOut size={14} />

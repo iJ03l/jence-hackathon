@@ -1,12 +1,19 @@
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api`
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+    const adminToken = localStorage.getItem('jence_admin_token')
+    const headers = new Headers(options?.headers)
+    if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+    
+    if (adminToken) {
+        headers.set('x-admin-token', adminToken)
+    }
+
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers,
-        },
+        headers,
         ...options,
     })
 
@@ -23,6 +30,7 @@ export const api = {
     getGlobalStats: () => request<any>('/stats/global'),
 
     // Admin
+    verifyAdmin: (identifier: string, keyphrase: string) => request<{ success: boolean, token: string }>('/admin/verify', { method: 'POST', body: JSON.stringify({ identifier, keyphrase }) }),
     getAdminMetrics: () => request<any>('/admin/metrics'),
     getAdminMetricsHistory: (interval: string) => request<any>(`/admin/metrics/history?interval=${interval}`),
     getAdminUsers: (query: string = '') => request<any>(`/admin/users?q=${query}`),

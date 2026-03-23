@@ -6,14 +6,32 @@ import { auth } from '../auth.js'
 
 const adminRoutes = new Hono()
 
+// Unprotected verification route
+adminRoutes.post('/verify', async (c) => {
+    try {
+        const { identifier, keyphrase } = await c.req.json()
+        const correctIdentifier = process.env.ADMIN_IDENTIFIER || 'yakoob'
+        const correctKeyphrase = process.env.ADMIN_KEYPHRASE || '0x000'
+        if (identifier === correctIdentifier && keyphrase === correctKeyphrase) {
+            return c.json({ success: true, token: `${identifier}:${keyphrase}` })
+        }
+        return c.json({ error: 'Invalid identifier or keyphrase' }, 401)
+    } catch (error) {
+        return c.json({ error: 'Bad request' }, 400)
+    }
+})
+
 // Middleware to ensure admin role
 adminRoutes.use('*', async (c, next) => {
-    // If running in development without auth headers, we could mock admin,
-    // but BetterAuth requires the Session to be checked via API or DB.
-    // For standard BetterAuth with Hono:
-    const sessionCookie = c.req.header('cookie')
-    // We can also just read the Auth context if integrated, but let's query DB using the auth wrapper logic
-    // Actually, Better Auth `auth.api.getSession(c.req)` is cleaner:
+    // Isolated Admin Auth Fast Path
+    const adminToken = c.req.header('x-admin-token')
+    const correctToken = `${process.env.ADMIN_IDENTIFIER || 'yakoob'}:${process.env.ADMIN_KEYPHRASE || '0x000'}`
+    if (adminToken === correctToken) {
+        await next()
+        return
+    }
+
+    // Fallback to Better Auth session
     const s = await auth.api.getSession({
         headers: c.req.raw.headers
     })
