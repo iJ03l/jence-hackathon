@@ -118,11 +118,11 @@ export default function ContentHero() {
       {/* Subtle gradient bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-jence-gold/3 via-transparent to-transparent pointer-events-none" />
 
-      <div className="relative z-20 max-w-4xl mx-auto text-center mt-8">
+      <div className="relative z-20 max-w-4xl mx-auto text-center mt-4 sm:mt-8">
         {/* Headline */}
         <h1
           ref={headlineRef}
-          className="heading-xl text-foreground mb-6"
+          className="text-4xl sm:heading-xl font-black tracking-tight text-foreground mb-4 sm:mb-6 leading-tight"
         >
           Every layer,{' '}
           <span className="text-gradient-gold">covered.</span>
@@ -131,36 +131,36 @@ export default function ContentHero() {
         {/* Subtitle */}
         <p
           ref={subRef}
-          className="body-lg max-w-xl mx-auto mb-10 text-muted-foreground"
+          className="text-base sm:body-lg max-w-xl mx-auto mb-8 sm:mb-10 text-muted-foreground px-4 sm:px-0"
         >
           Deep technical articles, hardware teardowns, and developer community
           from credited engineers, firmware to manufacturing.
         </p>
 
         {/* Search Container with Floating Elements */}
-        <div className="relative inline-block w-full max-w-2xl mx-auto z-30" ref={searchContainerRef}>
+        <div className="relative inline-block w-full max-w-2xl mx-auto z-30 px-2 sm:px-0" ref={searchContainerRef}>
 
           {/* Floating Aesthetic Elements */}
           <div ref={floatersRef} className="absolute inset-0 pointer-events-none perspective-1000">
-            <div className="absolute -top-10 -left-12 text-jence-gold/60 opacity-0 transform-style-3d"><Bot size={40} strokeWidth={1.5} /></div>
-            <div className="absolute -bottom-8 -right-8 text-blue-400/50 opacity-0 transform-style-3d"><Cpu size={36} strokeWidth={1.5} /></div>
-            <div className="absolute top-4 -right-14 text-pink-400/50 opacity-0 transform-style-3d"><Smile size={32} strokeWidth={1.5} /></div>
-            <div className="absolute -bottom-6 -left-8 text-emerald-400/50 opacity-0 transform-style-3d"><Wrench size={28} strokeWidth={1.5} /></div>
+            <div className="absolute -top-6 sm:-top-10 -left-2 sm:-left-12 text-jence-gold/60 opacity-0 transform-style-3d"><Bot className="w-6 h-6 sm:w-10 sm:h-10" strokeWidth={1.5} /></div>
+            <div className="absolute -bottom-5 sm:-bottom-8 -right-2 sm:-right-8 text-blue-400/50 opacity-0 transform-style-3d"><Cpu className="w-5 h-5 sm:w-9 sm:h-9" strokeWidth={1.5} /></div>
+            <div className="absolute top-2 sm:top-4 -right-4 sm:-right-14 text-pink-400/50 opacity-0 transform-style-3d"><Smile className="w-5 h-5 sm:w-8 sm:h-8" strokeWidth={1.5} /></div>
+            <div className="absolute -bottom-4 sm:-bottom-6 -left-2 sm:-left-8 text-emerald-400/50 opacity-0 transform-style-3d"><Wrench className="w-4 h-4 sm:w-7 sm:h-7" strokeWidth={1.5} /></div>
           </div>
 
           {/* Search Bar Wrapper */}
-          <div className={`relative flex items-stretch bg-card/80 backdrop-blur-xl border ${isFocused ? 'border-jence-gold/60 shadow-[0_0_20px_rgba(212,175,55,0.15)]' : 'border-border'} rounded-[2rem] transition-all duration-300 z-40 overflow-visible`}>
+          <div className={`relative flex items-stretch bg-card/80 backdrop-blur-xl border ${isFocused ? 'border-jence-gold/60 shadow-[0_0_20px_rgba(212,175,55,0.15)]' : 'border-border'} rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-300 z-40 overflow-visible`}>
 
             {/* Category Dropdown (Custom UI) */}
             <div className="relative flex-shrink-0">
               <button
                 type="button"
-                className="h-full px-5 py-4 flex items-center gap-2 text-sm font-medium text-foreground hover:bg-muted/50 rounded-l-[2rem] border-r border-border transition-colors outline-none focus:bg-muted/50"
+                className="h-full px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-foreground hover:bg-muted/50 rounded-l-[1.5rem] sm:rounded-l-[2rem] border-r border-border transition-colors outline-none focus:bg-muted/50"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <SelectedIcon size={16} className="text-muted-foreground" />
+                <SelectedIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                 <span className="hidden sm:inline-block">{selectedTypeObj.label}</span>
-                <ChevronDown size={14} className="text-muted-foreground ml-1" />
+                <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground sm:ml-1" />
               </button>
 
               {/* Dropdown Menu */}
@@ -195,7 +195,7 @@ export default function ContentHero() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
-                className="w-full bg-transparent border-none text-foreground placeholder:text-muted-foreground/60 text-base sm:text-lg focus:outline-none focus:ring-0 px-4 h-full"
+                className="w-full bg-transparent border-none text-foreground placeholder:text-muted-foreground/60 text-sm sm:text-lg focus:outline-none focus:ring-0 px-3 sm:px-4 h-full"
               />
               {isLoading && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">

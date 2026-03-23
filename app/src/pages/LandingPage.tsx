@@ -226,7 +226,7 @@ export default function LandingPage() {
                             </h2>
                         </div>
                         <Link
-                            to="/explore"
+                            to="/authors"
                             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-jence-gold transition-colors"
                         >
                             Explore all
