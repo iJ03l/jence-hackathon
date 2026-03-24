@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
     Users, FileText, DollarSign,
-    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X, Upload
+    Plus, Clock, MoreVertical, Loader2, Eye, ArrowBigUp, MessageCircle, Pin, ExternalLink, X, Upload, Trash2
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { DeleteModal } from '../components/DeleteModal'
 import { Switch } from '../components/ui/switch'
+import CsvTable, { CSV_PREFIX, isCsvBom, extractCsvText } from '../components/CsvTable'
 
 export default function CreatorDashboardPage() {
     const { user } = useAuth()
@@ -453,19 +454,32 @@ export default function CreatorDashboardPage() {
     )
 }
 
+const DRAFT_KEY = 'jence_post_draft'
+
 function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: any) {
-    const [title, setTitle] = useState('')
-    const [content, setContent] = useState('')
-    const [disclosure, setDisclosure] = useState('')
-    const [imageUrl, setImageUrl] = useState('')
-    const [allowTips, setAllowTips] = useState(false)
-    const [selectedVerticalId, setSelectedVerticalId] = useState(initialVerticalId || '')
-    const [bomStructure, setBomStructure] = useState('')
-    const [mediaAssets, setMediaAssets] = useState<string[]>([])
+    // Restore draft from localStorage on mount
+    const savedDraft = useRef(() => {
+        try {
+            const raw = localStorage.getItem(DRAFT_KEY)
+            return raw ? JSON.parse(raw) : null
+        } catch { return null }
+    })
+    const draft = savedDraft.current()
+
+    const [title, setTitle] = useState(draft?.title || '')
+    const [content, setContent] = useState(draft?.content || '')
+    const [disclosure, setDisclosure] = useState(draft?.disclosure || '')
+    const [imageUrl, setImageUrl] = useState(draft?.imageUrl || '')
+    const [allowTips, setAllowTips] = useState(draft?.allowTips || false)
+    const [selectedVerticalId, setSelectedVerticalId] = useState(draft?.selectedVerticalId || initialVerticalId || '')
+    const [bomStructure, setBomStructure] = useState(draft?.bomStructure || '')
+    const [mediaAssets, setMediaAssets] = useState<string[]>(draft?.mediaAssets || [])
     const [uploadingImages, setUploadingImages] = useState(false)
     const [verticals, setVerticals] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)
+    const [uploadingBom, setUploadingBom] = useState(false)
+    const hasDraft = !!(title || content || disclosure || imageUrl || bomStructure || mediaAssets.length)
 
     useEffect(() => {
         api.getVerticals().then((data) => {
@@ -475,6 +489,26 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             }
         }).catch(console.error)
     }, [])
+
+    // Debounced draft save
+    const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const saveDraft = useCallback(() => {
+        const d = { title, content, disclosure, imageUrl, allowTips, selectedVerticalId, bomStructure, mediaAssets }
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(d))
+    }, [title, content, disclosure, imageUrl, allowTips, selectedVerticalId, bomStructure, mediaAssets])
+
+    useEffect(() => {
+        if (draftTimer.current) clearTimeout(draftTimer.current)
+        draftTimer.current = setTimeout(saveDraft, 500)
+        return () => { if (draftTimer.current) clearTimeout(draftTimer.current) }
+    }, [saveDraft])
+
+    const clearDraft = () => {
+        localStorage.removeItem(DRAFT_KEY)
+        setTitle(''); setContent(''); setDisclosure(''); setImageUrl('')
+        setAllowTips(false); setBomStructure(''); setMediaAssets([])
+        setSelectedVerticalId(initialVerticalId || (verticals.length > 0 ? verticals[0].id : ''))
+    }
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -560,20 +594,44 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         }
     }
 
-    const handleBomSvgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-        if (!file.name.toLowerCase().endsWith('.svg')) {
-            alert('Only SVG files are supported for BOM upload.')
+        const nameLow = file.name.toLowerCase()
+        const isSvg = nameLow.endsWith('.svg')
+        const isCsv = nameLow.endsWith('.csv')
+
+        if (!isSvg && !isCsv) {
+            alert('Only SVG or CSV files are supported for BOM upload.')
             e.target.value = ''
             return
         }
+
         if (file.size > 5 * 1024 * 1024) {
-            alert('SVG size must be less than 5MB')
+            alert('File size must be less than 5MB')
             e.target.value = ''
             return
         }
-        setUploadingImage(true) // Reusing this generic state for loading UX
+
+        if (isCsv) {
+            // Read CSV client-side and store inline
+            const reader = new FileReader()
+            reader.onload = () => {
+                const text = reader.result as string
+                if (text.trim()) {
+                    setBomStructure(CSV_PREFIX + text)
+                } else {
+                    alert('The CSV file appears to be empty.')
+                }
+            }
+            reader.onerror = () => alert('Failed to read CSV file.')
+            reader.readAsText(file)
+            e.target.value = ''
+            return
+        }
+
+        // SVG — upload to Sanity
+        setUploadingBom(true)
         try {
             const data = await api.uploadImage(file)
             if (data?.url) {
@@ -585,7 +643,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             console.error('SVG upload failed:', err)
             alert(err?.message || 'Failed to upload BOM SVG.')
         } finally {
-            setUploadingImage(false)
+            setUploadingBom(false)
             e.target.value = ''
         }
     }
@@ -621,8 +679,8 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 verticalId: selectedVerticalId === 'none' ? undefined : selectedVerticalId,
                 isFree: true,
                 allowTips,
-                // excerpt generated by backend
             })
+            localStorage.removeItem(DRAFT_KEY)
             onSuccess()
         } catch (e: any) {
             console.error(e)
@@ -633,7 +691,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
     }
 
     return (
-        <div>
+        <div className="relative">
             <h2 className="text-xl font-bold text-foreground mb-6">New Article</h2>
 
             <div className="space-y-4">
@@ -724,14 +782,14 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 <div>
                     <div className="flex justify-between items-center mb-1.5">
                         <label className="block text-sm font-medium text-foreground">BOM Structure / Specifications (Optional)</label>
-                        <label className={`cursor-pointer text-xs text-jence-gold hover:underline flex items-center gap-1 ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
-                            {uploadingImage ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                            Upload SVG
+                        <label className={`cursor-pointer text-xs text-jence-gold hover:underline flex items-center gap-1 ${uploadingBom ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {uploadingBom ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                            Upload SVG / CSV
                             <input
                                 type="file"
-                                accept=".svg,image/svg+xml"
-                                onChange={handleBomSvgUpload}
-                                disabled={uploadingImage}
+                                accept=".svg,.csv,image/svg+xml,text/csv"
+                                onChange={handleBomUpload}
+                                disabled={uploadingBom}
                                 className="sr-only"
                             />
                         </label>
@@ -748,6 +806,18 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                                      Remove SVG
                                  </button>
                              </div>
+                        </div>
+                    ) : isCsvBom(bomStructure) ? (
+                        <div className="space-y-2 mb-2">
+                            <CsvTable csv={extractCsvText(bomStructure)} maxRows={10} />
+                            <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setBomStructure(''); }}
+                                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                            >
+                                <X size={12} />
+                                Remove CSV
+                            </button>
                         </div>
                     ) : (
                         <textarea
@@ -845,6 +915,16 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
+                    {hasDraft && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); clearDraft(); }}
+                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1.5 mr-auto transition-colors"
+                        >
+                            <Trash2 size={12} />
+                            Clear Draft
+                        </button>
+                    )}
                     <button onClick={onClose} className="btn-secondary">Cancel</button>
                     <button
                         onClick={handleSubmit}

@@ -8,6 +8,7 @@ import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
 import { OGBadge } from '../components/OGBadge'
 import { buildArticleShareUrl } from '../lib/public-url'
+import CsvTable, { isCsvBom, extractCsvText } from '../components/CsvTable'
 
 // Skeleton Component
 const PostSkeleton = () => (
@@ -321,6 +322,8 @@ export default function CreatorPostDetail() {
                                             <div className="rounded-xl overflow-hidden border border-border/50 bg-white">
                                                 <img src={post.bomStructure} alt="BOM Schematic" className="w-full object-contain" />
                                             </div>
+                                        ) : isCsvBom(post.bomStructure) ? (
+                                            <CsvTable csv={extractCsvText(post.bomStructure)} />
                                         ) : (
                                             <div className="text-foreground/90 whitespace-pre-wrap break-words font-mono text-sm leading-7">
                                                 {post.bomStructure}
