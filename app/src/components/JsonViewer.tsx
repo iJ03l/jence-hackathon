@@ -7,20 +7,29 @@ export function JsonViewer({ url }: { url: string }) {
     const [error, setError] = useState(false)
 
     useEffect(() => {
-        fetch(url)
-            .then(res => res.text())
-            .then(text => {
+        const fetchJson = async () => {
+            try {
+                let res = await fetch(url)
+                if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                let text = await res.text()
+                try { setData(JSON.stringify(JSON.parse(text), null, 2)) }
+                catch { setData(text) }
+            } catch (err) {
+                // CORS or network failure fallback
                 try {
-                    // Try to format it if it's minified
-                    const parsed = JSON.parse(text)
-                    setData(JSON.stringify(parsed, null, 2))
-                } catch {
-                    // Fallback to raw text
-                    setData(text)
+                    let res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                    let text = await res.text()
+                    try { setData(JSON.stringify(JSON.parse(text), null, 2)) }
+                    catch { setData(text) }
+                } catch (proxyErr) {
+                    setError(true)
                 }
-            })
-            .catch(() => setError(true))
-            .finally(() => setLoading(false))
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchJson()
     }, [url])
 
     if (loading) {

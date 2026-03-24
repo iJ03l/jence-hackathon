@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { linkifyText } from '../lib/linkify'
 
 /** Marker prefix used to distinguish CSV content from URLs or plain text. */
 export const CSV_PREFIX = 'csv:'
@@ -66,6 +67,29 @@ export default function CsvTable({ csv, maxRows = 0, className = '' }: CsvTableP
     const displayBody = maxRows > 0 ? body.slice(0, maxRows) : body
     const truncated = maxRows > 0 && body.length > maxRows
 
+    // Identify which column has "cost" or "price"
+    const costColIndices = new Set<number>()
+    header.forEach((h, i) => {
+        const text = h.toLowerCase()
+        if (text.includes('cost') || text.includes('price')) {
+            costColIndices.add(i)
+        }
+    })
+
+    const renderCell = (cellContent: string, colIdx: number) => {
+        let text = cellContent.trim()
+        
+        // Add $ prefix if it's a cost column and doesn't already have one
+        if (costColIndices.has(colIdx) && text) {
+            if (!text.startsWith('$')) {
+                text = `$${text}`
+            }
+        }
+        
+        // Linkify and truncate URLs
+        return linkifyText(text, true)
+    }
+
     return (
         <div className={`overflow-x-auto rounded-xl border border-border ${className}`}>
             <table className="w-full text-sm text-left">
@@ -92,7 +116,7 @@ export default function CsvTable({ csv, maxRows = 0, className = '' }: CsvTableP
                                     key={colIdx}
                                     className="px-4 py-2.5 text-foreground/80 whitespace-nowrap"
                                 >
-                                    {cell}
+                                    {renderCell(cell, colIdx)}
                                 </td>
                             ))}
                             {/* Pad short rows */}

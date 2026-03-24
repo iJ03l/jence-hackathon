@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check, HandCoins } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check, HandCoins, FileText, List, Image } from 'lucide-react'
 import { linkifyText } from '../lib/linkify'
 import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
@@ -196,28 +196,31 @@ export default function CreatorPostDetail() {
                 <div className="flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
                     
                     {/* Tabs Menu (Outside the box) */}
-                    <div className="md:w-56 lg:w-[280px] shrink-0 md:sticky md:top-24 order-2 md:order-1 relative">
+                    <div className="md:w-44 lg:w-[220px] shrink-0 md:sticky md:top-24 order-2 md:order-1 relative">
                         <nav className="flex md:flex-col gap-3 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden">
                             <button
                                 onClick={() => setActiveTab('article')}
-                                className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                             >
+                                <FileText size={16} />
                                 Article
                             </button>
                             {post.bomStructure && (
                                 <button
                                     onClick={() => setActiveTab('bom')}
-                                    className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                                 >
+                                    <List size={16} />
                                     BOM & Specs
                                 </button>
                             )}
                             {post.mediaAssets && post.mediaAssets.length > 0 && (
                                 <button
                                     onClick={() => setActiveTab('assets')}
-                                    className={`flex-none md:w-full text-center md:text-left px-5 py-4 rounded-2xl text-[15px] font-semibold transition-all ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                                 >
-                                    Media Assets
+                                    <Image size={16} />
+                                    Visual Assets
                                 </button>
                             )}
                         </nav>
@@ -327,7 +330,7 @@ export default function CreatorPostDetail() {
                                             <CsvTable csv={extractCsvText(post.bomStructure)} />
                                         ) : (
                                             <div className="text-foreground/90 whitespace-pre-wrap break-words font-mono text-sm leading-7">
-                                                {post.bomStructure}
+                                                {linkifyText(post.bomStructure, true)}
                                             </div>
                                         )}
                                     </div>
@@ -336,7 +339,7 @@ export default function CreatorPostDetail() {
 
                             {activeTab === 'assets' && post.mediaAssets && post.mediaAssets.length > 0 && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <h3 className="text-lg font-bold text-foreground mb-2">Schematics & Render Gallery</h3>
+                                    <h3 className="text-lg font-bold text-foreground mb-2">Visual Assets or Rendering Gallery</h3>
                                     <div className="grid grid-cols-1 gap-6">
                                         {post.mediaAssets.map((url: string, idx: number) => {
                                             const extMatch = url.match(/\.([^.?#]+)($|[?#])/)

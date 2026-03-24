@@ -831,7 +831,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
 
                 <div className="rounded-[24px] border border-border/70 bg-background/50 p-4 sm:p-5">
                     <div className="flex justify-between items-center mb-3">
-                        <label className="block text-sm font-medium text-foreground mb-1.5">Render Images, 3D Layouts & Schematics ({mediaAssets.length}/5)</label>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">Visual Assets or Rendering ({mediaAssets.length}/5)</label>
                     </div>
                     {mediaAssets.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">

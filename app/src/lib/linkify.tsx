@@ -8,7 +8,7 @@ import React from 'react'
  *   - www.example.com/path
  *   - example.co, example.com, example.org, etc. (bare domains)
  */
-export function linkifyText(text: string): React.ReactNode {
+export function linkifyText(text: string, truncate: boolean = false): React.ReactNode {
     // Pattern breakdown:
     // 1. Full URLs with protocol: https?://...
     // 2. www. prefixed: www.domain.tld...
@@ -34,6 +34,10 @@ export function linkifyText(text: string): React.ReactNode {
                 trailing = trailingMatch[1]
                 href = href.slice(0, -trailingMatch[1].length)
             }
+            if (truncate && displayText.length > 30) {
+                displayText = displayText.replace(/^https?:\/\//, '').substring(0, 27) + '...'
+            }
+
             return (
                 <React.Fragment key={i}>
                     <a
