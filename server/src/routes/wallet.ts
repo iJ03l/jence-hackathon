@@ -3,11 +3,8 @@ import { auth } from '../auth.js'
 import { db } from '../db/index.js'
 import { wallet } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
-import { generateAndEncryptWallet, decryptWallet } from '../lib/kms.js'
-import { getRpcConnection, signWithRelayer } from '../lib/relayer.js'
+import { generateAndEncryptWallet, decryptPrivateKey } from '../lib/kms.js'
 import { getUsdcBalance } from '../lib/usdc.js'
-import { VersionedTransaction } from '@solana/web3.js'
-import bs58 from 'bs58'
 
 type Variables = {
     user: {
@@ -88,68 +85,15 @@ walletRoutes.get('/export', async (c) => {
     }
 
     try {
-        const userKeypair = decryptWallet(
+        const privateKeyHex = decryptPrivateKey(
             userWallet.encryptedPrivateKey,
             userWallet.iv,
             userWallet.authTag
         )
-        const secretKeyBase58 = bs58.encode(userKeypair.secretKey)
-        return c.json({ privateKey: secretKeyBase58 })
+        return c.json({ privateKey: privateKeyHex })
     } catch (error) {
         console.error('Failed to export wallet:', error)
         return c.json({ error: 'Failed to decrypt wallet' }, 500)
-    }
-})
-
-// POST /api/wallet/sign - Sign and relay a transaction
-walletRoutes.post('/sign', async (c) => {
-    const user = c.get('user')
-
-    try {
-        const body = await c.req.json()
-        const { transactionBase64 } = body
-
-        if (!transactionBase64) {
-            return c.json({ error: 'transactionBase64 is required' }, 400)
-        }
-
-        const userWallet = await db.query.wallet.findFirst({
-            where: eq(wallet.userId, user.id)
-        })
-
-        if (!userWallet) {
-            return c.json({ error: 'User wallet not found. Call /api/wallet/create first.' }, 404)
-        }
-
-        const userKeypair = decryptWallet(
-            userWallet.encryptedPrivateKey,
-            userWallet.iv,
-            userWallet.authTag
-        )
-
-        // Deserialize transaction
-        const txBytes = Buffer.from(transactionBase64, 'base64')
-        const transaction = VersionedTransaction.deserialize(txBytes)
-
-        // Sign as the user
-        transaction.sign([userKeypair])
-
-        // Sign as the relayer (fee payer)
-        signWithRelayer(transaction)
-
-        // Broadcast to RPC
-        const connection = getRpcConnection()
-        const signature = await connection.sendRawTransaction(transaction.serialize(), {
-            skipPreflight: false,
-            maxRetries: 3
-        })
-
-        // Wait for confirmation implicitly or just return signature
-        // It's usually better to just return the signature and let frontend/background confirm
-        return c.json({ signature })
-    } catch (error: any) {
-        console.error('Failed to sign and relay transaction:', error)
-        return c.json({ error: error.message || 'Transaction failed' }, 500)
     }
 })
 

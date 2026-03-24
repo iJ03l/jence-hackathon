@@ -66,7 +66,7 @@ These items represent security risks, data integrity issues, or legal requiremen
 
 3. **Testing & Quality: Zero Automated Tests**
    - **What's missing**: No unit tests, integration tests, or E2E tests exist for the codebase.
-   - **Why it matters**: A financial/subscription platform without tests will inevitably suffer regressions, especially regarding the complex Solana payment and content gating logic.
+   - **Why it matters**: A financial/subscription platform without tests will inevitably suffer regressions, especially regarding the complex Flow payment and content gating logic.
    - **Recommendation**: Setup `vitest` for the backend. Write API integration tests for the `subscriptions` and `posts` endpoints to ensure content gating and payments work correctly.
    - **Effort estimate**: 3-5 days
 
@@ -204,7 +204,7 @@ Based on your launch timeline of ASAP (1-4 weeks), here's a phased approach:
 ### Week 2: Core Infrastructure & Resilience
 - [ ] Add pagination to the `posts.ts` endpoints. (1 day)
 - [ ] Replace `setInterval` cron with a more robust job execution method to prevent missed/duplicated billing. (2 days)
-- [ ] Write integration tests for Solana subscription logic and content gating. (2 days)
+- [ ] Write integration tests for Flow subscription logic and content gating. (2 days)
 
 ### Before Launch: Essential Operations
 - [ ] Setup simple global error catching (Try/Catch at the Hono app level returning 500s safely). (2 hours)

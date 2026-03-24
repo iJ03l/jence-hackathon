@@ -1,11 +1,12 @@
 import crypto from 'crypto'
-import { Keypair } from '@solana/web3.js'
-import bs58 from 'bs58'
 
 // AES-256-GCM settings
 const ALGORITHM = 'aes-256-gcm'
 const IV_LENGTH = 12
 const AUTH_TAG_LENGTH = 16
+
+// Flow uses ECDSA_P256 by default for account keys
+const FLOW_KEY_CURVE = 'prime256v1' // NIST P-256
 
 // Require a strong master key via environment variable
 function getEncryptionKey(): Buffer {
@@ -26,38 +27,65 @@ function getEncryptionKey(): Buffer {
     return key
 }
 
+export interface FlowKeyPair {
+    publicKey: string   // Hex-encoded public key (uncompressed, without 04 prefix)
+    privateKey: string  // Hex-encoded private key
+}
+
 export interface EncryptedWallet {
-    publicKey: string
-    encryptedPrivateKey: string
-    iv: string
-    authTag: string
+    publicKey: string           // Hex-encoded Flow public key
+    encryptedPrivateKey: string // AES-256-GCM encrypted private key (hex)
+    iv: string                  // Initialization vector (hex)
+    authTag: string             // GCM auth tag (hex)
+}
+
+/**
+ * Generate a P-256 keypair for Flow and return the public
+ * key in the format Flow expects (uncompressed point, no 04 prefix).
+ */
+export function generateFlowKeyPair(): FlowKeyPair {
+    const ecdh = crypto.createECDH(FLOW_KEY_CURVE)
+    ecdh.generateKeys()
+
+    // Flow expects the uncompressed public key without the leading 04 byte
+    const uncompressedPubKey = ecdh.getPublicKey('hex')
+    const publicKey = uncompressedPubKey.startsWith('04')
+        ? uncompressedPubKey.slice(2)
+        : uncompressedPubKey
+
+    const privateKey = ecdh.getPrivateKey('hex')
+
+    return { publicKey, privateKey }
 }
 
 export function generateAndEncryptWallet(): EncryptedWallet {
-    const keypair = Keypair.generate()
-    const secretKeyStr = bs58.encode(keypair.secretKey)
+    const { publicKey, privateKey } = generateFlowKeyPair()
 
     const masterKey = getEncryptionKey()
     const iv = crypto.randomBytes(IV_LENGTH)
 
     const cipher = crypto.createCipheriv(ALGORITHM, masterKey, iv)
-    let encrypted = cipher.update(secretKeyStr, 'utf8', 'hex')
+    let encrypted = cipher.update(privateKey, 'utf8', 'hex')
     encrypted += cipher.final('hex')
     const authTag = cipher.getAuthTag()
 
     return {
-        publicKey: keypair.publicKey.toBase58(),
+        publicKey,
         encryptedPrivateKey: encrypted,
         iv: iv.toString('hex'),
         authTag: authTag.toString('hex'),
     }
 }
 
-export function decryptWallet(
+/**
+ * Decrypt a stored private key and return the raw hex private key string.
+ * This is used by FCL authorization functions to sign transactions.
+ */
+export function decryptPrivateKey(
     encryptedPrivateKeyHex: string,
     ivHex: string,
     authTagHex: string
-): Keypair {
+): string {
     const masterKey = getEncryptionKey()
     const iv = Buffer.from(ivHex, 'hex')
     const authTag = Buffer.from(authTagHex, 'hex')
@@ -68,6 +96,5 @@ export function decryptWallet(
     let decrypted = decipher.update(encryptedPrivateKeyHex, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
 
-    const secretKeyBytes = bs58.decode(decrypted)
-    return Keypair.fromSecretKey(secretKeyBytes)
+    return decrypted
 }

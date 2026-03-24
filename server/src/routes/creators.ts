@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
-import { creatorProfile, post, subscription, vertical, user, creatorRating } from '../db/schema.js'
+import { creatorProfile, post, subscription, vertical, user, creatorRating, tip } from '../db/schema.js'
 import { eq, sql, and, desc, avg, count, or } from 'drizzle-orm'
 
 const creatorsRoutes = new Hono()
@@ -81,6 +81,7 @@ creatorsRoutes.get('/:id', async (c) => {
             verticalSlug: vertical.slug,
             subscriptionPrice: creatorProfile.subscriptionPrice,
             createdAt: creatorProfile.createdAt,
+            userId: creatorProfile.userId,
         })
         .from(creatorProfile)
         .leftJoin(vertical, eq(creatorProfile.verticalId, vertical.id))
@@ -129,6 +130,19 @@ creatorsRoutes.get('/:id', async (c) => {
         .orderBy(desc(creatorRating.createdAt))
         .limit(10)
 
+    // Calculate Impact Score (total tips + monthly MRR from subs)
+    const [tipResult] = await db
+        .select({ totalTips: sql<number>`SUM(CAST(${tip.amountUsdc} AS numeric))` })
+        .from(tip)
+        .where(eq(tip.recipientUserId, creator.userId))
+
+    const [subResult] = await db
+        .select({ totalSubs: sql<number>`SUM(CAST(${subscription.amountUsdc} AS numeric))` })
+        .from(subscription)
+        .where(and(eq(subscription.creatorProfileId, id), eq(subscription.status, 'active')))
+
+    const impactScoreUsdc = (Number(tipResult?.totalTips) || 0) + (Number(subResult?.totalSubs) || 0)
+
     // Get creator's posts
     const creatorPosts = await fetchCreatorPosts(id)
 
@@ -138,6 +152,7 @@ creatorsRoutes.get('/:id', async (c) => {
             subscriberCount,
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
+            impactScoreUsdc,
         },
         posts: creatorPosts.map(p => p.isFree ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,
@@ -240,6 +255,19 @@ creatorsRoutes.get('/u/:username', async (c) => {
         .orderBy(desc(creatorRating.createdAt))
         .limit(10)
 
+    // Calculate Impact Score (total tips + monthly MRR from subs)
+    const [tipResult] = await db
+        .select({ totalTips: sql<number>`SUM(CAST(${tip.amountUsdc} AS numeric))` })
+        .from(tip)
+        .where(eq(tip.recipientUserId, creator.userId))
+
+    const [subResult] = await db
+        .select({ totalSubs: sql<number>`SUM(CAST(${subscription.amountUsdc} AS numeric))` })
+        .from(subscription)
+        .where(and(eq(subscription.creatorProfileId, creator.id), eq(subscription.status, 'active')))
+
+    const impactScoreUsdc = (Number(tipResult?.totalTips) || 0) + (Number(subResult?.totalSubs) || 0)
+
     // Get creator's posts
     const creatorPosts = await fetchCreatorPosts(creator.id)
 
@@ -253,6 +281,7 @@ creatorsRoutes.get('/u/:username', async (c) => {
             isSubscribed,
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
+            impactScoreUsdc,
         },
         posts: creatorPosts.map(p => (p.isFree || canViewPremium) ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,
@@ -349,6 +378,19 @@ creatorsRoutes.get('/user/:userId', async (c) => {
         .orderBy(desc(creatorRating.createdAt))
         .limit(10)
 
+    // Calculate Impact Score (total tips + monthly MRR from subs)
+    const [tipResult] = await db
+        .select({ totalTips: sql<number>`SUM(CAST(${tip.amountUsdc} AS numeric))` })
+        .from(tip)
+        .where(eq(tip.recipientUserId, creator.userId))
+
+    const [subResult] = await db
+        .select({ totalSubs: sql<number>`SUM(CAST(${subscription.amountUsdc} AS numeric))` })
+        .from(subscription)
+        .where(and(eq(subscription.creatorProfileId, creator.id), eq(subscription.status, 'active')))
+
+    const impactScoreUsdc = (Number(tipResult?.totalTips) || 0) + (Number(subResult?.totalSubs) || 0)
+
     // Get creator's posts
     const creatorPosts = await fetchCreatorPosts(creator.id)
 
@@ -362,6 +404,7 @@ creatorsRoutes.get('/user/:userId', async (c) => {
             isSubscribed,
             averageRating: ratingStats?.averageRating ? parseFloat(Number(ratingStats.averageRating).toFixed(1)) : 0,
             ratingCount: ratingStats?.ratingCount || 0,
+            impactScoreUsdc,
         },
         posts: creatorPosts.map(p => (p.isFree || canViewPremium) ? p : { ...p, content: p.excerpt || p.content.substring(0, 200) + '...' }),
         feedback: feedbackList,

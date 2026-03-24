@@ -20,7 +20,7 @@ jence/
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, GSAP |
 | Backend | Hono (Node.js), Drizzle ORM, PostgreSQL |
 | Auth | Better Auth (email/password + Google OAuth) |
-| Payments | Solana (USDC) with embedded wallets |
+| Payments | Flow blockchain (USDC) with gas-sponsored embedded wallets |
 | Hosting | jence.xyz |
 
 ## Features
@@ -40,6 +40,14 @@ jence/
 - Forum-style Q&A with posts, voting, comments, and tags
 - Creator badges and reputation
 - Real-time notifications
+
+### Payments & Tipping (Flow USDC)
+- **Gas-sponsored USDC transactions** on Flow blockchain
+- Embedded wallets (P-256 keypairs, AES-256-GCM encrypted, server-managed)
+- **Gasless for users** — the platform relayer pays all transaction fees using Flow's native payer role
+- Direct USDC tips to creators on articles, posts, and launch notes
+- Creator subscriptions with automated recurring billing (30-day cycles)
+- Split payments between creators and platform with configurable revenue share
 
 ### First-Time Onboarding
 - Gamified 5-step welcome flow at `/welcome` for new visitors
@@ -74,7 +82,22 @@ npm run dev              # Start Vite dev server on port 5173
 **Server** (`server/.env`):
 ```
 DATABASE_URL=postgresql://user:pass@localhost:5432/jence
-ENCRYPTION_KEY=<32-byte-hex-key-for-wallet-encryption>
+
+# Wallet encryption
+WALLET_ENCRYPTION_KEY=<32-byte-key-for-wallet-encryption>
+
+# Flow blockchain
+FLOW_ACCESS_NODE=https://rest-mainnet.onflow.org
+FLOW_RELAYER_ADDRESS=<your-flow-relayer-account-address>
+FLOW_RELAYER_PRIVATE_KEY=<hex-encoded-p256-private-key>
+FLOW_RELAYER_KEY_INDEX=0
+FLOW_PLATFORM_WALLET=<your-flow-platform-wallet-address>
+FLOW_USDC_CONTRACT_ADDRESS=0xb19436aae4d94622
+
+# Payments
+VITE_CREATOR_PAYOUT_PERCENT=80
+
+# Optional
 RESEND_API_KEY=<optional-for-email-notifications>
 ```
 
@@ -99,8 +122,27 @@ VITE_API_URL=http://localhost:3001
 | `/api/launches/my` | GET | User's own submissions |
 | `/api/launches/:id/review` | PUT | Admin approve/reject |
 | `/api/stats/global` | GET | Platform statistics |
+| `/api/wallet/me` | GET | User's wallet address + USDC balance |
+| `/api/wallet/create` | POST | Create embedded Flow wallet |
+| `/api/wallet/export` | GET | Export private key |
+| `/api/tips` | POST | Send USDC tip to a creator |
 | `/api/subscriptions` | POST | Subscribe to a creator |
 | `/api/notifications` | GET | User notifications |
+
+## Flow Blockchain Integration
+
+Jence uses Flow's native multi-role transaction signing for gasless USDC transfers:
+
+- **Proposer & Payer**: Platform relayer account (pays all FLOW gas fees)
+- **Authorizer**: User's embedded wallet (authorizes USDC movement)
+
+This means users **never need to hold FLOW tokens** — the platform sponsors all transaction costs. Transactions use Cadence smart contracts to interact with Circle's USDC (FiatToken) deployed on Flow mainnet.
+
+### How It Works
+1. User creates an account → server generates a P-256 keypair, encrypts private key with AES-256-GCM
+2. User tips a creator → server decrypts user's key, builds a Cadence transaction, signs as authorizer
+3. Relayer signs as payer → transaction submitted to Flow Access Node → USDC transferred instantly
+4. User sees confirmation → no gas fees, no crypto UX friction
 
 ## Database Migrations
 

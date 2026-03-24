@@ -1,17 +1,9 @@
 import { db } from '../db/index.js'
 import { subscription, wallet, creatorProfile } from '../db/schema.js'
 import { eq, and, lte } from 'drizzle-orm'
-import { decryptWallet } from '../lib/kms.js'
-import { getRpcConnection, signWithRelayer, getRelayerKeypair } from '../lib/relayer.js'
-import { PublicKey, Transaction } from '@solana/web3.js'
-import {
-    getAssociatedTokenAddressSync,
-    createAssociatedTokenAccountInstruction,
-    createTransferInstruction,
-} from '@solana/spl-token'
+import { decryptPrivateKey } from '../lib/kms.js'
+import { sendUsdcWithSplit } from '../lib/flow-tx.js'
 
-const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
-const USDC_DECIMALS = 6
 const CREATOR_SHARE_PERCENT = parseInt(process.env.VITE_CREATOR_PAYOUT_PERCENT || '80', 10)
 
 export async function processDueSubscriptions() {
@@ -36,9 +28,7 @@ export async function processDueSubscriptions() {
 
     console.log(`[CRON] Found ${dueSubscriptions.length} due subscriptions.`)
 
-    const connection = getRpcConnection()
-    const relayer = getRelayerKeypair()
-    const platformWalletStr = process.env.VITE_PLATFORM_WALLET
+    const platformWalletAddr = process.env.FLOW_PLATFORM_WALLET
 
     for (const { sub, subscriberWallet, creator } of dueSubscriptions) {
         try {
@@ -61,93 +51,27 @@ export async function processDueSubscriptions() {
                 }
             }
 
-            // --- Construct USDC Transfer ---
-            const subscriberKeypair = decryptWallet(
+            // Decrypt subscriber key and send USDC via Flow
+            const subscriberPrivateKey = decryptPrivateKey(
                 subscriberWallet.encryptedPrivateKey,
                 subscriberWallet.iv,
                 subscriberWallet.authTag
             )
-            const payerPubkey = subscriberKeypair.publicKey
-            const creatorPubkey = new PublicKey(finalCreatorPayoutAddress)
 
-            const totalAmount = Math.round(priceUsdc * 10 ** USDC_DECIMALS)
-            const creatorAmount = Math.round(totalAmount * (CREATOR_SHARE_PERCENT / 100))
-            const platformAmount = totalAmount - creatorAmount
-
-            const transaction = new Transaction()
-
-            // ATAs
-            const payerAta = getAssociatedTokenAddressSync(USDC_MINT, payerPubkey)
-            const creatorAta = getAssociatedTokenAddressSync(USDC_MINT, creatorPubkey)
-
-            // Check creator ATA
-            const creatorAtaInfo = await connection.getAccountInfo(creatorAta)
-            if (!creatorAtaInfo) {
-                transaction.add(
-                    createAssociatedTokenAccountInstruction(
-                        relayer.publicKey, // Relayer pays for ATA creation
-                        creatorAta,
-                        creatorPubkey,
-                        USDC_MINT
-                    )
-                )
-            }
-
-            // Transfer to creator (must use payer proxy)
-            if (creatorAmount > 0) {
-                transaction.add(
-                    createTransferInstruction(
-                        payerAta,
-                        creatorAta,
-                        payerPubkey,
-                        creatorAmount
-                    )
-                )
-            }
-
-            // Transfer to platform
-            if (platformAmount > 0 && platformWalletStr) {
-                const platformPubkey = new PublicKey(platformWalletStr)
-                const platformAta = getAssociatedTokenAddressSync(USDC_MINT, platformPubkey)
-
-                const platformAtaInfo = await connection.getAccountInfo(platformAta)
-                if (!platformAtaInfo) {
-                    transaction.add(
-                        createAssociatedTokenAccountInstruction(
-                            relayer.publicKey, // Relayer pays for ATA creation
-                            platformAta,
-                            platformPubkey,
-                            USDC_MINT
-                        )
-                    )
-                }
-
-                transaction.add(
-                    createTransferInstruction(
-                        payerAta,
-                        platformAta,
-                        payerPubkey,
-                        platformAmount
-                    )
-                )
-            }
-
-            // Sign and Send
-            const { blockhash } = await connection.getLatestBlockhash()
-            transaction.recentBlockhash = blockhash
-            transaction.feePayer = relayer.publicKey
-
-            transaction.sign(subscriberKeypair, relayer)
-
-            const signature = await connection.sendRawTransaction(transaction.serialize(), {
-                skipPreflight: false,
-                maxRetries: 3
+            const txId = await sendUsdcWithSplit({
+                senderAddress: subscriberWallet.publicKey,
+                senderPrivateKey: subscriberPrivateKey,
+                senderKeyIndex: 0,
+                creatorAddress: finalCreatorPayoutAddress,
+                platformAddress: platformWalletAddr,
+                totalUsdc: priceUsdc,
+                creatorSharePercent: CREATOR_SHARE_PERCENT,
             })
 
-            console.log(`[CRON] Processed subscription ${sub.id}: ${signature}`)
+            console.log(`[CRON] Processed subscription ${sub.id}: ${txId}`)
 
             // Update next billing date
-            await bumpSubscriptionDate(sub.id, signature)
+            await bumpSubscriptionDate(sub.id, txId)
 
         } catch (error) {
             console.error(`[CRON] Error processing subscription ${sub.id}:`, error)
@@ -156,14 +80,14 @@ export async function processDueSubscriptions() {
     }
 }
 
-async function bumpSubscriptionDate(subscriptionId: string, txSignature?: string) {
+async function bumpSubscriptionDate(subscriptionId: string, txId?: string) {
     const nextDate = new Date()
     nextDate.setDate(nextDate.getDate() + 30) // Bump by 30 days
 
     await db.update(subscription)
         .set({
             nextBillingDate: nextDate,
-            ...(txSignature ? { txSignature } : {})
+            ...(txId ? { txSignature: txId } : {})
         })
         .where(eq(subscription.id, subscriptionId))
 }

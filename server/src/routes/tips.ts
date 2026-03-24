@@ -5,14 +5,9 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { requireAuth } from '../middleware/auth.js'
-import { decryptWallet } from '../lib/kms.js'
-import { getRelayerKeypair, getRpcConnection } from '../lib/relayer.js'
-import { getUsdcBalance, getUsdcAta, toUsdcMinorUnits, USDC_MINT } from '../lib/usdc.js'
-import { PublicKey, Transaction } from '@solana/web3.js'
-import {
-    createAssociatedTokenAccountInstruction,
-    createTransferInstruction,
-} from '@solana/spl-token'
+import { decryptPrivateKey } from '../lib/kms.js'
+import { getUsdcBalance, toUsdcMinorUnits } from '../lib/usdc.js'
+import { sendUsdcWithSplit, formatUFix64, sendUsdcTransfer } from '../lib/flow-tx.js'
 
 type Variables = {
     user: any
@@ -81,7 +76,6 @@ async function resolveRecipientWallet(userId: string) {
 tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
     const userFromSession = c.get('user')
     const { amountUsdc, creatorProfileId, postId, launchNoteId } = c.req.valid('json')
-    const amountMinorUnits = toUsdcMinorUnits(amountUsdc)
 
     const tipTarget: TipTarget =
         creatorProfileId
@@ -90,7 +84,7 @@ tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
                 ? { type: 'post', postId }
                 : { type: 'launch', launchNoteId: launchNoteId! }
 
-    if (amountMinorUnits <= 0) {
+    if (amountUsdc <= 0) {
         return c.json({ error: 'Tip amount must be greater than zero.' }, 400)
     }
 
@@ -103,12 +97,12 @@ tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
         return c.json({ error: 'You need an embedded wallet before you can tip.' }, 400)
     }
 
-    const tipperKeypair = decryptWallet(
+    const tipperPrivateKey = decryptPrivateKey(
         tipperWallet.encryptedPrivateKey,
         tipperWallet.iv,
         tipperWallet.authTag
     )
-    const tipperPubkey = tipperKeypair.publicKey
+    const tipperAddress = tipperWallet.publicKey
 
     let recipientUserId: string | null = null
     let recipientWalletAddress: string | null = null
@@ -221,54 +215,20 @@ tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
         return c.json({ error: 'You cannot tip yourself.' }, 400)
     }
 
-    const connection = getRpcConnection()
-    const availableBalance = await getUsdcBalance(tipperPubkey, connection)
+    const availableBalance = await getUsdcBalance(tipperAddress)
     if (availableBalance < amountUsdc) {
         return c.json({ error: 'Insufficient USDC balance in your wallet.' }, 402)
     }
 
-    let recipientPubkey: PublicKey
+    let txId: string | null = null
     try {
-        recipientPubkey = new PublicKey(recipientWalletAddress)
-    } catch {
-        return c.json({ error: 'Recipient payout address is invalid.' }, 400)
-    }
-    const recipientAta = getUsdcAta(recipientPubkey)
-    const tipperAta = getUsdcAta(tipperPubkey)
-    const relayer = getRelayerKeypair()
-    const transaction = new Transaction()
-
-    const recipientAtaInfo = await connection.getAccountInfo(recipientAta)
-    if (!recipientAtaInfo) {
-        transaction.add(
-            createAssociatedTokenAccountInstruction(
-                relayer.publicKey,
-                recipientAta,
-                recipientPubkey,
-                USDC_MINT,
-            )
-        )
-    }
-
-    transaction.add(
-        createTransferInstruction(
-            tipperAta,
-            recipientAta,
-            tipperPubkey,
-            amountMinorUnits,
-        )
-    )
-
-    const { blockhash } = await connection.getLatestBlockhash()
-    transaction.recentBlockhash = blockhash
-    transaction.feePayer = relayer.publicKey
-    transaction.sign(tipperKeypair, relayer)
-
-    let txSignature: string | null = null
-    try {
-        txSignature = await connection.sendRawTransaction(transaction.serialize(), {
-            skipPreflight: true,
-            maxRetries: 3,
+        // Send the full tip amount directly to the creator (no platform split on tips)
+        txId = await sendUsdcTransfer({
+            senderAddress: tipperAddress,
+            senderPrivateKey: tipperPrivateKey,
+            senderKeyIndex: 0,
+            recipientAddress: recipientWalletAddress,
+            amount: formatUFix64(amountUsdc),
         })
     } catch (error: any) {
         console.error('Tip transaction failed:', error)
@@ -283,7 +243,7 @@ tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
         postId: tipTarget.type === 'post' ? tipTarget.postId : null,
         launchNoteId: tipTarget.type === 'launch' ? tipTarget.launchNoteId : null,
         amountUsdc: amountUsdc.toFixed(2),
-        txSignature,
+        txSignature: txId,
     }).returning()
 
     await db.insert(notification).values({
@@ -296,7 +256,7 @@ tipRoutes.post('/', requireAuth, zValidator('json', tipSchema), async (c) => {
     return c.json({
         success: true,
         tip: createdTip,
-        txSignature,
+        txId,
         amountUsdc,
     }, 201)
 })

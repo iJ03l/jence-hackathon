@@ -117,7 +117,7 @@ export const subscription = pgTable('subscription', {
     subscriberUserId: text('subscriber_user_id').notNull().references(() => user.id),
     creatorProfileId: uuid('creator_profile_id').notNull().references(() => creatorProfile.id),
     status: text('status').notNull().default('active'), // 'active' | 'cancelled' | 'expired'
-    txSignature: text('tx_signature'), // Solana transaction signature for payment proof
+    txSignature: text('tx_signature'), // Flow transaction ID for payment proof
     amountUsdc: text('amount_usdc'), // Amount paid in USDC
     nextBillingDate: timestamp('next_billing_date'), // Track when the cron job should charge the next month
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -241,13 +241,13 @@ export const creatorRating = pgTable('creator_rating', {
     unique('creator_user_rating_unique').on(t.creatorProfileId, t.userId)
 ])
 
-// ===== Self-Hosted Wallets =====
+// ===== Self-Hosted Wallets (Flow) =====
 
 export const wallet = pgTable('wallet', {
     id: uuid('id').defaultRandom().primaryKey(),
     userId: text('user_id').notNull().references(() => user.id).unique(), // One managed wallet per user
-    publicKey: text('public_key').notNull().unique(), // The Solana public address
-    encryptedPrivateKey: text('encrypted_private_key').notNull(), // The AES-256-GCM encrypted seed/secret
+    publicKey: text('public_key').notNull().unique(), // Flow public key (hex-encoded P-256)
+    encryptedPrivateKey: text('encrypted_private_key').notNull(), // AES-256-GCM encrypted private key
     iv: text('iv').notNull(), // Initialization Vector for decryption
     authTag: text('auth_tag').notNull(), // Authentication Tag to ensure data integrity
     createdAt: timestamp('created_at').notNull().defaultNow(),
