@@ -8,6 +8,60 @@ type Variables = {
     authSession: any
 }
 
+/** Detect any Sanity permission / auth error regardless of format. */
+function isSanityPermissionError(err: any): boolean {
+    const msg = (err?.message || err?.error || '').toLowerCase()
+    const status = err?.statusCode || err?.response?.status || 0
+    return (
+        status === 401 ||
+        status === 403 ||
+        msg.includes('permission "update" required') ||
+        msg.includes('permission "create" required') ||
+        msg.includes('insufficient permissions') ||
+        msg.includes('forbidden')
+    )
+}
+
+/** Generate a unique filename to bypass Sanity deduplication. */
+function uniqueFilename(original: string): string {
+    const dot = original.lastIndexOf('.')
+    const base = dot > 0 ? original.slice(0, dot) : original
+    const ext = dot > 0 ? original.slice(dot) : ''
+    return `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
+}
+
+/**
+ * Upload to Sanity with two levels of retry:
+ *  1. Retry without filename (avoids deduplication PATCH).
+ *  2. Retry with a unique filename (forces fresh asset creation).
+ */
+async function uploadWithRetry(
+    type: 'image' | 'file',
+    buffer: Buffer,
+    filename: string | undefined,
+) {
+    // Attempt 1 — normal upload
+    try {
+        return await sanityClient.assets.upload(type, buffer, filename ? { filename } : undefined)
+    } catch (err: any) {
+        if (!isSanityPermissionError(err)) throw err
+        console.log(`Sanity dedup/permission error on initial upload. Retrying without filename…`)
+    }
+
+    // Attempt 2 — without filename to skip dedup patch
+    try {
+        return await sanityClient.assets.upload(type, buffer)
+    } catch (err: any) {
+        if (!isSanityPermissionError(err)) throw err
+        console.log(`Sanity dedup/permission error on retry. Retrying with unique filename…`)
+    }
+
+    // Attempt 3 — unique filename forces fresh asset
+    return await sanityClient.assets.upload(type, buffer, {
+        filename: uniqueFilename(filename || 'jence-upload'),
+    })
+}
+
 const uploadRoutes = new Hono<{ Variables: Variables }>()
 
 uploadRoutes.post('/', requireAuth, async (c) => {
@@ -25,64 +79,23 @@ uploadRoutes.post('/', requireAuth, async (c) => {
         let asset;
 
         if (isRawFile) {
-            // 25MB limit for raw 3D/PDF/JSON files
             if (file.size > 25 * 1024 * 1024) {
                 return c.json({ error: 'File size exceeds 25MB limit' }, 400)
             }
             const buffer = Buffer.from(await file.arrayBuffer())
-            try {
-                asset = await sanityClient.assets.upload('file', buffer, {
-                    filename: file.name
-                })
-            } catch (sanityError: any) {
-                const msg = sanityError.message || ''
-                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
-                    console.log('Sanity deduplication patch failed for raw file. Retrying without filename...')
-                    asset = await sanityClient.assets.upload('file', buffer)
-                } else {
-                    throw sanityError
-                }
-            }
+            asset = await uploadWithRetry('file', buffer, file.name)
         } else if (isSvg) {
-            // 5MB limit for SVGs
             if (file.size > 5 * 1024 * 1024) {
                 return c.json({ error: 'Image size exceeds 5MB limit' }, 400)
             }
             const buffer = Buffer.from(await file.arrayBuffer())
-            try {
-                asset = await sanityClient.assets.upload('image', buffer, {
-                    filename: file.name
-                })
-            } catch (sanityError: any) {
-                const msg = sanityError.message || ''
-                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
-                    console.log('Sanity deduplication patch failed for SVG. Retrying without filename...')
-                    asset = await sanityClient.assets.upload('image', buffer)
-                } else {
-                    throw sanityError
-                }
-            }
+            asset = await uploadWithRetry('image', buffer, file.name)
         } else {
-            // 5MB limit for heavily processed images
             if (file.size > 5 * 1024 * 1024) {
                 return c.json({ error: 'Image size exceeds 5MB limit' }, 400)
             }
-
             const { buffer, filename } = await normalizeUploadImage(file)
-            
-            try {
-                asset = await sanityClient.assets.upload('image', buffer, {
-                    filename,
-                })
-            } catch (sanityError: any) {
-                const msg = sanityError.message || ''
-                if (msg.includes('permission "update" required') || msg.includes('permission "create" required')) {
-                    console.log('Sanity deduplication patch failed (token lacks update/create rights). Retrying without filename...')
-                    asset = await sanityClient.assets.upload('image', buffer)
-                } else {
-                    throw sanityError
-                }
-            }
+            asset = await uploadWithRetry('image', buffer, filename)
         }
 
         return c.json({ url: asset.url })
@@ -93,13 +106,14 @@ uploadRoutes.post('/', requireAuth, async (c) => {
 
         console.error('Error uploading to Sanity:', error)
 
-        const message = error instanceof Error ? error.message : ''
-        if (message.includes('permission "update" required') || message.includes('permission "create" required')) {
+        // Never surface internal Sanity config details to users
+        if (isSanityPermissionError(error)) {
             return c.json({
-                error: 'Sanity upload is not configured with write access. Check SANITY_WRITE_TOKEN.',
+                error: 'Upload failed. Please try again or use a different file.',
             }, 500)
         }
 
+        const message = error instanceof Error ? error.message : ''
         if (
             message.includes('Invalid image, could not read metadata') ||
             message.includes('Could not convert AVIF image') ||

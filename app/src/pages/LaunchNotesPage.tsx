@@ -135,11 +135,13 @@ export default function LaunchNotesPage() {
         const supportedImage = supportedMimeTypes.has(file.type.toLowerCase()) || /\.(jpe?g|png|gif|webp|avif|avifs|heic|heif|heics|heifs)$/i.test(file.name)
         if (!supportedImage) {
             alert('Jence only accepts JPG, PNG, GIF, WebP, AVIF, or HEIC logos.')
+            e.target.value = ''
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
             alert('Logo size must be less than 5MB')
+            e.target.value = ''
             return
         }
 
@@ -156,6 +158,7 @@ export default function LaunchNotesPage() {
             alert(err?.message || 'Jence could not upload that logo. Please try again.')
         } finally {
             setUploadingLogo(false)
+            e.target.value = ''
         }
     }
 
@@ -165,6 +168,7 @@ export default function LaunchNotesPage() {
 
         if (imageAssets.length + files.length > 5) {
             alert('You can only upload up to 5 images.')
+            e.target.value = ''
             return
         }
 
@@ -176,7 +180,10 @@ export default function LaunchNotesPage() {
             return isSupported && isSmallEnough
         })
 
-        if (!validFiles.length) return
+        if (!validFiles.length) {
+            e.target.value = ''
+            return
+        }
 
         setUploadingImages(true)
         try {
@@ -191,6 +198,7 @@ export default function LaunchNotesPage() {
             alert(err?.message || 'Failed to upload one or more images.')
         } finally {
             setUploadingImages(false)
+            e.target.value = ''
         }
     }
 

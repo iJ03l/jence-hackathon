@@ -483,11 +483,13 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         const supportedImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|avif|avifs|heic|heif|heics|heifs)$/i.test(file.name)
         if (!supportedImage) {
             alert('Jence only accepts JPG, PNG, GIF, WebP, AVIF, or HEIC images.')
+            e.target.value = ''
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
             alert('Image size must be less than 5MB')
+            e.target.value = ''
             return
         }
 
@@ -504,6 +506,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             alert(err?.message || 'Jence could not upload that image. Please try again.')
         } finally {
             setUploadingImage(false)
+            e.target.value = ''
         }
     }
 
@@ -513,6 +516,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
 
         if (mediaAssets.length + files.length > 5) {
             alert('You can only upload up to 5 media assets.')
+            e.target.value = ''
             return
         }
 
@@ -534,7 +538,10 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             return true
         })
 
-        if (!validFiles.length) return
+        if (!validFiles.length) {
+            e.target.value = ''
+            return
+        }
 
         setUploadingImages(true)
         try {
@@ -549,6 +556,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             alert(err?.message || 'Failed to upload one or more media assets.')
         } finally {
             setUploadingImages(false)
+            e.target.value = ''
         }
     }
 
@@ -557,6 +565,12 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
         if (!file) return
         if (!file.name.toLowerCase().endsWith('.svg')) {
             alert('Only SVG files are supported for BOM upload.')
+            e.target.value = ''
+            return
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('SVG size must be less than 5MB')
+            e.target.value = ''
             return
         }
         setUploadingImage(true) // Reusing this generic state for loading UX
@@ -572,6 +586,7 @@ function CreatePostForm({ creatorId, initialVerticalId, onClose, onSuccess }: an
             alert(err?.message || 'Failed to upload BOM SVG.')
         } finally {
             setUploadingImage(false)
+            e.target.value = ''
         }
     }
 

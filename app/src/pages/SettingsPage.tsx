@@ -110,6 +110,13 @@ export default function SettingsPage() {
         const supportedImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|avif|avifs|heic|heif|heics|heifs)$/i.test(file.name)
         if (!supportedImage) {
             alert('Jence only accepts JPG, PNG, GIF, WebP, AVIF, or HEIC images.')
+            e.target.value = ''
+            return
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size must be less than 5MB')
+            e.target.value = ''
             return
         }
 
@@ -124,6 +131,7 @@ export default function SettingsPage() {
             alert(error instanceof Error ? error.message : 'Jence could not upload that image. Please try again.')
         } finally {
             setUploadingImage(false)
+            e.target.value = ''
         }
     }
 
