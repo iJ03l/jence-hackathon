@@ -195,31 +195,31 @@ export default function CreatorPostDetail() {
 
                 <div className="flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
                     
-                    {/* Tabs Menu (Outside the box) */}
-                    <div className="md:w-44 lg:w-[220px] shrink-0 md:sticky md:top-24 order-2 md:order-1 relative">
-                        <nav className="flex md:flex-col gap-3 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden">
+                    {/* Tabs Menu — top on mobile, sidebar on desktop */}
+                    <div className="w-full md:w-44 lg:w-[220px] shrink-0 md:sticky md:top-24 order-1 md:order-1 relative">
+                        <nav className="flex md:flex-col gap-2 md:gap-3 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden">
                             <button
                                 onClick={() => setActiveTab('article')}
-                                className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                className={`flex-none md:w-full text-center md:text-left px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-1.5 md:gap-2 ${activeTab === 'article' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                             >
-                                <FileText size={16} />
+                                <FileText size={14} className="md:w-4 md:h-4" />
                                 Article
                             </button>
                             {post.bomStructure && (
                                 <button
                                     onClick={() => setActiveTab('bom')}
-                                    className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    className={`flex-none md:w-full text-center md:text-left px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-1.5 md:gap-2 ${activeTab === 'bom' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                                 >
-                                    <List size={16} />
+                                    <List size={14} className="md:w-4 md:h-4" />
                                     BOM & Specs
                                 </button>
                             )}
                             {post.mediaAssets && post.mediaAssets.length > 0 && (
                                 <button
                                     onClick={() => setActiveTab('assets')}
-                                    className={`flex-none md:w-full text-center md:text-left px-4 py-3 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-2 ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
+                                    className={`flex-none md:w-full text-center md:text-left px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-[14px] font-semibold transition-all flex items-center justify-center md:justify-start gap-1.5 md:gap-2 ${activeTab === 'assets' ? 'bg-jence-gold/15 text-jence-gold border border-jence-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:text-foreground border border-transparent'}`}
                                 >
-                                    <Image size={16} />
+                                    <Image size={14} className="md:w-4 md:h-4" />
                                     Visual Assets
                                 </button>
                             )}
@@ -227,7 +227,7 @@ export default function CreatorPostDetail() {
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="flex-1 min-w-0 order-1 md:order-2 w-full">
+                    <div className="flex-1 min-w-0 order-2 md:order-2 w-full">
                         {/* Main Post */}
                         <div className="card-plug p-4 sm:p-6 lg:p-10 mb-8">
                             <div className="flex gap-3 sm:gap-4 items-start border-b border-border/40 pb-6 mb-6">
