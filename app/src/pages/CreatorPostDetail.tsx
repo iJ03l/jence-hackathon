@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check, HandCoins, FileText, List, Image } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Send, Share2, ArrowBigUp, ArrowBigDown, Clock, Check, HandCoins, FileText, List, Image, X as XIcon, ZoomIn } from 'lucide-react'
 import { linkifyText } from '../lib/linkify'
 import SEO from '../components/SEO'
 import { TipModal } from '../components/TipModal'
@@ -47,6 +47,7 @@ export default function CreatorPostDetail() {
     const [tipping, setTipping] = useState(false)
     const [tipError, setTipError] = useState('')
     const trackedViewRef = useRef<string | null>(null)
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
     useEffect(() => {
         if (id) loadData(id)
@@ -406,8 +407,9 @@ export default function CreatorPostDetail() {
                                             }
                                             
                                             return (
-                                                <div key={idx} className={`relative min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in group ${isSVG ? 'aspect-auto bg-white/5 p-4 flex items-center justify-center' : 'aspect-auto'}`} onClick={() => window.open(url, '_blank')}>
+                                                <div key={idx} className={`relative min-h-[220px] rounded-[20px] overflow-hidden border border-border/60 bg-muted/20 shadow-sm hover:border-jence-gold/40 transition-colors cursor-zoom-in group ${isSVG ? 'aspect-auto bg-white/5 p-4 flex items-center justify-center' : 'aspect-auto'}`} onClick={() => setLightboxUrl(url)}>
                                                     <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none">
+                                                        <ZoomIn size={12} />
                                                         Click to expand
                                                     </div>
                                                     <img src={url} alt={`Media ${idx + 1}`} className={`w-full h-full ${isSVG ? 'object-contain' : 'object-cover'}`} />
@@ -570,6 +572,27 @@ export default function CreatorPostDetail() {
                     </div> {/* End flex-1 min-w-0 */}
                 </div> {/* End flex flex-col md:flex-row gap-6 */}
             </div> {/* End max-w-5xl lg:max-w-[1240px] */}
+
+            {/* Lightbox Modal */}
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out"
+                    onClick={() => setLightboxUrl(null)}
+                >
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+                        className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                    >
+                        <XIcon size={20} />
+                    </button>
+                    <img
+                        src={lightboxUrl}
+                        alt="Expanded view"
+                        className="max-w-[92vw] max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-90 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </section>
     )
 }
