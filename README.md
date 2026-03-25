@@ -79,4 +79,4 @@ npm run dev
 ```
 
 
-Built for the builders of the physical world.
+Built for the builders of the physical world. MIT - License
